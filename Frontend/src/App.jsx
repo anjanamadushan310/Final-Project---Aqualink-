@@ -1,5 +1,6 @@
+
 import React, { useState, useEffect } from "react";
-import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
 import Navbar from "./components/home/Navbar";
 import LoginForm from "./pages/Login"
 import Dashboard from "./components/home/Dashboard";
@@ -8,34 +9,33 @@ import HomePage from "./pages/HomePage";
 import OrderUI from "./pages/OrderUI";
 import ProductDetails from "./pages/ProductDetails";
 import useAuth from "./hooks/useAuth";
-
 import Footer from './components/home/Footer';
+import ProductForm from "./components/ProductForm";
+import AdminDashboard from "./components/dashboards/AdminDashboard";
+import ShopOwnerDashboard from "./components/dashboards/ShopOwnerDashboard";
+import FarmOwnerDashboard from "./components/dashboards/FarmOwnerDashboard";
+import CollectorDashboard from "./components/dashboards/CollectorDashboard";
+import ServiceProviderDashboard from "./components/dashboards/ServiceProviderDashboard";
+import IndustrialStuffSellerDashboard from "./components/dashboards/IndustrialStuffSellerDashboard";
+import DeliveryPersonDashboard from "./components/dashboards/DeliveryPersonDashboard";
 
 
 const App = () => {
   const { user, login, logout } = useAuth();
-
   const [showLogin, setShowLogin] = useState(false);
   const [showProfileMenu, setShowProfileMenu] = useState(false);
-  const [dashboard, setDashboard] = useState(null);
 
-  // "Open login" global event for nav
+  // "Open login" global event for nav"
   useEffect(() => {
     const f = () => setShowLogin(true);
     window.addEventListener("show-login", f);
     return () => window.removeEventListener("show-login", f);
   }, []);
 
-  // When logout, close profile menu and reset dashboard
+  // When logout, close profile menu
   const handleLogout = () => {
     logout();
-    setDashboard(null);
     setShowProfileMenu(false);
-  };
-
-  // Handle dashboard selection
-  const handleDashboardSelect = (role) => {
-    setDashboard(role);
   };
 
   return (
@@ -45,11 +45,9 @@ const App = () => {
         <Navbar
           user={user}
           onLogout={handleLogout}
-          dashboardName={dashboard}
           onProfileClick={() => setShowProfileMenu((s) => !s)}
           showProfileMenu={showProfileMenu}
           setShowProfileMenu={setShowProfileMenu}
-          onDashboardSelect={handleDashboardSelect}
         />
 
         {/* Login Modal */}
@@ -62,34 +60,39 @@ const App = () => {
 
         {/* Main Content */}
         <main className="w-full mt-10">
-          {/* If logged in and dashboard selected, show dashboard */}
-          {user && dashboard && <Dashboard dashboardName={dashboard} />}
+          <Routes>
+            {/* Public Routes */}
+            <Route path="/" element={<HomePage />} />
+            <Route path="/register" element={<RegistrationForm setShowLogin={setShowLogin} />} />
+            <Route path="/orderUI" element={<OrderUI />} />
+            <Route path="/product" element={<ProductDetails />} />
+            <Route path="/add-product" element={<ProductForm />} />
+            
+            
+            {/* Protected Dashboard Routes */}
+            <Route path="/dashboard/shop-owner" element={<ShopOwnerDashboard />}/>
+            <Route path="/dashboard/Farm-Owner" element={<FarmOwnerDashboard />}/>
+            <Route path="/dashboard/Collector" element={<CollectorDashboard />}/>
+            <Route path="/dashboard/Service-Provider" element={<ServiceProviderDashboard />}/>
+            <Route path="/dashboard/Industrial-Stuff_Seller" element={<IndustrialStuffSellerDashboard/>}/>
+            <Route path="/dashboard/Delivery-Person" element={<DeliveryPersonDashboard />}/>
+            <Route path="/admin" element={<AdminDashboard />} />
 
-          {/* If logged in but no dashboard selected */}
-          {user && !dashboard && (
-            <div>
-              <HomePage/>
-            </div>
-          )}
-
-          {/* If not logged in */}
-          {!user && (
-            <>
-              <Routes>
-                <Route path="/register" element={<RegistrationForm setShowLogin={setShowLogin} />}  />
-                <Route path="/" element={<HomePage />} />
-                <Route path="/orderUI" element={<OrderUI />} />
-                <Route path="/product" element={<ProductDetails />} />
-                {/* You can add more public routes here */}
-              </Routes>
+            
               
-            </>
-          )}
+           
+          </Routes>
         </main>
       </div>
-       <Footer />
+      <Footer />
     </Router>
   );
+};
+
+// Wrapper component to handle dynamic dashboard types
+const DashboardWrapper = () => {
+  const { dashboardType } = useParams();
+  return <Dashboard dashboardName={dashboardType.toUpperCase()} />;
 };
 
 export default App;
