@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import Footer from './home/Footer';
 
 const RegistrationForm = ({ setShowLogin }) => {
   const [formData, setFormData] = useState({
@@ -1060,9 +1061,12 @@ const RegistrationForm = ({ setShowLogin }) => {
                 Sign in here
               </button>
             </p>
-          </div>
+          </div> 
+          
+          <br></br>
 
       </div>
+      <Footer />
     </div>
   );
 };

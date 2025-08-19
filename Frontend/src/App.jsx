@@ -3,21 +3,22 @@ import React, { useState, useEffect } from "react";
 import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
 import Navbar from "./components/home/Navbar";
 import LoginForm from "./pages/Login"
-import Dashboard from "./components/home/Dashboard";
 import RegistrationForm from "./components/RegistrationForm";
 import HomePage from "./pages/HomePage";
 import OrderUI from "./pages/OrderUI";
 import ProductDetails from "./pages/ProductDetails";
 import useAuth from "./hooks/useAuth";
-import Footer from './components/home/Footer';
+import AdminDashboard from "./pages/dashboards/AdminDashboard";
+import ShopOwnerDashboard from "./pages/dashboards/ShopOwnerDashboard";
+import FarmOwnerDashboard from "./pages/dashboards/FarmOwnerDashboard";
+import CollectorDashboard from "./pages/dashboards/CollectorDashboard";
+import ServiceProviderDashboard from "./pages/dashboards/ServiceProviderDashboard";
+import IndustrialStuffSellerDashboard from "./pages/dashboards/IndustrialStuffSellerDashboard";
+import DeliveryPersonDashboard from "./pages/dashboards/DeliveryPersonDashboard";
+
+//aditional
+import ProductApprove from "./components/admin/ProductApprove";
 import ProductForm from "./components/ProductForm";
-import AdminDashboard from "./components/dashboards/AdminDashboard";
-import ShopOwnerDashboard from "./components/dashboards/ShopOwnerDashboard";
-import FarmOwnerDashboard from "./components/dashboards/FarmOwnerDashboard";
-import CollectorDashboard from "./components/dashboards/CollectorDashboard";
-import ServiceProviderDashboard from "./components/dashboards/ServiceProviderDashboard";
-import IndustrialStuffSellerDashboard from "./components/dashboards/IndustrialStuffSellerDashboard";
-import DeliveryPersonDashboard from "./components/dashboards/DeliveryPersonDashboard";
 
 
 const App = () => {
@@ -36,6 +37,7 @@ const App = () => {
   const handleLogout = () => {
     logout();
     setShowProfileMenu(false);
+    
   };
 
   return (
@@ -78,13 +80,14 @@ const App = () => {
             <Route path="/dashboard/Delivery-Person" element={<DeliveryPersonDashboard />}/>
             <Route path="/admin" element={<AdminDashboard />} />
 
-            
-              
-           
+            <Route path="/productaprove" element={<ProductApprove />} />
+            <Route path="/product-form" element={<ProductForm />} />
+
+    
           </Routes>
         </main>
       </div>
-      <Footer />
+     
     </Router>
   );
 };

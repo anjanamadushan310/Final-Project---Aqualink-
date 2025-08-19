@@ -1,6 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { ChevronLeftIcon, ChevronRightIcon } from '@heroicons/react/24/outline';
 import ProductCard from './../components/home/ProductCard';
+import Footer from '../components/home/Footer';
+import BannerCarousel from '../components/home/BannerCarousel';
+
 
 const HomePage = () => {
   const [products, setProducts] = useState([]);
@@ -120,13 +123,8 @@ const HomePage = () => {
       <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50">
         <div className="container mx-auto px-4 py-8 max-w-7xl">
           {/* Header */}
-          <div className="mb-12 text-center">
-            <h1 className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent mb-4">
-              Ornamental Fish Marketplace
-            </h1>
-            <p className="text-gray-600 text-lg max-w-2xl mx-auto">
-              Discover premium ornamental fish, expert services, and quality industrial equipment
-            </p>
+          <div >
+            <BannerCarousel />
           </div>
 
           {/* Fish Section */}
@@ -161,7 +159,9 @@ const HomePage = () => {
           display: none;
         }
       `}</style>
+      <Footer />
       </div>
+       
   );
 };
 

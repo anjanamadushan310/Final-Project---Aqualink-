@@ -1,8 +1,11 @@
 import { useState } from "react";
 
+
+
 export default function useAuth() {
   const stored = JSON.parse(localStorage.getItem("user"));
   const [user, setUser] = useState(stored);
+  
 
   function login(data) {
     setUser(data);
@@ -11,6 +14,8 @@ export default function useAuth() {
   function logout() {
     setUser(null);
     localStorage.removeItem("user");
+  
+
   }
   return { user, login, logout };
 }
