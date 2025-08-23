@@ -25,6 +25,9 @@ const App = () => {
   const { user, login, logout } = useAuth();
   const [showLogin, setShowLogin] = useState(false);
   const [showProfileMenu, setShowProfileMenu] = useState(false);
+  const handleLogin = (data, navigate) => {
+  login(data, navigate);
+};
 
   // "Open login" global event for nav"
   useEffect(() => {
@@ -54,10 +57,10 @@ const App = () => {
 
         {/* Login Modal */}
         {showLogin && (
-          <LoginForm
-            onLogin={login}
-            onClose={() => setShowLogin(false)}
-          />
+        <LoginForm
+        onLogin={handleLogin}
+       onClose={() => setShowLogin(false)}
+        />
         )}
 
         {/* Main Content */}
