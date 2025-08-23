@@ -19,7 +19,7 @@ public class UserRole {
     private Long id;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
+    @Column(name = "role_name", nullable = false, length = 50) // Add length specification
     private Role roleName;
 
     @ManyToOne(fetch = FetchType.LAZY)

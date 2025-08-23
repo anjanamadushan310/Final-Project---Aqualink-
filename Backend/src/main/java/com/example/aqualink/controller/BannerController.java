@@ -8,7 +8,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/banners")
-@CrossOrigin(origins = "*") // Adjust for security in real deployment
+@CrossOrigin(origins = "http://localhost:5173")
 public class BannerController {
     @Autowired
     private BannerService bannerService;

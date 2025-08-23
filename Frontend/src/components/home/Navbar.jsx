@@ -1,6 +1,4 @@
 
-
-
 import React from 'react';
 import { Fish } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
@@ -12,14 +10,14 @@ function Navbar({
   onProfileClick,
   showProfileMenu,
   setShowProfileMenu,
-  onDashboardSelect, // This prop might not be needed anymore
+ 
 }) {
   const navigate = useNavigate();
 
   // Handle dashboard selection with navigation
   const handleDashboardSelect = (role) => {
     // Convert role to URL-friendly format
-    const dashboardPath = role.toLowerCase().replace('_', '-');
+    const dashboardPath = role.toLowerCase().replace('_', '-').replace('_', '-');        //replace(/_/g, '-');
     
     // Navigate to the dashboard route
     navigate(`/dashboard/${dashboardPath}`);
@@ -60,24 +58,8 @@ function Navbar({
               </>
             )}
 
-            {/* Dashboard name */}
-            {dashboardName && (
-              <span className="text-white bg-cyan-900 px-3 py-1 rounded-full font-semibold shadow">
-                {dashboardName === "SHOP_OWNER" 
-                  ? "Shop Owner" 
-                  : dashboardName === "FARM_OWNER" 
-                  ? "Farm Owner" 
-                  : dashboardName === "COLLECTOR"
-                  ? "Collector "
-                  : dashboardName === "SERVICE_PROVIDER"
-                  ? "Service Provider"
-                  : dashboardName === "INDUSTRIAL_STUFF_SELLER"
-                  ? "Industrial Stuff Seller"
-                  : dashboardName === "DELIVERY_PERSON"
-                  ? "Delivery Person"
-                  : dashboardName}
-              </span>
-            )}
+            
+            
 
             {/* Auth Buttons */}
             {!user && (

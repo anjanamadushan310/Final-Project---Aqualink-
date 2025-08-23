@@ -7,7 +7,8 @@ public enum Role {
     COLLECTOR("Collector"),
     SERVICE_PROVIDER("Service Provider"),
     INDUSTRIAL_STUFF_SELLER("Industrial Stuff Seller"),
-    DELIVERY_PERSON("Delivery Person");
+    DELIVERY_PERSON("Delivery Person"),
+    ADMIN("Admin");
 
     private final String displayName;
 

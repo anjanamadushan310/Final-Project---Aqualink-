@@ -110,4 +110,10 @@ public class User {
                 ", createdAt=" + createdAt +
                 '}';
     }
+
+
+    private String firstName;
+    private String lastName;
+    private boolean enabled = true;
+
 }
