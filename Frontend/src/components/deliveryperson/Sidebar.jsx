@@ -8,17 +8,17 @@ import {
   CurrencyDollarIcon,
   ShoppingBagIcon,
   PhotoIcon,
-  XMarkIcon
+  XMarkIcon,
+  ClipboardDocumentListIcon
 } from '@heroicons/react/24/outline';
 
 const Sidebar = ({ activeComponent, setActiveComponent, sidebarOpen, setSidebarOpen }) => {
   const menuItems = [
-    { id: 'user-verification', label: 'User Verification', icon: UserPlusIcon },
-    { id: 'product-management', label: 'Product Management', icon: CubeIcon },
-    { id: 'user-management', label: 'User Management', icon: UsersIcon },
-    { id: 'reviews', label: 'Reviews Management', icon: StarIcon },
-    { id: 'earnings', label: 'Earnings & Payments', icon: CurrencyDollarIcon },
-    { id: 'banners', label: 'Banner Management', icon: PhotoIcon },
+    { id: 'delivery-tasks', label: 'Delivery Tasks', icon: ClipboardDocumentListIcon },
+    { id: 'delivery-history', label: 'Delivery History', icon:  ShoppingBagIcon },
+    { id: 'route-planning', label: 'Route Planning', icon:StarIcon },
+    
+    
   ];
 
   return (
@@ -42,7 +42,7 @@ const Sidebar = ({ activeComponent, setActiveComponent, sidebarOpen, setSidebarO
             <div className="bg-white bg-opacity-20 p-2 mt-2 rounded-full">
                 <img src="/logo.png" alt="Logo" className="w-8 h-8 rounded-full"/>
               </div>
-            <h2 className="text-xl font-bold">Admin</h2>
+            <h2 className="text-xl font-bold">Delivery Person</h2>
           </div>
           <button 
             onClick={() => setSidebarOpen(false)}
