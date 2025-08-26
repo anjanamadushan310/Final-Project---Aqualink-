@@ -16,9 +16,10 @@ import ServiceProviderDashboard from "./pages/dashboards/ServiceProviderDashboar
 import IndustrialStuffSellerDashboard from "./pages/dashboards/IndustrialStuffSellerDashboard";
 import DeliveryPersonDashboard from "./pages/dashboards/DeliveryPersonDashboard";
 
-//aditional
+
 import ProductApprove from "./components/admin/ProductApprove";
 import ProductForm from "./components/ProductForm";
+import UserProfile from "./pages/UserProfile";
 
 
 const App = () => {
@@ -85,6 +86,7 @@ const App = () => {
 
             <Route path="/productaprove" element={<ProductApprove />} />
             <Route path="/product-form" element={<ProductForm />} />
+            <Route path="/user-profile" element={<UserProfile />} />
 
     
           </Routes>
