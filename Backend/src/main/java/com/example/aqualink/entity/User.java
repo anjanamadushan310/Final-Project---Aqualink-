@@ -42,14 +42,22 @@ public class User {
 
     @Column(nullable = false)
     @NotBlank(message = "Phone number is required")
-    @Pattern(regexp = "^[0-9]{10}$", message = "Phone number must be 10 digits")
+    @Pattern(regexp = "^\\+94[0-9]{9}$|^\\+[1-9]\\d{1,14}$",
+            message = "Invalid phone number format. Use international format (e.g., +94771234567)")
     private String phoneNumber;
 
     @Column(nullable = false)
     @NotBlank(message = "Password is required")
     private String password;
 
-    private String nicDocumentPath;
+    @Column(name = "nic_front_document_path")
+    private String nicFrontDocumentPath;
+
+    @Column(name = "nic_back_document_path")
+    private String nicBackDocumentPath;
+
+    @Column(name = "selfie_document_path")
+    private String selfieDocumentPath;
 
     // Changed back to LAZY to avoid ConcurrentModificationException
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY)

@@ -10,14 +10,20 @@ const RegistrationForm = ({ setShowLogin }) => {
     phoneNumber: '',
     password: '',
     confirmPassword: '',
-    nicDocument: null,
+    nicFrontDocument: null,
+    nicBackDocument: null,
+    selfieDocument: null,
     userRoles: []
   });
 
   const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('');
-  const [previewImage, setPreviewImage] = useState(null);
+  const [previewImages, setPreviewImages] = useState({
+    nicFront: null,
+    nicBack: null,
+    selfie: null
+  });
   const [availableRoles, setAvailableRoles] = useState([]);
 
   // Password strength state
@@ -34,6 +40,9 @@ const RegistrationForm = ({ setShowLogin }) => {
   const [otpMessage, setOtpMessage] = useState('');
   const [otpLoading, setOtpLoading] = useState(false);
   const [otpSent, setOtpSent] = useState(false);
+
+  // Phone country codes
+  const [countryCode, setCountryCode] = useState('+94');
 
   // Password strength evaluation function
   const evaluatePasswordStrength = (password) => {
@@ -121,25 +130,28 @@ const RegistrationForm = ({ setShowLogin }) => {
 
   // Fetch available roles from backend
   useEffect(() => {
-    const fetchRoles = async () => {
-      try {
-        const response = await axios.get('http://localhost:8080/api/users/roles');
-        setAvailableRoles(response.data);
-      } catch (error) {
-        console.error('Error fetching roles:', error);
-        setAvailableRoles([
-          { value: 'SHOP_OWNER', label: 'Shop Owner' },
-          { value: 'FARM_OWNER', label: 'Farm Owner' },
-          { value: 'COLLECTOR', label: 'Collector' },
-          { value: 'SERVICE_PROVIDER', label: 'Service Provider' },
-          { value: 'INDUSTRIAL_STUFF_SELLER', label: 'Industrial Stuff Seller' },
-          { value: 'DELIVERY_PERSON', label: 'Delivery Person' }
-        ]);
-      }
-    };
+  const fetchRoles = async () => {
+    try {
+      const response = await axios.get('http://localhost:8080/api/users/roles');
+      // Filter out any admin role by value; update as needed based on your actual admin value
+      setAvailableRoles(
+        response.data.filter(role => role.value !== 'ADMIN')
+      );
+    } catch (error) {
+      // fallback roles, also filtering out admin
+      setAvailableRoles([
+        { value: 'SHOP_OWNER', label: 'Shop Owner' },
+        { value: 'FARM_OWNER', label: 'Farm Owner' },
+        { value: 'COLLECTOR', label: 'Collector' },
+        { value: 'SERVICE_PROVIDER', label: 'Service Provider' },
+        { value: 'INDUSTRIAL_STUFF_SELLER', label: 'Industrial Stuff Seller' },
+        { value: 'DELIVERY_PERSON', label: 'Delivery Person' }
+      ]);
+    console.log(error)}
+  };
 
-    fetchRoles();
-  }, []);
+  fetchRoles();
+}, []);
 
   // Check password match whenever passwords change
   useEffect(() => {
@@ -198,7 +210,7 @@ const RegistrationForm = ({ setShowLogin }) => {
     }
   };
 
-  const handleFileChange = (e) => {
+  const handleFileChange = (e, documentType) => {
     const file = e.target.files[0];
 
     if (file) {
@@ -206,7 +218,7 @@ const RegistrationForm = ({ setShowLogin }) => {
       if (!validTypes.includes(file.type)) {
         setErrors(prevErrors => ({
           ...prevErrors,
-          nicDocument: 'Only JPEG, JPG, and PNG files are allowed'
+          [documentType]: 'Only JPEG, JPG, and PNG files are allowed'
         }));
         return;
       }
@@ -214,29 +226,53 @@ const RegistrationForm = ({ setShowLogin }) => {
       if (file.size > 5 * 1024 * 1024) {
         setErrors(prevErrors => ({
           ...prevErrors,
-          nicDocument: 'File size must be less than 5MB'
+          [documentType]: 'File size must be less than 5MB'
         }));
         return;
       }
 
       setFormData(prevState => ({
         ...prevState,
-        nicDocument: file
+        [documentType]: file
       }));
 
       const reader = new FileReader();
       reader.onload = (e) => {
-        setPreviewImage(e.target.result);
+        const previewKey = documentType === 'nicFrontDocument' ? 'nicFront' :
+                           documentType === 'nicBackDocument' ? 'nicBack' : 'selfie';
+        setPreviewImages(prevState => ({
+          ...prevState,
+          [previewKey]: e.target.result
+        }));
       };
       reader.readAsDataURL(file);
 
-      if (errors.nicDocument) {
+      if (errors[documentType]) {
         setErrors(prevErrors => ({
           ...prevErrors,
-          nicDocument: ''
+          [documentType]: ''
         }));
       }
     }
+  };
+
+  const removeImage = (documentType) => {
+    const previewKey = documentType === 'nicFrontDocument' ? 'nicFront' :
+                       documentType === 'nicBackDocument' ? 'nicBack' : 'selfie';
+    
+    setPreviewImages(prevState => ({
+      ...prevState,
+      [previewKey]: null
+    }));
+    
+    setFormData(prevState => ({
+      ...prevState,
+      [documentType]: null
+    }));
+
+    const inputId = documentType === 'nicFrontDocument' ? 'nicFrontDocument' :
+                    documentType === 'nicBackDocument' ? 'nicBackDocument' : 'selfieDocument';
+    document.getElementById(inputId).value = '';
   };
 
   const sendOtp = async () => {
@@ -325,11 +361,12 @@ const RegistrationForm = ({ setShowLogin }) => {
       newErrors.email = 'Invalid email format';
     }
 
-    const phonePattern = /^[0-9]{10}$/;
+    // Validate phone number without country code
+    const phonePattern = /^[0-9]{9}$/;
     if (!formData.phoneNumber) {
       newErrors.phoneNumber = 'Phone number is required';
     } else if (!phonePattern.test(formData.phoneNumber)) {
-      newErrors.phoneNumber = 'Phone number must be 10 digits';
+      newErrors.phoneNumber = 'Phone number must be 9 digits (without country code)';
     }
 
     if (!formData.password) {
@@ -344,8 +381,9 @@ const RegistrationForm = ({ setShowLogin }) => {
       newErrors.confirmPassword = 'Passwords do not match';
     }
 
-    if (!formData.nicDocument) {
-      newErrors.nicDocument = 'NIC document is required';
+    // Check if at least one document is uploaded
+    if (!formData.nicFrontDocument && !formData.nicBackDocument && !formData.selfieDocument) {
+      newErrors.documents = 'At least one document (NIC Front, NIC Back, or Selfie) is required';
     }
 
     if (formData.userRoles.length === 0) {
@@ -379,10 +417,21 @@ const RegistrationForm = ({ setShowLogin }) => {
     formDataToSend.append('nicNumber', formData.nicNumber);
     formDataToSend.append('name', formData.name);
     formDataToSend.append('email', formData.email);
-    formDataToSend.append('phoneNumber', formData.phoneNumber);
+    // Combine country code with phone number
+    formDataToSend.append('phoneNumber', countryCode + formData.phoneNumber);
     formDataToSend.append('password', formData.password);
     formDataToSend.append('confirmPassword', formData.confirmPassword);
-    formDataToSend.append('nicDocument', formData.nicDocument);
+    
+    if (formData.nicFrontDocument) {
+      formDataToSend.append('nicFrontDocument', formData.nicFrontDocument);
+    }
+    if (formData.nicBackDocument) {
+      formDataToSend.append('nicBackDocument', formData.nicBackDocument);
+    }
+    if (formData.selfieDocument) {
+      formDataToSend.append('selfieDocument', formData.selfieDocument);
+    }
+    
     formDataToSend.append('otpVerified', otpVerified);
 
     formData.userRoles.forEach(role => {
@@ -402,6 +451,7 @@ const RegistrationForm = ({ setShowLogin }) => {
 
       setMessage(response.data.message);
 
+      // Reset form
       setFormData({
         nicNumber: '',
         name: '',
@@ -409,10 +459,12 @@ const RegistrationForm = ({ setShowLogin }) => {
         phoneNumber: '',
         password: '',
         confirmPassword: '',
-        nicDocument: null,
+        nicFrontDocument: null,
+        nicBackDocument: null,
+        selfieDocument: null,
         userRoles: []
       });
-      setPreviewImage(null);
+      setPreviewImages({ nicFront: null, nicBack: null, selfie: null });
       setOtp('');
       setOtpVerified(false);
       setOtpSent(false);
@@ -422,10 +474,13 @@ const RegistrationForm = ({ setShowLogin }) => {
       setShowPassword(false);
       setShowConfirmPassword(false);
 
-      const fileInput = document.getElementById('nicDocument');
-      if (fileInput) {
-        fileInput.value = '';
-      }
+      // Clear file inputs
+      ['nicFrontDocument', 'nicBackDocument', 'selfieDocument'].forEach(id => {
+        const fileInput = document.getElementById(id);
+        if (fileInput) {
+          fileInput.value = '';
+        }
+      });
 
     } catch (error) {
       if (error.response && error.response.data) {
@@ -671,29 +726,265 @@ const RegistrationForm = ({ setShowLogin }) => {
                 </div>
               )}
 
-              {/* Phone Number */}
+              {/* Phone Number - Horizontal Layout */}
               <div className="space-y-2">
                 <label htmlFor="phoneNumber" className="block text-sm font-semibold text-gray-700">
                   Phone Number
                 </label>
-                <div className="relative">
-                  <input
-                    id="phoneNumber"
-                    name="phoneNumber"
-                    type="tel"
-                    value={formData.phoneNumber}
-                    onChange={handleChange}
-                    className={`w-full px-4 py-3 border-2 rounded-xl transition-all duration-200 focus:outline-none ${
-                      errors.phoneNumber
-                        ? 'border-red-300 focus:border-red-500 bg-red-50'
-                        : 'border-gray-200 focus:border-blue-500 hover:border-gray-300'
-                    }`}
-                    placeholder="Enter your phone number"
-                  />
-                  <div className="absolute inset-y-0 right-0 pr-3 flex items-center">
-                    <svg className="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
-                    </svg>
+                <div className="flex space-x-2">
+                  <div className="w-32">
+                    <select
+  value={countryCode}
+  onChange={(e) => setCountryCode(e.target.value)}
+  className="w-full px-3 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:border-blue-500 hover:border-gray-300 transition-all duration-200"
+>
+  <option value="+93">🇦🇫 Afghanistan +93</option>
+  <option value="+355">🇦🇱 Albania +355</option>
+  <option value="+213">🇩🇿 Algeria +213</option>
+  <option value="+1-684">🇦🇸 American Samoa +1-684</option>
+  <option value="+376">🇦🇩 Andorra +376</option>
+  <option value="+244">🇦🇴 Angola +244</option>
+  <option value="+1-264">🇦🇮 Anguilla +1-264</option>
+  <option value="+1-268">🇦🇬 Antigua and Barbuda +1-268</option>
+  <option value="+54">🇦🇷 Argentina +54</option>
+  <option value="+374">🇦🇲 Armenia +374</option>
+  <option value="+297">🇦🇼 Aruba +297</option>
+  <option value="+61">🇦🇺 Australia +61</option>
+  <option value="+43">🇦🇹 Austria +43</option>
+  <option value="+994">🇦🇿 Azerbaijan +994</option>
+  <option value="+1-242">🇧🇸 Bahamas +1-242</option>
+  <option value="+973">🇧🇭 Bahrain +973</option>
+  <option value="+880">🇧🇩 Bangladesh +880</option>
+  <option value="+1-246">🇧🇧 Barbados +1-246</option>
+  <option value="+375">🇧🇾 Belarus +375</option>
+  <option value="+32">🇧🇪 Belgium +32</option>
+  <option value="+501">🇧🇿 Belize +501</option>
+  <option value="+229">🇧🇯 Benin +229</option>
+  <option value="+1-441">🇧🇲 Bermuda +1-441</option>
+  <option value="+975">🇧🇹 Bhutan +975</option>
+  <option value="+591">🇧🇴 Bolivia +591</option>
+  <option value="+387">🇧🇦 Bosnia and Herzegovina +387</option>
+  <option value="+267">🇧🇼 Botswana +267</option>
+  <option value="+55">🇧🇷 Brazil +55</option>
+  <option value="+246">🇮🇴 British Indian Ocean Territory +246</option>
+  <option value="+1-284">🇻🇬 British Virgin Islands +1-284</option>
+  <option value="+673">🇧🇳 Brunei +673</option>
+  <option value="+359">🇧🇬 Bulgaria +359</option>
+  <option value="+226">🇧🇫 Burkina Faso +226</option>
+  <option value="+257">🇧🇮 Burundi +257</option>
+  <option value="+238">🇨🇻 Cape Verde +238</option>
+  <option value="+855">🇰🇭 Cambodia +855</option>
+  <option value="+237">🇨🇲 Cameroon +237</option>
+  <option value="+1">🇨🇦 Canada +1</option>
+  <option value="+1-345">🇰🇾 Cayman Islands +1-345</option>
+  <option value="+236">🇨🇫 Central African Republic +236</option>
+  <option value="+235">🇹🇩 Chad +235</option>
+  <option value="+56">🇨🇱 Chile +56</option>
+  <option value="+86">🇨🇳 China +86</option>
+  <option value="+57">🇨🇴 Colombia +57</option>
+  <option value="+269">🇰🇲 Comoros +269</option>
+  <option value="+682">🇨🇰 Cook Islands +682</option>
+  <option value="+506">🇨🇷 Costa Rica +506</option>
+  <option value="+225">🇨🇮 Côte d'Ivoire +225</option>
+  <option value="+385">🇭🇷 Croatia +385</option>
+  <option value="+53">🇨🇺 Cuba +53</option>
+  <option value="+599">🇨🇼 Curaçao +599</option>
+  <option value="+357">🇨🇾 Cyprus +357</option>
+  <option value="+420">🇨🇿 Czech Republic +420</option>
+  <option value="+243">🇨🇩 DR Congo +243</option>
+  <option value="+45">🇩🇰 Denmark +45</option>
+  <option value="+253">🇩🇯 Djibouti +253</option>
+  <option value="+1-767">🇩🇲 Dominica +1-767</option>
+  <option value="+1-809">🇩🇴 Dominican Republic +1-809</option>
+  <option value="+670">🇹🇱 East Timor +670</option>
+  <option value="+593">🇪🇨 Ecuador +593</option>
+  <option value="+20">🇪🇬 Egypt +20</option>
+  <option value="+503">🇸🇻 El Salvador +503</option>
+  <option value="+240">🇬🇶 Equatorial Guinea +240</option>
+  <option value="+291">🇪🇷 Eritrea +291</option>
+  <option value="+372">🇪🇪 Estonia +372</option>
+  <option value="+268">🇸🇿 Eswatini +268</option>
+  <option value="+251">🇪🇹 Ethiopia +251</option>
+  <option value="+298">🇫🇴 Faroe Islands +298</option>
+  <option value="+500">🇫🇰 Falkland Islands +500</option>
+  <option value="+679">🇫🇯 Fiji +679</option>
+  <option value="+358">🇫🇮 Finland +358</option>
+  <option value="+33">🇫🇷 France +33</option>
+  <option value="+689">🇵🇫 French Polynesia +689</option>
+  <option value="+241">🇬🇦 Gabon +241</option>
+  <option value="+220">🇬🇲 Gambia +220</option>
+  <option value="+995">🇬🇪 Georgia +995</option>
+  <option value="+49">🇩🇪 Germany +49</option>
+  <option value="+233">🇬🇭 Ghana +233</option>
+  <option value="+350">🇬🇮 Gibraltar +350</option>
+  <option value="+30">🇬🇷 Greece +30</option>
+  <option value="+299">🇬🇱 Greenland +299</option>
+  <option value="+1-473">🇬🇩 Grenada +1-473</option>
+  <option value="+1-671">🇬🇺 Guam +1-671</option>
+  <option value="+502">🇬🇹 Guatemala +502</option>
+  <option value="+224">🇬🇳 Guinea +224</option>
+  <option value="+245">🇬🇼 Guinea-Bissau +245</option>
+  <option value="+592">🇬🇾 Guyana +592</option>
+  <option value="+509">🇭🇹 Haiti +509</option>
+  <option value="+379">🇻🇦 Holy See +379</option>
+  <option value="+504">🇭🇳 Honduras +504</option>
+  <option value="+852">🇭🇰 Hong Kong +852</option>
+  <option value="+36">🇭🇺 Hungary +36</option>
+  <option value="+354">🇮🇸 Iceland +354</option>
+  <option value="+91">🇮🇳 India +91</option>
+  <option value="+62">🇮🇩 Indonesia +62</option>
+  <option value="+98">🇮🇷 Iran +98</option>
+  <option value="+964">🇮🇶 Iraq +964</option>
+  <option value="+353">🇮🇪 Ireland +353</option>
+  <option value="+972">🇮🇱 Israel +972</option>
+  <option value="+39">🇮🇹 Italy +39</option>
+  <option value="+1-876">🇯🇲 Jamaica +1-876</option>
+  <option value="+81">🇯🇵 Japan +81</option>
+  <option value="+962">🇯🇴 Jordan +962</option>
+  <option value="+7">🇰🇿 Kazakhstan +7</option>
+  <option value="+254">🇰🇪 Kenya +254</option>
+  <option value="+686">🇰🇮 Kiribati +686</option>
+  <option value="+965">🇰🇼 Kuwait +965</option>
+  <option value="+996">🇰🇬 Kyrgyzstan +996</option>
+  <option value="+856">🇱🇦 Laos +856</option>
+  <option value="+371">🇱🇻 Latvia +371</option>
+  <option value="+961">🇱🇧 Lebanon +961</option>
+  <option value="+266">🇱🇸 Lesotho +266</option>
+  <option value="+231">🇱🇷 Liberia +231</option>
+  <option value="+218">🇱🇾 Libya +218</option>
+  <option value="+423">🇱🇮 Liechtenstein +423</option>
+  <option value="+370">🇱🇹 Lithuania +370</option>
+  <option value="+352">🇱🇺 Luxembourg +352</option>
+  <option value="+853">🇲🇴 Macao +853</option>
+  <option value="+261">🇲🇬 Madagascar +261</option>
+  <option value="+265">🇲🇼 Malawi +265</option>
+  <option value="+60">🇲🇾 Malaysia +60</option>
+  <option value="+960">🇲🇻 Maldives +960</option>
+  <option value="+223">🇲🇱 Mali +223</option>
+  <option value="+356">🇲🇹 Malta +356</option>
+  <option value="+692">🇲🇭 Marshall Islands +692</option>
+  <option value="+222">🇲🇷 Mauritania +222</option>
+  <option value="+230">🇲🇺 Mauritius +230</option>
+  <option value="+262">🇾🇹 Mayotte +262</option>
+  <option value="+52">🇲🇽 Mexico +52</option>
+  <option value="+691">🇫🇲 Micronesia +691</option>
+  <option value="+373">🇲🇩 Moldova +373</option>
+  <option value="+377">🇲🇨 Monaco +377</option>
+  <option value="+976">🇲🇳 Mongolia +976</option>
+  <option value="+382">🇲🇪 Montenegro +382</option>
+  <option value="+1-664">🇲🇸 Montserrat +1-664</option>
+  <option value="+212">🇲🇦 Morocco +212</option>
+  <option value="+258">🇲🇿 Mozambique +258</option>
+  <option value="+95">🇲🇲 Myanmar +95</option>
+  <option value="+264">🇳🇦 Namibia +264</option>
+  <option value="+674">🇳🇷 Nauru +674</option>
+  <option value="+977">🇳🇵 Nepal +977</option>
+  <option value="+31">🇳🇱 Netherlands +31</option>
+  <option value="+687">🇳🇨 New Caledonia +687</option>
+  <option value="+64">🇳🇿 New Zealand +64</option>
+  <option value="+505">🇳🇮 Nicaragua +505</option>
+  <option value="+227">🇳🇪 Niger +227</option>
+  <option value="+234">🇳🇬 Nigeria +234</option>
+  <option value="+683">🇳🇺 Niue +683</option>
+  <option value="+1-670">🇲🇵 Northern Mariana Islands +1-670</option>
+  <option value="+850">🇰🇵 North Korea +850</option>
+  <option value="+47">🇳🇴 Norway +47</option>
+  <option value="+968">🇴🇲 Oman +968</option>
+  <option value="+92">🇵🇰 Pakistan +92</option>
+  <option value="+680">🇵🇼 Palau +680</option>
+  <option value="+970">🇵🇸 Palestine +970</option>
+  <option value="+507">🇵🇦 Panama +507</option>
+  <option value="+675">🇵🇬 Papua New Guinea +675</option>
+  <option value="+595">🇵🇾 Paraguay +595</option>
+  <option value="+51">🇵🇪 Peru +51</option>
+  <option value="+63">🇵🇭 Philippines +63</option>
+  <option value="+48">🇵🇱 Poland +48</option>
+  <option value="+351">🇵🇹 Portugal +351</option>
+  <option value="+1-787">🇵🇷 Puerto Rico +1-787</option>
+  <option value="+974">🇶🇦 Qatar +974</option>
+  <option value="+242">🇨🇬 Republic of the Congo +242</option>
+  <option value="+262">🇷🇪 Reunion +262</option>
+  <option value="+40">🇷🇴 Romania +40</option>
+  <option value="+7">🇷🇺 Russia +7</option>
+  <option value="+250">🇷🇼 Rwanda +250</option>
+  <option value="+290">🇸🇭 Saint Helena +290</option>
+  <option value="+1-869">🇰🇳 Saint Kitts and Nevis +1-869</option>
+  <option value="+1-758">🇱🇨 Saint Lucia +1-758</option>
+  <option value="+508">🇵🇲 Saint Pierre and Miquelon +508</option>
+  <option value="+1-784">🇻🇨 Saint Vincent and the Grenadines +1-784</option>
+  <option value="+685">🇼🇸 Samoa +685</option>
+  <option value="+378">🇸🇲 San Marino +378</option>
+  <option value="+239">🇸🇹 Sao Tome and Principe +239</option>
+  <option value="+966">🇸🇦 Saudi Arabia +966</option>
+  <option value="+221">🇸🇳 Senegal +221</option>
+  <option value="+381">🇷🇸 Serbia +381</option>
+  <option value="+248">🇸🇨 Seychelles +248</option>
+  <option value="+232">🇸🇱 Sierra Leone +232</option>
+  <option value="+65">🇸🇬 Singapore +65</option>
+  <option value="+421">🇸🇰 Slovakia +421</option>
+  <option value="+386">🇸🇮 Slovenia +386</option>
+  <option value="+677">🇸🇧 Solomon Islands +677</option>
+  <option value="+252">🇸🇴 Somalia +252</option>
+  <option value="+27">🇿🇦 South Africa +27</option>
+  <option value="+82">🇰🇷 South Korea +82</option>
+  <option value="+211">🇸🇸 South Sudan +211</option>
+  <option value="+34">🇪🇸 Spain +34</option>
+  <option value="+94">🇱🇰 Sri Lanka +94</option>
+  <option value="+249">🇸🇩 Sudan +249</option>
+  <option value="+597">🇸🇷 Suriname +597</option>
+  <option value="+46">🇸🇪 Sweden +46</option>
+  <option value="+41">🇨🇭 Switzerland +41</option>
+  <option value="+963">🇸🇾 Syria +963</option>
+  <option value="+886">🇹🇼 Taiwan +886</option>
+  <option value="+992">🇹🇯 Tajikistan +992</option>
+  <option value="+255">🇹🇿 Tanzania +255</option>
+  <option value="+66">🇹🇭 Thailand +66</option>
+  <option value="+228">🇹🇬 Togo +228</option>
+  <option value="+690">🇹🇰 Tokelau +690</option>
+  <option value="+676">🇹🇴 Tonga +676</option>
+  <option value="+1-868">🇹🇹 Trinidad and Tobago +1-868</option>
+  <option value="+216">🇹🇳 Tunisia +216</option>
+  <option value="+90">🇹🇷 Turkey +90</option>
+  <option value="+993">🇹🇲 Turkmenistan +993</option>
+  <option value="+1-649">🇹🇨 Turks and Caicos Islands +1-649</option>
+  <option value="+688">🇹🇻 Tuvalu +688</option>
+  <option value="+1-340">🇻🇮 U.S. Virgin Islands +1-340</option>
+  <option value="+256">🇺🇬 Uganda +256</option>
+  <option value="+380">🇺🇦 Ukraine +380</option>
+  <option value="+971">🇦🇪 United Arab Emirates +971</option>
+  <option value="+44">🇬🇧 United Kingdom +44</option>
+  <option value="+1">🇺🇸 United States +1</option>
+  <option value="+598">🇺🇾 Uruguay +598</option>
+  <option value="+998">🇺🇿 Uzbekistan +998</option>
+  <option value="+678">🇻🇺 Vanuatu +678</option>
+  <option value="+58">🇻🇪 Venezuela +58</option>
+  <option value="+84">🇻🇳 Vietnam +84</option>
+  <option value="+967">🇾🇪 Yemen +967</option>
+  <option value="+260">🇿🇲 Zambia +260</option>
+  <option value="+263">🇿🇼 Zimbabwe +263</option>
+</select>
+
+                  </div>
+                  <div className="flex-1 relative">
+                    <input
+                      id="phoneNumber"
+                      name="phoneNumber"
+                      type="tel"
+                      value={formData.phoneNumber}
+                      onChange={handleChange}
+                      className={`w-full px-4 py-3 border-2 rounded-xl transition-all duration-200 focus:outline-none ${
+                        errors.phoneNumber
+                          ? 'border-red-300 focus:border-red-500 bg-red-50'
+                          : 'border-gray-200 focus:border-blue-500 hover:border-gray-300'
+                      }`}
+                      placeholder="Enter phone number (9 digits)"
+                      maxLength="9"
+                    />
+                    <div className="absolute inset-y-0 right-0 pr-3 flex items-center">
+                      <svg className="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+                      </svg>
+                    </div>
                   </div>
                 </div>
                 {errors.phoneNumber && (
@@ -704,6 +995,7 @@ const RegistrationForm = ({ setShowLogin }) => {
                     {errors.phoneNumber}
                   </p>
                 )}
+                <p className="text-xs text-gray-500">Complete number will be: {countryCode}{formData.phoneNumber}</p>
               </div>
 
               {/* User Roles */}
@@ -924,69 +1216,171 @@ const RegistrationForm = ({ setShowLogin }) => {
                 </div>
               </div>
 
-              {/* NIC Document Upload */}
+              {/* Document Uploads - Horizontal Layout */}
               <div className="space-y-4">
                 <label className="block text-sm font-semibold text-gray-700">
-                  NIC Document Upload
+                  Document Upload (Upload at least one document)
                 </label>
-                <div className={`border-2 border-dashed rounded-xl p-6 transition-all duration-200 ${
-                  errors.nicDocument 
-                    ? 'border-red-300 bg-red-50' 
-                    : 'border-gray-300 hover:border-gray-400'
-                }`}>
-                  {previewImage ? (
-                    <div className="text-center">
-                      <img 
-                        src={previewImage} 
-                        alt="NIC Preview" 
-                        className="mx-auto h-40 w-auto object-cover rounded-lg shadow-lg mb-4"
-                      />
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setPreviewImage(null);
-                          setFormData(prev => ({ ...prev, nicDocument: null }));
-                          document.getElementById('nicDocument').value = '';
-                        }}
-                        className="text-red-600 hover:text-red-800 font-medium transition-colors duration-200"
-                      >
-                        Remove Image
-                      </button>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  {/* NIC Front */}
+                  <div className="space-y-2">
+                    <label className="block text-xs font-medium text-gray-600">NIC Front</label>
+                    <div className={`border-2 border-dashed rounded-xl p-4 transition-all duration-200 ${
+                      errors.nicFrontDocument 
+                        ? 'border-red-300 bg-red-50' 
+                        : 'border-gray-300 hover:border-gray-400'
+                    }`}>
+                      {previewImages.nicFront ? (
+                        <div className="text-center">
+                          <img 
+                            src={previewImages.nicFront} 
+                            alt="NIC Front Preview" 
+                            className="mx-auto h-24 w-auto object-cover rounded-lg shadow-lg mb-2"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => removeImage('nicFrontDocument')}
+                            className="text-red-600 hover:text-red-800 text-xs font-medium transition-colors duration-200"
+                          >
+                            Remove
+                          </button>
+                        </div>
+                      ) : (
+                        <div className="text-center">
+                          <svg className="mx-auto h-8 w-8 text-gray-400 mb-2" fill="none" stroke="currentColor" viewBox="0 0 48 48">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" />
+                          </svg>
+                          <label
+                            htmlFor="nicFrontDocument"
+                            className="cursor-pointer inline-flex items-center px-3 py-1 border border-transparent text-xs font-medium rounded-lg text-white bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 transition-all duration-200"
+                          >
+                            Choose File
+                          </label>
+                          <input
+                            id="nicFrontDocument"
+                            name="nicFrontDocument"
+                            type="file"
+                            className="sr-only"
+                            accept=".jpg,.jpeg,.png"
+                            onChange={(e) => handleFileChange(e, 'nicFrontDocument')}
+                          />
+                          <p className="mt-1 text-xs text-gray-500">PNG, JPG up to 5MB</p>
+                        </div>
+                      )}
                     </div>
-                  ) : (
-                    <div className="text-center">
-                      <svg className="mx-auto h-16 w-16 text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 48 48">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" />
-                      </svg>
-                      <label
-                        htmlFor="nicDocument"
-                        className="cursor-pointer inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-xl text-white bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 transition-all duration-200 shadow-lg hover:shadow-xl"
-                      >
-                        <svg className="h-5 w-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
-                        </svg>
-                        Choose File
-                      </label>
-                      <input
-                        id="nicDocument"
-                        name="nicDocument"
-                        type="file"
-                        className="sr-only"
-                        accept=".jpg,.jpeg,.png"
-                        onChange={handleFileChange}
-                      />
-                      <p className="mt-2 text-sm text-gray-500">
-                        PNG, JPG, JPEG up to 5MB
-                      </p>
+                  </div>
+
+                  {/* NIC Back */}
+                  <div className="space-y-2">
+                    <label className="block text-xs font-medium text-gray-600">NIC Back</label>
+                    <div className={`border-2 border-dashed rounded-xl p-4 transition-all duration-200 ${
+                      errors.nicBackDocument 
+                        ? 'border-red-300 bg-red-50' 
+                        : 'border-gray-300 hover:border-gray-400'
+                    }`}>
+                      {previewImages.nicBack ? (
+                        <div className="text-center">
+                          <img 
+                            src={previewImages.nicBack} 
+                            alt="NIC Back Preview" 
+                            className="mx-auto h-24 w-auto object-cover rounded-lg shadow-lg mb-2"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => removeImage('nicBackDocument')}
+                            className="text-red-600 hover:text-red-800 text-xs font-medium transition-colors duration-200"
+                          >
+                            Remove
+                          </button>
+                        </div>
+                      ) : (
+                        <div className="text-center">
+                          <svg className="mx-auto h-8 w-8 text-gray-400 mb-2" fill="none" stroke="currentColor" viewBox="0 0 48 48">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" />
+                          </svg>
+                          <label
+                            htmlFor="nicBackDocument"
+                            className="cursor-pointer inline-flex items-center px-3 py-1 border border-transparent text-xs font-medium rounded-lg text-white bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 transition-all duration-200"
+                          >
+                            Choose File
+                          </label>
+                          <input
+                            id="nicBackDocument"
+                            name="nicBackDocument"
+                            type="file"
+                            className="sr-only"
+                            accept=".jpg,.jpeg,.png"
+                            onChange={(e) => handleFileChange(e, 'nicBackDocument')}
+                          />
+                          <p className="mt-1 text-xs text-gray-500">PNG, JPG up to 5MB</p>
+                        </div>
+                      )}
                     </div>
-                  )}
+                  </div>
+
+                  {/* Selfie */}
+                  <div className="space-y-2">
+                    <label className="block text-xs font-medium text-gray-600">Selfie with NIC card frontside </label>
+                    <div className={`border-2 border-dashed rounded-xl p-4 transition-all duration-200 ${
+                      errors.selfieDocument 
+                        ? 'border-red-300 bg-red-50' 
+                        : 'border-gray-300 hover:border-gray-400'
+                    }`}>
+                      {previewImages.selfie ? (
+                        <div className="text-center">
+                          <img 
+                            src={previewImages.selfie} 
+                            alt="Selfie Preview" 
+                            className="mx-auto h-24 w-auto object-cover rounded-lg shadow-lg mb-2"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => removeImage('selfieDocument')}
+                            className="text-red-600 hover:text-red-800 text-xs font-medium transition-colors duration-200"
+                          >
+                            Remove
+                          </button>
+                        </div>
+                      ) : (
+                        <div className="text-center">
+                          <svg className="mx-auto h-8 w-8 text-gray-400 mb-2" fill="none" stroke="currentColor" viewBox="0 0 48 48">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" />
+                          </svg>
+                          <label
+                            htmlFor="selfieDocument"
+                            className="cursor-pointer inline-flex items-center px-3 py-1 border border-transparent text-xs font-medium rounded-lg text-white bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 transition-all duration-200"
+                          >
+                            Choose File
+                          </label>
+                          <input
+                            id="selfieDocument"
+                            name="selfieDocument"
+                            type="file"
+                            className="sr-only"
+                            accept=".jpg,.jpeg,.png"
+                            onChange={(e) => handleFileChange(e, 'selfieDocument')}
+                          />
+                          <p className="mt-1 text-xs text-gray-500">PNG, JPG up to 5MB</p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
                 </div>
-                {errors.nicDocument && (
+                
+                {errors.documents && (
                   <p className="text-sm text-red-600 flex items-center">
                     <svg className="h-4 w-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
                       <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
                     </svg>
-                    {errors.nicDocument}
+                    {errors.documents}
+                  </p>
+                )}
+                {Object.keys(errors).some(key => key.includes('Document')) && (
+                  <p className="text-sm text-red-600 flex items-center">
+                    <svg className="h-4 w-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                    </svg>
+                    Please check document upload errors
                   </p>
                 )}
               </div>
@@ -1050,20 +1444,20 @@ const RegistrationForm = ({ setShowLogin }) => {
             </form>
           </div>
         </div>
-          <div className="text-center mt-8">
-            <p className="text-gray-600">
-              Already have an account?{" "}
-              <button
-                type="button"
-                onClick={() => setShowLogin(true)}
-                className="font-semibold text-blue-600 hover:text-blue-800 transition-colors duration-200"
-              >
-                Sign in here
-              </button>
-            </p>
-          </div> 
-          
-          <br></br>
+        <div className="text-center mt-8">
+          <p className="text-gray-600">
+            Already have an account?{" "}
+            <button
+              type="button"
+              onClick={() => setShowLogin(true)}
+              className="font-semibold text-blue-600 hover:text-blue-800 transition-colors duration-200"
+            >
+              Sign in here
+            </button>
+          </p>
+        </div> 
+        
+        <br></br>
 
       </div>
       <Footer />

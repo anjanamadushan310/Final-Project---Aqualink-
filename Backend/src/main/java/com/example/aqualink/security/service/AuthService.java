@@ -40,7 +40,8 @@ public class AuthService {
 
     public String registerUser(String nicNumber, String name, String email,
                                String phoneNumber, String password, String confirmPassword,
-                               MultipartFile nicDocument, List<String> userRoles) {
+                               MultipartFile nicFrontDocument, MultipartFile nicBackDocument,
+                               MultipartFile selfieDocument, List<String> userRoles) {
         try {
             // Check if passwords match
             if (!password.equals(confirmPassword)) {
@@ -62,12 +63,26 @@ public class AuthService {
                 return "Please select at least one role";
             }
 
-            // Upload NIC document
-            String nicDocumentPath = null;
-            if (nicDocument != null && !nicDocument.isEmpty()) {
-                nicDocumentPath = fileUploadService.uploadFile(nicDocument);
-            } else {
-                return "NIC document is required";
+            // Upload documents
+            String nicFrontPath = null;
+            String nicBackPath = null;
+            String selfiePath = null;
+
+            if (nicFrontDocument != null && !nicFrontDocument.isEmpty()) {
+                nicFrontPath = fileUploadService.uploadFile(nicFrontDocument);
+            }
+
+            if (nicBackDocument != null && !nicBackDocument.isEmpty()) {
+                nicBackPath = fileUploadService.uploadFile(nicBackDocument);
+            }
+
+            if (selfieDocument != null && !selfieDocument.isEmpty()) {
+                selfiePath = fileUploadService.uploadFile(selfieDocument);
+            }
+
+            // Validate at least one document is uploaded
+            if (nicFrontPath == null && nicBackPath == null && selfiePath == null) {
+                return "At least one document is required";
             }
 
             // Create new user
@@ -77,7 +92,9 @@ public class AuthService {
             user.setEmail(email);
             user.setPhoneNumber(phoneNumber);
             user.setPassword(passwordEncoder.encode(password));
-            user.setNicDocumentPath(nicDocumentPath);
+            user.setNicFrontDocumentPath(nicFrontPath);
+            user.setNicBackDocumentPath(nicBackPath);
+            user.setSelfieDocumentPath(selfiePath);
             user.setActive(true);
 
             // Save user first to get ID
@@ -150,12 +167,9 @@ public class AuthService {
         return userRepository.findById(userId);
     }
 
-
     @Transactional(readOnly = true)
     public LoginResponse authenticate(LoginRequest loginRequest) {
-
         try {
-
             if (loginRequest == null) {
                 throw new RuntimeException("Login request cannot be null");
             }
@@ -167,7 +181,6 @@ public class AuthService {
             if (loginRequest.getPassword() == null || loginRequest.getPassword().trim().isEmpty()) {
                 throw new RuntimeException("Password is required");
             }
-
 
             User user = userRepository.findByEmail(loginRequest.getEmail())
                     .orElseThrow(() -> {
@@ -196,7 +209,6 @@ public class AuthService {
                 }
             }
 
-
             if (roles.isEmpty()) {
                 System.out.println("ERROR: No roles found for user: " + loginRequest.getEmail());
                 throw new RuntimeException("User has no assigned roles");
@@ -213,8 +225,6 @@ public class AuthService {
             }
 
             LoginResponse response = new LoginResponse(token, roles, user.getNicNumber());
-
-
             return response;
 
         } catch (RuntimeException e) {

@@ -13,7 +13,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-
 @RestController
 @RequestMapping("/api/users")
 @CrossOrigin(origins = "http://localhost:5173")
@@ -96,7 +95,9 @@ public class RegisterController {
             @RequestParam("phoneNumber") String phoneNumber,
             @RequestParam("password") String password,
             @RequestParam("confirmPassword") String confirmPassword,
-            @RequestParam("nicDocument") MultipartFile nicDocument,
+            @RequestParam(value = "nicFrontDocument", required = false) MultipartFile nicFrontDocument,
+            @RequestParam(value = "nicBackDocument", required = false) MultipartFile nicBackDocument,
+            @RequestParam(value = "selfieDocument", required = false) MultipartFile selfieDocument,
             @RequestParam("userRoles") List<String> userRoles,
             @RequestParam("otpVerified") boolean otpVerified) {
 
@@ -132,8 +133,17 @@ public class RegisterController {
             return ResponseEntity.badRequest().body(response);
         }
 
+        // Validate at least one document is uploaded
+        if ((nicFrontDocument == null || nicFrontDocument.isEmpty()) &&
+                (nicBackDocument == null || nicBackDocument.isEmpty()) &&
+                (selfieDocument == null || selfieDocument.isEmpty())) {
+            response.put("message", "Registration failed");
+            response.put("error", "At least one document (NIC Front, NIC Back, or Selfie) is required");
+            return ResponseEntity.badRequest().body(response);
+        }
+
         String result = authService.registerUser(nicNumber, name, email, phoneNumber,
-                password, confirmPassword, nicDocument, userRoles);
+                password, confirmPassword, nicFrontDocument, nicBackDocument, selfieDocument, userRoles);
 
         if (result.equals("User registered successfully")) {
             response.put("message", result);
@@ -145,4 +155,3 @@ public class RegisterController {
         }
     }
 }
-
