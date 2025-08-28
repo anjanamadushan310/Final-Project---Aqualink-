@@ -16,7 +16,7 @@ import java.util.stream.Collectors;
 @Component
 public class JwtUtil {
     private String secret = "O6z6I2xL8UeQ9nV0xD5hRpO3rYgCmJv6YzNcT0qLgBw=";
-    private int jwtExpiration = 60*30; // 30 min
+    private int jwtExpiration = 60*30*1000; // 30 min
 
     public String generateToken(String email, Set<Role> roles) {
         System.out.println("=== JWT TOKEN GENERATION DEBUG START ===");
