@@ -20,6 +20,7 @@ import DeliveryPersonDashboard from "./pages/dashboards/DeliveryPersonDashboard"
 import ProductApprove from "./components/admin/ProductApprove";
 import ProductForm from "./components/ProductForm";
 import UserProfile from "./pages/UserProfile";
+import Hello from "./pages/hello";
 
 
 const App = () => {
@@ -47,6 +48,7 @@ const App = () => {
   return (
     <Router>
       <div>
+        <Hello />
         {/* Navbar */}
         <Navbar
           user={user}
