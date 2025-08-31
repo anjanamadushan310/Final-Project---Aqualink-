@@ -18,9 +18,9 @@ import DeliveryPersonDashboard from "./pages/dashboards/DeliveryPersonDashboard"
 
 
 import ProductApprove from "./components/admin/ProductApprove";
-import ProductForm from "./components/ProductForm";
+import FishAdsForm from "./components/farmowner/FishAdsForm";
 import UserProfile from "./pages/UserProfile";
-import Hello from "./pages/hello";
+
 
 
 const App = () => {
@@ -48,7 +48,7 @@ const App = () => {
   return (
     <Router>
       <div>
-        <Hello />
+        
         {/* Navbar */}
         <Navbar
           user={user}
@@ -74,7 +74,7 @@ const App = () => {
             <Route path="/register" element={<RegistrationForm setShowLogin={setShowLogin} />} />
             <Route path="/orderUI" element={<OrderUI />} />
             <Route path="/product" element={<ProductDetails />} />
-            <Route path="/add-product" element={<ProductForm />} />
+            
             
             
             {/* Protected Dashboard Routes */}
@@ -87,8 +87,10 @@ const App = () => {
             <Route path="/dashboard/admin" element={<AdminDashboard />} />
 
             <Route path="/productaprove" element={<ProductApprove />} />
-            <Route path="/product-form" element={<ProductForm />} />
+
+            //not completed
             <Route path="/user-profile" element={<UserProfile />} />
+            <Route path="/fish-ads-form" element={<FishAdsForm />} />
 
     
           </Routes>

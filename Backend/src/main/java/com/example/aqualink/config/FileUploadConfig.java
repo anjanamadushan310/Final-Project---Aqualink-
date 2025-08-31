@@ -34,4 +34,5 @@ public class FileUploadConfig implements WebMvcConfigurer {
         registry.addResourceHandler("/uploads/banners/**")
                 .addResourceLocations("file:uploads/banners/");
     }
+
 }

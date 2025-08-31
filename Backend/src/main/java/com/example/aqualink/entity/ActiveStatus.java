@@ -1,5 +1,5 @@
 package com.example.aqualink.entity;
 
 public enum ActiveStatus {
-    ACTIVE, INACTIVE
+    PENDING, VERIFIED ,REJECTED
 }
