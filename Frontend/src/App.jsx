@@ -6,7 +6,6 @@ import LoginForm from "./pages/Login"
 import RegistrationForm from "./components/RegistrationForm";
 import HomePage from "./pages/HomePage";
 import OrderUI from "./pages/OrderUI";
-import ProductDetails from "./pages/ProductDetails";
 import useAuth from "./hooks/useAuth";
 import AdminDashboard from "./pages/dashboards/AdminDashboard";
 import ShopOwnerDashboard from "./pages/dashboards/ShopOwnerDashboard";
@@ -73,7 +72,7 @@ const App = () => {
             <Route path="/" element={<HomePage />} />
             <Route path="/register" element={<RegistrationForm setShowLogin={setShowLogin} />} />
             <Route path="/orderUI" element={<OrderUI />} />
-            <Route path="/product" element={<ProductDetails />} />
+            
             
             
             

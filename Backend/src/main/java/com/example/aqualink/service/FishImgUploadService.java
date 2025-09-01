@@ -1,3 +1,4 @@
+
 package com.example.aqualink.service;
 
 import org.springframework.beans.factory.annotation.Value;
@@ -20,7 +21,7 @@ public class FishImgUploadService {
     private String uploadDir;
 
     @Value("${fishimages.upload.dir}")
-    private String uploadDir1;
+    private String fishImagesUploadDir;
 
     public String uploadFile(MultipartFile file) throws IOException {
         if (file.isEmpty()) {
@@ -83,7 +84,7 @@ public class FishImgUploadService {
         }
 
         // Create directory structure: uploads/fish_images/{fishId}/
-        Path fishImagesDir = Paths.get(uploadDir1, fishId.toString()).toAbsolutePath();
+        Path fishImagesDir = Paths.get(fishImagesUploadDir, fishId.toString()).toAbsolutePath();
 
         // Create directories if they don't exist
         Files.createDirectories(fishImagesDir);
@@ -103,9 +104,9 @@ public class FishImgUploadService {
                 // Save the file
                 Files.copy(image.getInputStream(), targetPath, StandardCopyOption.REPLACE_EXISTING);
 
-                // Store relative path for database
-                String relativePath = "fish_images/" + fishId + "/" + uniqueFilename;
-                savedImagePaths.add(relativePath);
+                // Store the URL path that matches the frontend expectation
+                String urlPath = "/uploads/fish_images/" + fishId + "/" + uniqueFilename;
+                savedImagePaths.add(urlPath);
             }
         }
 
@@ -115,7 +116,9 @@ public class FishImgUploadService {
     public void deleteImages(List<String> imagePaths) {
         for (String imagePath : imagePaths) {
             try {
-                Path fullPath = Paths.get(uploadDir1).getParent().resolve(imagePath);
+                // Extract the relative path and construct full path
+                String relativePath = imagePath.replace("/uploads/fish_images/", "");
+                Path fullPath = Paths.get(fishImagesUploadDir, relativePath);
                 Files.deleteIfExists(fullPath);
             } catch (IOException e) {
                 System.err.println("Failed to delete image: " + imagePath + " - " + e.getMessage());
