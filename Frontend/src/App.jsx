@@ -19,6 +19,9 @@ import DeliveryPersonDashboard from "./pages/dashboards/DeliveryPersonDashboard"
 import ProductApprove from "./components/admin/ProductApprove";
 import FishAdsForm from "./components/farmowner/FishAdsForm";
 import UserProfile from "./pages/UserProfile";
+import Cart from './pages/Cart';
+import AboutPage from './pages/AboutPage';
+import Contact from './pages/Contact';
 
 
 
@@ -72,6 +75,9 @@ const App = () => {
             <Route path="/" element={<HomePage />} />
             <Route path="/register" element={<RegistrationForm setShowLogin={setShowLogin} />} />
             <Route path="/orderUI" element={<OrderUI />} />
+            <Route path="/shopping-cart" element={<Cart />} />
+            <Route path="/about" element={<AboutPage />} />
+            <Route path="/contact" element={<Contact/>} />
             
             
             
