@@ -1,8 +1,11 @@
 import React, { useState } from 'react';
 import Sidebar from '../../components/deliveryperson/Sidebar';
-import DeliveryHistory from '../../components/deliveryperson/DeliveryHistory';
-import DeliveryTasks from '../../components/deliveryperson/DeliveryTasks';
-import RoutePlanning from '../../components/deliveryperson/RoutePlanning';
+
+import DeliveryRequests from '../../components/deliveryperson/DeliveryRequests';
+import QuoteManagement from '../../components/deliveryperson/QuoteManagement';
+import DeliveryTracking from '../../components/deliveryperson/DeliveryTracking';
+import CoverageAreaManagement from '../../components/deliveryperson/CoverageAreaManagement';
+
 
 
 const DeliveryPersonDashboard = () => {
@@ -11,10 +14,12 @@ const DeliveryPersonDashboard = () => {
 
   const renderComponent = () => {
     switch (activeComponent) {
-      case 'delivery-tasks': return <DeliveryTasks />;
-      case 'delivery-history': return <DeliveryHistory />;
-      case 'route-planning': return <RoutePlanning />;
-      default: return <DeliveryTasks />;
+      case 'delivery-requests': return <DeliveryRequests />;
+     
+      case 'quote-management': return <QuoteManagement />;
+      case 'delivery-tracking': return <DeliveryTracking />;
+      case 'coverage-area-management': return <CoverageAreaManagement />;
+      default: return <DeliveryRequests />;
     }
   };
 

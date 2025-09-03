@@ -22,6 +22,9 @@ import UserProfile from "./pages/UserProfile";
 import Cart from './pages/Cart';
 import AboutPage from './pages/AboutPage';
 import Contact from './pages/Contact';
+import OrderPlacement from "./pages/AiDraftPages/OrderPlacement";
+import OrderStatusUpdates from "./pages/AiDraftPages/OrderStatusUpdates";
+import DeliveryQuoteSelection from "./pages/AiDraftPages/DeliveryQuoteSelection";
 
 
 
@@ -74,7 +77,7 @@ const App = () => {
             {/* Public Routes */}
             <Route path="/" element={<HomePage />} />
             <Route path="/register" element={<RegistrationForm setShowLogin={setShowLogin} />} />
-            <Route path="/orderUI" element={<OrderUI />} />
+            
             <Route path="/shopping-cart" element={<Cart />} />
             <Route path="/about" element={<AboutPage />} />
             <Route path="/contact" element={<Contact/>} />
@@ -96,6 +99,10 @@ const App = () => {
             //not completed
             <Route path="/user-profile" element={<UserProfile />} />
             <Route path="/fish-ads-form" element={<FishAdsForm />} />
+            <Route path="/orderUI" element={<OrderUI />} />
+            <Route path="/order-placement" element={<OrderPlacement />} />
+            <Route path="/delivery-quote-selection" element={<DeliveryQuoteSelection />} />
+            <Route path="/order-status-updates" element={<OrderStatusUpdates />} />
 
     
           </Routes>

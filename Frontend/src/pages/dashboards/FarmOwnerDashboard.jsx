@@ -13,7 +13,7 @@ const FarmOwnerDashboard= () => {
   const renderComponent = () => {
     switch (activeComponent) {
       
-      case 'fish-order': return <FishOrders />;fish-ads-form
+      case 'fish-order': return <FishOrders />;
       case 'fish-stock-management': return <FishStockManagement />;
       case 'fish-ads-form': return <FishAdsForm />;
       default: return <FishOrders />;

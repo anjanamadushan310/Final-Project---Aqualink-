@@ -16,6 +16,7 @@ const Sidebar = ({ activeComponent, setActiveComponent, sidebarOpen, setSidebarO
   const menuItems = [
     { id: 'orders', label: 'Orders', icon: ClipboardDocumentListIcon },
     { id: 'orders-history', label: 'Orders History', icon: ShoppingBagIcon },
+    { id: 'delivery-tracking', label: 'Delivery Tracking', icon: ClipboardDocumentListIcon },
   
   ];
 
