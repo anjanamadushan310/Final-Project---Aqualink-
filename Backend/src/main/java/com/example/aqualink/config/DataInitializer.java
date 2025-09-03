@@ -1,14 +1,15 @@
 package com.example.aqualink.config;
 
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.CommandLineRunner;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.stereotype.Component;
+
 import com.example.aqualink.entity.Role;
 import com.example.aqualink.entity.User;
 import com.example.aqualink.entity.UserRole;
 import com.example.aqualink.repository.UserRepository;
 import com.example.aqualink.repository.UserRoleRepository;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.CommandLineRunner;
-import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.stereotype.Component;
 
 @Component
 public class DataInitializer implements CommandLineRunner {
@@ -38,7 +39,7 @@ public class DataInitializer implements CommandLineRunner {
             admin.setLastName("Admin");
             admin.setEnabled(true);
             admin.setName("System Administrator");
-            admin.setPhoneNumber("0000000000");
+            admin.setPhoneNumber("+94123456789");
             admin.setNicNumber("000000000V");
             admin.setEnabled(true); // Make sure this is set
             admin.setActive(true);
