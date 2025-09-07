@@ -216,7 +216,7 @@ public class AuthService {
 
             String token;
             try {
-                token = jwtUtil.generateToken(user.getEmail(), roles);
+                token = jwtUtil.generateToken(user.getEmail(),  user.getId(), roles);
                 System.out.println("Token generated successfully");
             } catch (Exception e) {
                 System.out.println("ERROR: Failed to generate token: " + e.getMessage());
@@ -224,7 +224,7 @@ public class AuthService {
                 throw new RuntimeException("Failed to generate authentication token");
             }
 
-            LoginResponse response = new LoginResponse(token, roles, user.getNicNumber());
+            LoginResponse response = new LoginResponse(token, roles, user.getNicNumber(), user.getId());
             return response;
 
         } catch (RuntimeException e) {

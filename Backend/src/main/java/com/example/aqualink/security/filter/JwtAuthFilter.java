@@ -105,12 +105,14 @@ public class JwtAuthFilter extends OncePerRequestFilter {
 
         final String authHeader = request.getHeader("Authorization");
         String email = null;
+        Long userId = null;
         String jwt = null;
 
         if (authHeader != null && authHeader.startsWith("Bearer ")) {
             jwt = authHeader.substring(7);
             try {
                 email = jwtUtil.extractEmail(jwt);
+                userId = jwtUtil.extractUserId(jwt);
             } catch (Exception e) {
                 // Invalid token
             }
@@ -126,6 +128,11 @@ public class JwtAuthFilter extends OncePerRequestFilter {
 
                 authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
                 SecurityContextHolder.getContext().setAuthentication(authToken);
+
+                if (userId != null) {
+                    request.setAttribute("userId", userId);
+                    System.out.println("Stored userId in request: " + userId);
+                }
             }
         }
 

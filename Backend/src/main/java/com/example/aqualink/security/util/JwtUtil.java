@@ -18,19 +18,27 @@ public class JwtUtil {
     private String secret = "O6z6I2xL8UeQ9nV0xD5hRpO3rYgCmJv6YzNcT0qLgBw=";
     private int jwtExpiration = 60*30*1000; // 30 min
 
-    public String generateToken(String email, Set<Role> roles) {
+    public String generateToken(String email,Long userId, Set<Role> roles) {
         System.out.println("=== JWT TOKEN GENERATION DEBUG START ===");
 
         try {
             System.out.println("Input email: " + email);
+            System.out.println("Input userId: " + userId);
             System.out.println("Input roles: " + roles);
             System.out.println("Roles size: " + (roles != null ? roles.size() : "NULL"));
 
             if (email == null || email.trim().isEmpty()) {
                 throw new RuntimeException("Email cannot be null or empty for token generation");
             }
+            //  NEW: Validate userId
+            if (userId == null) {
+                throw new RuntimeException("UserId cannot be null for token generation");
+            }
 
             Map<String, Object> claims = new HashMap<>();
+
+            claims.put("userId", userId);
+            System.out.println("Adding userId to token: " + userId);
 
             // Convert roles to string list to avoid serialization issues
             if (roles != null && !roles.isEmpty()) {
@@ -112,6 +120,34 @@ public class JwtUtil {
             throw e;
         }
     }
+    public Long extractUserId(String token) {
+        try {
+            Claims claims = extractAllClaims(token);
+            Object userIdClaim = claims.get("userId");
+
+            if (userIdClaim == null) {
+                System.out.println("WARNING: No userId found in token");
+                return null;
+            }
+
+            // Handle different number types that might be stored
+            if (userIdClaim instanceof Integer) {
+                return ((Integer) userIdClaim).longValue();
+            } else if (userIdClaim instanceof Long) {
+                return (Long) userIdClaim;
+            } else if (userIdClaim instanceof String) {
+                return Long.parseLong((String) userIdClaim);
+            }
+
+            System.out.println("Extracted userId: " + userIdClaim);
+            return Long.valueOf(userIdClaim.toString());
+
+        } catch (Exception e) {
+            System.out.println("Failed to extract userId from token: " + e.getMessage());
+            throw e;
+        }
+    }
+
 
     public Date extractExpiration(String token) {
         return extractClaim(token, Claims::getExpiration);
