@@ -17,8 +17,9 @@ const Sidebar = ({ activeComponent, setActiveComponent, sidebarOpen, setSidebarO
     { id: 'delivery-requests', label: 'Delivery Requests', icon: ClipboardDocumentListIcon },
     { id: 'delivery-history', label: 'Delivery History', icon:  ShoppingBagIcon },
     { id: 'quote-management', label: 'Quote Management', icon:StarIcon },
-     { id: 'delivery-tracking', label: 'Delivery Tracking', icon:StarIcon },
-      { id: 'coverage-area-management', label: 'Coverage Area Management', icon:StarIcon },
+    { id: 'coverage-area-management', label: 'Coverage Area Management', icon:StarIcon },
+    { id: 'earnings-tracker', label: 'Earnings Tracker', icon:StarIcon },
+    { id: 'current-deliveries', label: 'Current Deliveries', icon:StarIcon },
     
     
   ];

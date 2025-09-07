@@ -1,99 +1,148 @@
 import React, { useState, useEffect } from 'react';
 
 const EarningsTracker = () => {
-  const [earnings, setEarnings] = useState({});
-  const [transactions, setTransactions] = useState([]);
+  const [earnings, setEarnings] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [dateFilter, setDateFilter] = useState('month');
+  const [selectedDateRange, setSelectedDateRange] = useState('all');
+  const [searchTerm, setSearchTerm] = useState('');
+  const [filterPaymentMethod, setFilterPaymentMethod] = useState('all');
 
-  // Mock earnings data
-  const mockEarnings = {
-    today: {
-      total: 4500,
-      deliveries: 8,
-      distance: 125,
-      avgPerDelivery: 562.5
-    },
-    week: {
-      total: 28000,
-      deliveries: 45,
-      distance: 850,
-      avgPerDelivery: 622.22
-    },
-    month: {
-      total: 125000,
-      deliveries: 180,
-      distance: 3200,
-      avgPerDelivery: 694.44
-    },
-    year: {
-      total: 1250000,
-      deliveries: 2100,
-      distance: 35000,
-      avgPerDelivery: 595.24
-    }
-  };
-
-  const mockTransactions = [
+  // Mock earnings data - WITH PAYMENT INFO
+  const mockEarnings = [
     {
       id: 1,
       orderId: 'ORD001',
+      date: '2025-09-01',
       customerName: 'Saman Perera',
-      amount: 1200,
-      distance: 15,
-      date: '2025-09-03T11:15:00',
-      status: 'COMPLETED',
-      paymentMethod: 'CASH'
+      orderTotal: 6000,
+      deliveryFee: 1200,
+      totalPayment: 7200,
+      paymentMethod: 'Cash on Delivery',
+      pickupLocation: 'Colombo 03',
+      deliveryLocation: 'Dehiwala',
+      status: 'COLLECTED',
+      paymentDate: '2025-09-01T18:30:00',
+      collectionNotes: 'Payment collected successfully upon delivery'
     },
     {
       id: 2,
       orderId: 'ORD002',
+      date: '2025-09-01',
       customerName: 'Kamal Silva',
-      amount: 1500,
-      distance: 25,
-      date: '2025-09-03T10:30:00',
-      status: 'COMPLETED',
-      paymentMethod: 'DIGITAL'
+      orderTotal: 2700,
+      deliveryFee: 1500,
+      totalPayment: 4200,
+      paymentMethod: 'Paid',
+      pickupLocation: 'Colombo 03',
+      deliveryLocation: 'Negombo',
+      status: 'COLLECTED',
+      paymentDate: '2025-09-01T16:45:00',
+      collectionNotes: 'Pre-paid order - delivery fee earned'
     },
     {
       id: 3,
       orderId: 'ORD003',
+      date: '2025-09-02',
       customerName: 'Nimal Fernando',
-      amount: 2200,
-      distance: 35,
-      date: '2025-09-02T16:45:00',
-      status: 'COMPLETED',
-      paymentMethod: 'CASH'
+      orderTotal: 23000,
+      deliveryFee: 2200,
+      totalPayment: 25200,
+      paymentMethod: 'Cash on Delivery',
+      pickupLocation: 'Colombo 03',
+      deliveryLocation: 'Peradeniya',
+      status: 'COLLECTED',
+      paymentDate: '2025-09-02T14:20:00',
+      collectionNotes: 'Large order payment collected - customer very satisfied'
     },
     {
       id: 4,
       orderId: 'ORD004',
+      date: '2025-09-02',
       customerName: 'Priya Jayawardena',
-      amount: 1800,
-      distance: 45,
-      date: '2025-09-02T12:30:00',
-      status: 'PENDING',
-      paymentMethod: 'DIGITAL'
+      orderTotal: 7000,
+      deliveryFee: 800,
+      totalPayment: 7800,
+      paymentMethod: 'Paid',
+      pickupLocation: 'Colombo 03',
+      deliveryLocation: 'Colombo 07',
+      status: 'COLLECTED',
+      paymentDate: '2025-09-02T12:15:00',
+      collectionNotes: 'Pre-paid order completed successfully'
     },
     {
       id: 5,
       orderId: 'ORD005',
+      date: '2025-09-03',
       customerName: 'Ruwan Wickramasinghe',
-      amount: 900,
-      distance: 12,
-      date: '2025-09-01T17:20:00',
-      status: 'COMPLETED',
-      paymentMethod: 'CASH'
+      orderTotal: 1450,
+      deliveryFee: 900,
+      totalPayment: 2350,
+      paymentMethod: 'Cash on Delivery',
+      pickupLocation: 'Colombo 03',
+      deliveryLocation: 'Moratuwa',
+      status: 'COLLECTED',
+      paymentDate: '2025-09-03T19:10:00',
+      collectionNotes: 'Quick local delivery - payment collected'
     }
   ];
 
   useEffect(() => {
     setTimeout(() => {
       setEarnings(mockEarnings);
-      setTransactions(mockTransactions);
       setLoading(false);
     }, 800);
   }, []);
+
+  const filterEarnings = () => {
+    let filtered = [...earnings];
+
+    // Date filter
+    if (selectedDateRange !== 'all') {
+      const today = new Date();
+      const startDate = new Date(today);
+      
+      switch (selectedDateRange) {
+        case 'today':
+          filtered = filtered.filter(earning => 
+            new Date(earning.date).toDateString() === today.toDateString()
+          );
+          break;
+        case 'week':
+          startDate.setDate(today.getDate() - 7);
+          filtered = filtered.filter(earning => 
+            new Date(earning.date) >= startDate
+          );
+          break;
+        case 'month':
+          startDate.setMonth(today.getMonth() - 1);
+          filtered = filtered.filter(earning => 
+            new Date(earning.date) >= startDate
+          );
+          break;
+      }
+    }
+
+    // Payment method filter
+    if (filterPaymentMethod !== 'all') {
+      filtered = filtered.filter(earning => 
+        earning.paymentMethod === filterPaymentMethod
+      );
+    }
+
+    // Search filter
+    if (searchTerm) {
+      filtered = filtered.filter(earning =>
+        earning.orderId.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        earning.customerName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        earning.deliveryLocation.toLowerCase().includes(searchTerm.toLowerCase())
+      );
+    }
+
+    // Sort by date (newest first)
+    filtered.sort((a, b) => new Date(b.paymentDate) - new Date(a.paymentDate));
+
+    return filtered;
+  };
 
   const formatPrice = (price) => {
     return `Rs.${parseFloat(price).toLocaleString('en-US', { 
@@ -110,222 +159,241 @@ const EarningsTracker = () => {
     });
   };
 
-  const formatTime = (dateString) => {
-    return new Date(dateString).toLocaleTimeString('en-US', {
+  const formatDateTime = (dateTimeString) => {
+    return new Date(dateTimeString).toLocaleString('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
       hour: '2-digit',
       minute: '2-digit'
     });
   };
 
-  const getStatusColor = (status) => {
-    switch (status) {
-      case 'COMPLETED': return 'bg-green-500';
-      case 'PENDING': return 'bg-yellow-500';
-      case 'CANCELLED': return 'bg-red-500';
-      default: return 'bg-gray-500';
+  const getPaymentMethodColor = (method) => {
+    switch (method) {
+      case 'Paid': return 'bg-green-100 text-green-800 border-green-200';
+      case 'Cash on Delivery': return 'bg-orange-100 text-orange-800 border-orange-200';
+      default: return 'bg-gray-100 text-gray-800 border-gray-200';
     }
   };
 
-  const currentEarnings = earnings[dateFilter] || {};
+  const filteredEarnings = filterEarnings();
+  const totalEarningsDeliveryFee = filteredEarnings.reduce((sum, earning) => sum + earning.deliveryFee, 0);
+  const totalCollectedAmount = filteredEarnings.filter(e => e.paymentMethod === 'Cash on Delivery').reduce((sum, earning) => sum + earning.totalPayment, 0);
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-32">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+      <div className="flex items-center justify-center h-64 bg-gray-50">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading earnings data...</p>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="space-y-6">
-      {/* Period Selector */}
-      <div className="bg-white p-6 rounded-lg shadow-sm">
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="text-lg font-semibold text-gray-900">Earnings Overview</h3>
-          <div className="flex space-x-2">
-            {['today', 'week', 'month', 'year'].map((period) => (
-              <button
-                key={period}
-                onClick={() => setDateFilter(period)}
-                className={`px-4 py-2 rounded-lg font-medium text-sm transition duration-200 ${
-                  dateFilter === period
-                    ? 'bg-blue-600 text-white'
-                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                }`}
+    <div className="p-6 bg-gray-50 min-h-screen">
+      <div className="max-w-7xl mx-auto space-y-6">
+        {/* Header */}
+        <div className="bg-white p-6 rounded-lg shadow-sm">
+          <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center">
+            <div>
+              <h1 className="text-3xl font-bold text-gray-900 mb-2">Earnings Tracker</h1>
+              <p className="text-gray-600">Track your delivery earnings and payment collections</p>
+            </div>
+            
+            {/* Earnings Summary */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mt-4 lg:mt-0">
+              <div className="bg-green-50 p-4 rounded-lg border border-green-200">
+                <div className="text-center">
+                  <div className="text-2xl font-bold text-green-800">{formatPrice(totalEarningsDeliveryFee)}</div>
+                  <div className="text-sm text-green-600">My Delivery Earnings</div>
+                </div>
+              </div>
+              <div className="bg-orange-50 p-4 rounded-lg border border-orange-200">
+                <div className="text-center">
+                  <div className="text-2xl font-bold text-orange-800">{formatPrice(totalCollectedAmount)}</div>
+                  <div className="text-sm text-orange-600">Cash Collected</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Filters */}
+        <div className="bg-white p-6 rounded-lg shadow-sm">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Search</label>
+              <input
+                type="text"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                placeholder="Search by order ID, customer, or location..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Payment Method</label>
+              <select
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                value={filterPaymentMethod}
+                onChange={(e) => setFilterPaymentMethod(e.target.value)}
               >
-                {period.charAt(0).toUpperCase() + period.slice(1)}
+                <option value="all">All Methods</option>
+                <option value="Cash on Delivery">Cash on Delivery</option>
+                <option value="Paid">Pre-paid</option>
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Date Range</label>
+              <select
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                value={selectedDateRange}
+                onChange={(e) => setSelectedDateRange(e.target.value)}
+              >
+                <option value="all">All Time</option>
+                <option value="today">Today</option>
+                <option value="week">Last 7 Days</option>
+                <option value="month">Last 30 Days</option>
+              </select>
+            </div>
+
+            <div className="flex items-end">
+              <button
+                onClick={() => {
+                  setSelectedDateRange('all');
+                  setFilterPaymentMethod('all');
+                  setSearchTerm('');
+                }}
+                className="w-full px-4 py-2 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 transition duration-200"
+              >
+                Clear Filters
               </button>
-            ))}
-          </div>
-        </div>
-
-        {/* Stats Cards */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-          <div className="bg-gradient-to-br from-green-50 to-green-100 rounded-xl p-6 border border-green-200">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-green-600 text-sm font-medium">Total Earnings</p>
-                <p className="text-2xl font-bold text-green-800">{formatPrice(currentEarnings.total || 0)}</p>
-              </div>
-              <div className="bg-green-200 p-3 rounded-lg">
-                <svg className="h-6 w-6 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
-                </svg>
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl p-6 border border-blue-200">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-blue-600 text-sm font-medium">Deliveries</p>
-                <p className="text-2xl font-bold text-blue-800">{currentEarnings.deliveries || 0}</p>
-              </div>
-              <div className="bg-blue-200 p-3 rounded-lg">
-                <svg className="h-6 w-6 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7v8a2 2 0 002 2h6M8 7V5a2 2 0 012-2h4.586a1 1 0 01.707.293l4.414 4.414a1 1 0 01.293.707V7M8 7H6a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2v-2" />
-                </svg>
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-gradient-to-br from-purple-50 to-purple-100 rounded-xl p-6 border border-purple-200">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-purple-600 text-sm font-medium">Distance (km)</p>
-                <p className="text-2xl font-bold text-purple-800">{currentEarnings.distance || 0}</p>
-              </div>
-              <div className="bg-purple-200 p-3 rounded-lg">
-                <svg className="h-6 w-6 text-purple-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                </svg>
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-gradient-to-br from-orange-50 to-orange-100 rounded-xl p-6 border border-orange-200">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-orange-600 text-sm font-medium">Avg per Delivery</p>
-                <p className="text-2xl font-bold text-orange-800">{formatPrice(currentEarnings.avgPerDelivery || 0)}</p>
-              </div>
-              <div className="bg-orange-200 p-3 rounded-lg">
-                <svg className="h-6 w-6 text-orange-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-                </svg>
-              </div>
             </div>
           </div>
         </div>
-      </div>
 
-      {/* Recent Transactions */}
-      <div className="bg-white rounded-lg shadow-sm">
-        <div className="px-6 py-4 border-b border-gray-200">
-          <div className="flex items-center justify-between">
-            <h3 className="text-lg font-semibold text-gray-900">Recent Transactions</h3>
-            <button className="text-blue-600 hover:text-blue-800 font-medium text-sm">
-              View All
-            </button>
-          </div>
-        </div>
-
-        <div className="divide-y divide-gray-200">
-          {transactions.slice(0, 10).map(transaction => (
-            <div key={transaction.id} className="px-6 py-4 hover:bg-gray-50 transition duration-200">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-4">
-                  <div className="bg-gray-100 p-2 rounded-lg">
-                    <svg className="h-5 w-5 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                    </svg>
-                  </div>
-                  <div>
-                    <p className="font-semibold text-gray-900">Order #{transaction.orderId}</p>
-                    <p className="text-sm text-gray-600">{transaction.customerName}</p>
-                  </div>
-                </div>
-
-                <div className="flex items-center space-x-4">
-                  <div className="text-right">
-                    <p className="font-semibold text-gray-900">{formatPrice(transaction.amount)}</p>
-                    <p className="text-sm text-gray-600">{transaction.distance} km</p>
-                  </div>
-                  
-                  <div className="text-right">
-                    <p className="text-sm text-gray-600">{formatDate(transaction.date)}</p>
-                    <p className="text-sm text-gray-600">{formatTime(transaction.date)}</p>
-                  </div>
-
-                  <div className="flex flex-col items-end space-y-1">
-                    <div className={`${getStatusColor(transaction.status)} text-white px-2 py-1 rounded-full text-xs font-semibold`}>
-                      {transaction.status}
+        {/* Earnings List */}
+        <div className="space-y-4">
+          {filteredEarnings.length === 0 ? (
+            <div className="bg-white rounded-lg shadow-sm p-12 text-center">
+              <div className="text-6xl mb-4">💰</div>
+              <h3 className="text-xl font-semibold text-gray-900 mb-2">No earnings found</h3>
+              <p className="text-gray-600">
+                {searchTerm || selectedDateRange !== 'all' || filterPaymentMethod !== 'all'
+                  ? 'Try adjusting your filters to see more results.' 
+                  : 'Your delivery earnings will appear here.'
+                }
+              </p>
+            </div>
+          ) : (
+            filteredEarnings.map(earning => (
+              <div key={earning.id} className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+                {/* Header */}
+                <div className="bg-gradient-to-r from-green-50 to-emerald-50 p-6 border-b border-gray-200">
+                  <div className="flex justify-between items-start">
+                    <div className="flex items-center space-x-4">
+                      <div className="bg-green-100 p-3 rounded-xl">
+                        <svg className="h-8 w-8 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
+                        </svg>
+                      </div>
+                      <div>
+                        <h3 className="text-xl font-bold text-gray-900">Order #{earning.orderId}</h3>
+                        <p className="text-gray-600">{earning.customerName}</p>
+                        <p className="text-sm text-gray-500">
+                          Delivered: {formatDate(earning.date)}
+                        </p>
+                        <p className="text-sm text-gray-500">
+                          Collected: {formatDateTime(earning.paymentDate)}
+                        </p>
+                      </div>
                     </div>
-                    <div className={`px-2 py-1 rounded text-xs font-medium ${
-                      transaction.paymentMethod === 'CASH' 
-                        ? 'bg-green-100 text-green-800' 
-                        : 'bg-blue-100 text-blue-800'
-                    }`}>
-                      {transaction.paymentMethod}
+                    
+                    <div className="text-right">
+                      <div className="text-2xl font-bold text-green-600">{formatPrice(earning.deliveryFee)}</div>
+                      <div className="text-sm text-gray-600">My Earnings</div>
+                      <div className={`px-3 py-1 rounded-full text-sm font-medium mt-2 border ${getPaymentMethodColor(earning.paymentMethod)}`}>
+                        {earning.paymentMethod}
+                      </div>
                     </div>
                   </div>
                 </div>
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
 
-      {/* Payment Summary */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div className="bg-white p-6 rounded-lg shadow-sm">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">Payment Methods</h3>
-          <div className="space-y-3">
-            <div className="flex justify-between items-center">
-              <span className="text-gray-600">Cash Payments</span>
-              <span className="font-semibold text-gray-900">
-                {formatPrice(transactions.filter(t => t.paymentMethod === 'CASH' && t.status === 'COMPLETED').reduce((sum, t) => sum + t.amount, 0))}
-              </span>
-            </div>
-            <div className="flex justify-between items-center">
-              <span className="text-gray-600">Digital Payments</span>
-              <span className="font-semibold text-gray-900">
-                {formatPrice(transactions.filter(t => t.paymentMethod === 'DIGITAL' && t.status === 'COMPLETED').reduce((sum, t) => sum + t.amount, 0))}
-              </span>
-            </div>
-            <div className="pt-2 border-t border-gray-200">
-              <div className="flex justify-between items-center">
-                <span className="font-semibold text-gray-900">Total Completed</span>
-                <span className="font-bold text-green-600">
-                  {formatPrice(transactions.filter(t => t.status === 'COMPLETED').reduce((sum, t) => sum + t.amount, 0))}
-                </span>
-              </div>
-            </div>
-          </div>
-        </div>
+                <div className="p-6 space-y-6">
+                  {/* PAYMENT BREAKDOWN */}
+                  <div className="bg-blue-50 rounded-lg p-4 border border-blue-200">
+                    <h4 className="font-semibold text-gray-900 mb-3 flex items-center">
+                      <svg className="h-5 w-5 mr-2 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
+                      </svg>
+                      Payment Breakdown
+                    </h4>
+                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+                      <div className="bg-white rounded-lg p-3 border border-gray-200">
+                        <p className="text-sm text-gray-600">Order Value</p>
+                        <p className="text-xl font-bold text-gray-900">{formatPrice(earning.orderTotal)}</p>
+                      </div>
+                      <div className="bg-white rounded-lg p-3 border border-green-200">
+                        <p className="text-sm text-gray-600">My Delivery Fee</p>
+                        <p className="text-xl font-bold text-green-600">{formatPrice(earning.deliveryFee)}</p>
+                      </div>
+                      <div className="bg-white rounded-lg p-3 border border-blue-200">
+                        <p className="text-sm text-gray-600">
+                          {earning.paymentMethod === 'Cash on Delivery' ? 'Total Collected' : 'Total Order Value'}
+                        </p>
+                        <p className="text-xl font-bold text-blue-600">{formatPrice(earning.totalPayment)}</p>
+                      </div>
+                    </div>
+                  </div>
 
-        <div className="bg-white p-6 rounded-lg shadow-sm">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">Performance Metrics</h3>
-          <div className="space-y-3">
-            <div className="flex justify-between items-center">
-              <span className="text-gray-600">Completed Deliveries</span>
-              <span className="font-semibold text-gray-900">
-                {transactions.filter(t => t.status === 'COMPLETED').length}
-              </span>
-            </div>
-            <div className="flex justify-between items-center">
-              <span className="text-gray-600">Pending Payments</span>
-              <span className="font-semibold text-yellow-600">
-                {transactions.filter(t => t.status === 'PENDING').length}
-              </span>
-            </div>
-            <div className="flex justify-between items-center">
-              <span className="text-gray-600">Success Rate</span>
-              <span className="font-semibold text-green-600">
-                {((transactions.filter(t => t.status === 'COMPLETED').length / transactions.length) * 100).toFixed(1)}%
-              </span>
-            </div>
-          </div>
+                  {/* Route Information */}
+                  <div className="bg-gray-50 rounded-lg p-4">
+                    <h4 className="font-semibold text-gray-900 mb-3 flex items-center">
+                      <svg className="h-5 w-5 mr-2 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                      </svg>
+                      Delivery Route
+                    </h4>
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                      <div className="flex items-center space-x-3">
+                        <div className="w-3 h-3 bg-green-500 rounded-full"></div>
+                        <div>
+                          <p className="text-sm text-gray-600">From</p>
+                          <p className="font-medium text-gray-900">{earning.pickupLocation}</p>
+                        </div>
+                      </div>
+                      <div className="flex items-center space-x-3">
+                        <div className="w-3 h-3 bg-red-500 rounded-full"></div>
+                        <div>
+                          <p className="text-sm text-gray-600">To</p>
+                          <p className="font-medium text-gray-900">{earning.deliveryLocation}</p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Collection Notes */}
+                  {earning.collectionNotes && (
+                    <div className="bg-green-50 rounded-lg p-4 border border-green-200">
+                      <h4 className="font-semibold text-gray-900 mb-2 flex items-center">
+                        <svg className="h-5 w-5 mr-2 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        Collection Notes
+                      </h4>
+                      <p className="text-gray-800">{earning.collectionNotes}</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            ))
+          )}
         </div>
       </div>
     </div>

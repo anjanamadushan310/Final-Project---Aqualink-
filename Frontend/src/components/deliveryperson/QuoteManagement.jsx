@@ -1,219 +1,160 @@
 import React, { useState, useEffect } from 'react';
-import QuoteCard from './QuoteCard';
-import QuoteDetailsModal from './QuoteDetailsModal';
-import EditQuoteModal from './EditQuoteModal';
 
 const QuoteManagement = () => {
   const [quotes, setQuotes] = useState([]);
-  const [filteredQuotes, setFilteredQuotes] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [selectedQuote, setSelectedQuote] = useState(null);
-  const [showDetailsModal, setShowDetailsModal] = useState(false);
-  const [showEditModal, setShowEditModal] = useState(false);
-  
-  // Filter states
-  const [statusFilter, setStatusFilter] = useState('');
-  const [dateFilter, setDateFilter] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
-  const [sortBy, setSortBy] = useState('newest');
+  const [filterStatus, setFilterStatus] = useState('all');
 
-  // Mock quotes data - development purposes
+  // Mock quotes data - All created quotes
   const mockQuotes = [
     {
       id: 1,
-      quoteId: 'QT001',
       orderId: 'ORD001',
+      quoteId: 'QT001',
       customerName: 'Saman Perera',
       customerPhone: '0771234567',
-      district: 'Colombo',
-      town: 'Dehiwala',
-      deliveryAddress: '123 Main Street, Dehiwala',
-      quotedPrice: 1200,
-      estimatedTime: '2-3 hours',
-      status: 'PENDING',
-      createdAt: '2025-09-03T10:30:00',
-      validUntil: '2025-09-04T18:00:00',
-      priceBreakdown: 'Base delivery: Rs.500\nDistance (15km): Rs.750\nTotal: Rs.1200',
-      specialInstructions: 'Handle with care - live fish',
-      customerResponse: null,
-      responseAt: null
+      orderItems: [
+        { name: 'Gold Fish', quantity: 5, price: 500 },
+        { name: 'Aquarium Filter', quantity: 1, price: 3500 }
+      ],
+      orderTotal: 6000,
+      quotePrice: 1200,
+      deliveryDate: '2025-09-10',
+      validUntil: '2025-09-06T10:30:00',
+      createdAt: '2025-09-04T11:15:00',
+      status: 'PENDING', // PENDING, ACCEPTED, REJECTED, EXPIRED
+      pickupLocation: {
+        address: 'Aqualink Fish Store, Main Road',
+        town: 'Colombo 03',
+        district: 'Colombo',
+        province: 'Western'
+      },
+      deliveryLocation: {
+        address: '123 Main Street, Galle Road',
+        town: 'Dehiwala',
+        district: 'Colombo',
+        province: 'Western'
+      }
     },
     {
       id: 2,
-      quoteId: 'QT002',
       orderId: 'ORD002',
+      quoteId: 'QT002',
       customerName: 'Kamal Silva',
       customerPhone: '0779876543',
-      district: 'Gampaha',
-      town: 'Negombo',
-      deliveryAddress: '456 Beach Road, Negombo',
-      quotedPrice: 1500,
-      estimatedTime: 'Same day',
+      orderItems: [
+        { name: 'Tropical Fish Mix', quantity: 8, price: 400 },
+        { name: 'Water Conditioner', quantity: 1, price: 1200 }
+      ],
+      orderTotal: 4400,
+      quotePrice: 1500,
+      deliveryDate: '2025-09-08',
+      validUntil: '2025-09-05T16:00:00',
+      createdAt: '2025-09-04T09:30:00',
       status: 'ACCEPTED',
-      createdAt: '2025-09-02T14:20:00',
-      validUntil: '2025-09-03T14:20:00',
-      priceBreakdown: 'Base delivery: Rs.500\nDistance (25km): Rs.1000\nTotal: Rs.1500',
-      specialInstructions: 'Fragile aquarium accessories',
-      customerResponse: 'Accepted - please deliver after 3PM',
-      responseAt: '2025-09-02T16:45:00'
+      pickupLocation: {
+        address: 'Aqualink Fish Store, Main Road',
+        town: 'Colombo 03',
+        district: 'Colombo',
+        province: 'Western'
+      },
+      deliveryLocation: {
+        address: '456 Beach Road',
+        town: 'Negombo',
+        district: 'Gampaha',
+        province: 'Western'
+      }
     },
     {
       id: 3,
-      quoteId: 'QT003',
       orderId: 'ORD003',
+      quoteId: 'QT003',
       customerName: 'Nimal Fernando',
       customerPhone: '0712345678',
-      district: 'Kandy',
-      town: 'Peradeniya',
-      deliveryAddress: '789 Temple Road, Peradeniya',
-      quotedPrice: 2200,
-      estimatedTime: 'Next day',
+      orderItems: [
+        { name: 'Large Aquarium Tank (50L)', quantity: 1, price: 15000 }
+      ],
+      orderTotal: 15000,
+      quotePrice: 2000,
+      deliveryDate: '2025-09-12',
+      validUntil: '2025-09-05T18:00:00',
+      createdAt: '2025-09-03T14:20:00',
       status: 'REJECTED',
-      createdAt: '2025-09-01T09:15:00',
-      validUntil: '2025-09-02T09:15:00',
-      priceBreakdown: 'Base delivery: Rs.500\nDistance (35km): Rs.1500\nSpecial handling: Rs.200\nTotal: Rs.2200',
-      specialInstructions: 'Large tank - need assistance',
-      customerResponse: 'Price too high - looking for alternatives',
-      responseAt: '2025-09-01T20:30:00'
+      pickupLocation: {
+        address: 'Aqualink Fish Store, Main Road',
+        town: 'Colombo 03',
+        district: 'Colombo',
+        province: 'Western'
+      },
+      deliveryLocation: {
+        address: '789 Temple Road',
+        town: 'Peradeniya',
+        district: 'Kandy',
+        province: 'Central'
+      }
     },
     {
       id: 4,
-      quoteId: 'QT004',
       orderId: 'ORD004',
+      quoteId: 'QT004',
       customerName: 'Priya Jayawardena',
       customerPhone: '0764567890',
-      district: 'Galle',
-      town: 'Hikkaduwa',
-      deliveryAddress: '321 Coral Gardens, Hikkaduwa',
-      quotedPrice: 1800,
-      estimatedTime: '4-5 hours',
+      orderItems: [
+        { name: 'Betta Fish Pair', quantity: 2, price: 1500 },
+        { name: 'Small Tank (10L)', quantity: 2, price: 2500 }
+      ],
+      orderTotal: 7000,
+      quotePrice: 800,
+      deliveryDate: '2025-09-07',
+      validUntil: '2025-09-04T20:00:00',
+      createdAt: '2025-09-03T16:45:00',
       status: 'EXPIRED',
-      createdAt: '2025-08-30T11:00:00',
-      validUntil: '2025-08-31T18:00:00',
-      priceBreakdown: 'Base delivery: Rs.500\nDistance (45km): Rs.1300\nTotal: Rs.1800',
-      specialInstructions: 'Standard delivery',
-      customerResponse: null,
-      responseAt: null
-    },
-    {
-      id: 5,
-      quoteId: 'QT005',
-      orderId: 'ORD005',
-      customerName: 'Ruwan Wickramasinghe',
-      customerPhone: '0751234567',
-      district: 'Colombo',
-      town: 'Moratuwa',
-      deliveryAddress: '654 Station Road, Moratuwa',
-      quotedPrice: 900,
-      estimatedTime: '1-2 hours',
-      status: 'PENDING',
-      createdAt: '2025-09-03T08:45:00',
-      validUntil: '2025-09-04T08:45:00',
-      priceBreakdown: 'Base delivery: Rs.500\nDistance (8km): Rs.400\nTotal: Rs.900',
-      specialInstructions: 'Small items only',
-      customerResponse: null,
-      responseAt: null
+      pickupLocation: {
+        address: 'Aqualink Fish Store, Main Road',
+        town: 'Colombo 03',
+        district: 'Colombo',
+        province: 'Western'
+      },
+      deliveryLocation: {
+        address: '321 Coral Gardens',
+        town: 'Colombo 07',
+        district: 'Colombo',
+        province: 'Western'
+      }
     }
   ];
 
   useEffect(() => {
-    // Simulate API loading
     setTimeout(() => {
       setQuotes(mockQuotes);
       setLoading(false);
     }, 1000);
   }, []);
 
-  useEffect(() => {
-    filterAndSortQuotes();
-  }, [quotes, statusFilter, dateFilter, searchTerm, sortBy]);
+  const formatPrice = (price) => {
+    return `Rs.${parseFloat(price).toLocaleString('en-US', { 
+      minimumFractionDigits: 2, 
+      maximumFractionDigits: 2 
+    })}`;
+  };
 
-  const filterAndSortQuotes = () => {
-    let filtered = [...quotes];
-
-    // Status filter
-    if (statusFilter) {
-      filtered = filtered.filter(quote => quote.status === statusFilter);
-    }
-
-    // Date filter
-    if (dateFilter) {
-      const today = new Date();
-      const filterDate = new Date();
-      
-      switch (dateFilter) {
-        case 'today':
-          filtered = filtered.filter(quote => 
-            new Date(quote.createdAt).toDateString() === today.toDateString()
-          );
-          break;
-        case 'week':
-          filterDate.setDate(today.getDate() - 7);
-          filtered = filtered.filter(quote => 
-            new Date(quote.createdAt) >= filterDate
-          );
-          break;
-        case 'month':
-          filterDate.setMonth(today.getMonth() - 1);
-          filtered = filtered.filter(quote => 
-            new Date(quote.createdAt) >= filterDate
-          );
-          break;
-      }
-    }
-
-    // Search filter
-    if (searchTerm) {
-      filtered = filtered.filter(quote =>
-        quote.customerName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        quote.quoteId.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        quote.orderId.toLowerCase().includes(searchTerm.toLowerCase())
-      );
-    }
-
-    // Sort
-    filtered.sort((a, b) => {
-      switch (sortBy) {
-        case 'newest':
-          return new Date(b.createdAt) - new Date(a.createdAt);
-        case 'oldest':
-          return new Date(a.createdAt) - new Date(b.createdAt);
-        case 'price-high':
-          return b.quotedPrice - a.quotedPrice;
-        case 'price-low':
-          return a.quotedPrice - b.quotedPrice;
-        case 'customer':
-          return a.customerName.localeCompare(b.customerName);
-        default:
-          return 0;
-      }
+  const formatDateTime = (dateTimeString) => {
+    return new Date(dateTimeString).toLocaleString('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
     });
-
-    setFilteredQuotes(filtered);
   };
 
-  const handleViewDetails = (quote) => {
-    setSelectedQuote(quote);
-    setShowDetailsModal(true);
-  };
-
-  const handleEditQuote = (quote) => {
-    setSelectedQuote(quote);
-    setShowEditModal(true);
-  };
-
-  const handleQuoteUpdated = (updatedQuote) => {
-    setQuotes(prevQuotes =>
-      prevQuotes.map(q => q.id === updatedQuote.id ? updatedQuote : q)
-    );
-    setShowEditModal(false);
-    setSelectedQuote(null);
-  };
-
-  const handleDeleteQuote = (quoteId) => {
-    if (window.confirm('Are you sure you want to delete this quote?')) {
-      setQuotes(prevQuotes => prevQuotes.filter(q => q.id !== quoteId));
-    }
+  const formatDate = (dateString) => {
+    return new Date(dateString).toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric'
+    });
   };
 
   const getStatusColor = (status) => {
@@ -226,9 +167,40 @@ const QuoteManagement = () => {
     }
   };
 
-  const getStatusCount = (status) => {
-    return quotes.filter(q => q.status === status).length;
+  const getStatusTextColor = (status) => {
+    switch (status) {
+      case 'PENDING': return 'text-yellow-600';
+      case 'ACCEPTED': return 'text-green-600';
+      case 'REJECTED': return 'text-red-600';
+      case 'EXPIRED': return 'text-gray-600';
+      default: return 'text-blue-600';
+    }
   };
+
+  const getBorderColor = (status) => {
+    switch (status) {
+      case 'PENDING': return 'border-yellow-300';
+      case 'ACCEPTED': return 'border-green-300';
+      case 'REJECTED': return 'border-red-300';
+      case 'EXPIRED': return 'border-gray-300';
+      default: return 'border-blue-300';
+    }
+  };
+
+  const isValidityExpired = (validUntil) => {
+    return new Date() > new Date(validUntil);
+  };
+
+  const filteredQuotes = quotes.filter(quote => {
+    const matchesStatus = filterStatus === 'all' || quote.status.toLowerCase() === filterStatus.toLowerCase();
+    const matchesSearch = !searchTerm || 
+      quote.customerName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      quote.orderId.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      quote.quoteId.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      quote.deliveryLocation.town.toLowerCase().includes(searchTerm.toLowerCase());
+    
+    return matchesStatus && matchesSearch;
+  });
 
   if (loading) {
     return (
@@ -249,26 +221,32 @@ const QuoteManagement = () => {
           <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center">
             <div>
               <h1 className="text-3xl font-bold text-gray-900 mb-2">Quote Management</h1>
-              <p className="text-gray-600">Create, track, and manage your delivery quotes</p>
+              <p className="text-gray-600">Manage and track all your delivery quotes</p>
             </div>
             
-            {/* Stats Cards */}
+            {/* Quick Stats */}
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mt-4 lg:mt-0">
               <div className="bg-yellow-50 p-3 rounded-lg text-center border border-yellow-200">
-                <div className="text-2xl font-bold text-yellow-800">{getStatusCount('PENDING')}</div>
+                <div className="text-2xl font-bold text-yellow-800">
+                  {quotes.filter(q => q.status === 'PENDING').length}
+                </div>
                 <div className="text-xs text-yellow-600">Pending</div>
               </div>
               <div className="bg-green-50 p-3 rounded-lg text-center border border-green-200">
-                <div className="text-2xl font-bold text-green-800">{getStatusCount('ACCEPTED')}</div>
+                <div className="text-2xl font-bold text-green-800">
+                  {quotes.filter(q => q.status === 'ACCEPTED').length}
+                </div>
                 <div className="text-xs text-green-600">Accepted</div>
               </div>
               <div className="bg-red-50 p-3 rounded-lg text-center border border-red-200">
-                <div className="text-2xl font-bold text-red-800">{getStatusCount('REJECTED')}</div>
+                <div className="text-2xl font-bold text-red-800">
+                  {quotes.filter(q => q.status === 'REJECTED').length}
+                </div>
                 <div className="text-xs text-red-600">Rejected</div>
               </div>
               <div className="bg-gray-50 p-3 rounded-lg text-center border border-gray-200">
-                <div className="text-2xl font-bold text-gray-800">{getStatusCount('EXPIRED')}</div>
-                <div className="text-xs text-gray-600">Expired</div>
+                <div className="text-2xl font-bold text-gray-800">{quotes.length}</div>
+                <div className="text-xs text-gray-600">Total</div>
               </div>
             </div>
           </div>
@@ -276,78 +254,40 @@ const QuoteManagement = () => {
 
         {/* Filters */}
         <div className="bg-white p-6 rounded-lg shadow-sm">
-          <div className="flex items-center space-x-2 mb-4">
-            <svg className="h-5 w-5 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
-            </svg>
-            <h3 className="text-lg font-semibold text-gray-900">Filters & Search</h3>
-          </div>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">Search</label>
               <input
                 type="text"
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                placeholder="Search quotes..."
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                placeholder="Search by customer, order ID, quote ID, or location..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Status</label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Filter by Status</label>
               <select
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                value={statusFilter}
-                onChange={(e) => setStatusFilter(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                value={filterStatus}
+                onChange={(e) => setFilterStatus(e.target.value)}
               >
-                <option value="">All Status</option>
-                <option value="PENDING">Pending</option>
-                <option value="ACCEPTED">Accepted</option>
-                <option value="REJECTED">Rejected</option>
-                <option value="EXPIRED">Expired</option>
-              </select>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Date Range</label>
-              <select
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                value={dateFilter}
-                onChange={(e) => setDateFilter(e.target.value)}
-              >
-                <option value="">All Time</option>
-                <option value="today">Today</option>
-                <option value="week">Last 7 Days</option>
-                <option value="month">Last 30 Days</option>
-              </select>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Sort By</label>
-              <select
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                value={sortBy}
-                onChange={(e) => setSortBy(e.target.value)}
-              >
-                <option value="newest">Newest First</option>
-                <option value="oldest">Oldest First</option>
-                <option value="price-high">Price: High to Low</option>
-                <option value="price-low">Price: Low to High</option>
-                <option value="customer">Customer Name</option>
+                <option value="all">All Quotes</option>
+                <option value="pending">Pending</option>
+                <option value="accepted">Accepted</option>
+                <option value="rejected">Rejected</option>
+                <option value="expired">Expired</option>
               </select>
             </div>
 
             <div className="flex items-end">
               <button
                 onClick={() => {
-                  setStatusFilter('');
-                  setDateFilter('');
+                  setFilterStatus('all');
                   setSearchTerm('');
-                  setSortBy('newest');
                 }}
-                className="w-full px-4 py-2 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 transition duration-200 font-medium"
+                className="w-full px-4 py-2 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 transition duration-200"
               >
                 Clear Filters
               </button>
@@ -355,54 +295,191 @@ const QuoteManagement = () => {
           </div>
         </div>
 
-        {/* Quote Cards */}
+        {/* Quotes */}
         <div className="space-y-4">
           {filteredQuotes.length === 0 ? (
             <div className="bg-white rounded-lg shadow-sm p-12 text-center">
-              <svg className="h-16 w-16 text-gray-400 mx-auto mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-              </svg>
+              <div className="text-6xl mb-4">📋</div>
               <h3 className="text-xl font-semibold text-gray-900 mb-2">No quotes found</h3>
               <p className="text-gray-600">
-                {searchTerm || statusFilter || dateFilter 
+                {searchTerm || filterStatus !== 'all' 
                   ? 'Try adjusting your filters to see more results.' 
-                  : 'Start creating quotes for your delivery requests.'
+                  : 'Your created quotes will appear here.'
                 }
               </p>
             </div>
           ) : (
             filteredQuotes.map(quote => (
-              <QuoteCard
-                key={quote.id}
-                quote={quote}
-                getStatusColor={getStatusColor}
-                onViewDetails={handleViewDetails}
-                onEditQuote={handleEditQuote}
-                onDeleteQuote={handleDeleteQuote}
-              />
+              <div key={quote.id} className={`bg-white rounded-lg shadow-sm border overflow-hidden ${getBorderColor(quote.status)}`}>
+                {/* Header */}
+                <div className="bg-gradient-to-r from-blue-50 to-indigo-50 p-6 border-b border-gray-200">
+                  <div className="flex justify-between items-start">
+                    <div className="flex items-center space-x-4">
+                      <div className="bg-blue-100 p-3 rounded-xl">
+                        <svg className="h-8 w-8 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                        </svg>
+                      </div>
+                      <div>
+                        <h3 className="text-xl font-bold text-gray-900">Quote #{quote.quoteId}</h3>
+                        <p className="text-gray-600">Order #{quote.orderId} - {quote.customerName}</p>
+                        <p className="text-sm text-gray-500">
+                          Created: {formatDateTime(quote.createdAt)}
+                        </p>
+                        <div className="flex items-center mt-1">
+                          <svg className="h-4 w-4 mr-1 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                          </svg>
+                          <p className="text-xs font-medium text-gray-600">
+                            Valid Until: {formatDateTime(quote.validUntil)}
+                            {isValidityExpired(quote.validUntil) && (
+                              <span className="text-red-600 ml-2">⚠️ EXPIRED</span>
+                            )}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <div className="text-right">
+                      <div className={`px-4 py-2 rounded-full text-white font-semibold mb-2 ${getStatusColor(quote.status)}`}>
+                        {quote.status}
+                      </div>
+                      <div className="text-2xl font-bold text-green-600">{formatPrice(quote.quotePrice)}</div>
+                      <div className="text-sm text-gray-600">Quote Price</div>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="p-6 space-y-6">
+                  {/* Quote Details */}
+                  <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <div className="bg-blue-50 rounded-lg p-4 border border-blue-200">
+                      <h4 className="font-semibold text-blue-900 mb-2">Quote Information</h4>
+                      <div className="space-y-1 text-sm">
+                        <p><span className="text-blue-700">Quote Price:</span> <span className="font-medium">{formatPrice(quote.quotePrice)}</span></p>
+                        <p><span className="text-blue-700">Order Value:</span> <span className="font-medium">{formatPrice(quote.orderTotal)}</span></p>
+                        <p><span className="text-blue-700">Delivery Date:</span> <span className="font-medium">{formatDate(quote.deliveryDate)}</span></p>
+                      </div>
+                    </div>
+
+                    <div className="bg-green-50 rounded-lg p-4 border border-green-200">
+                      <h4 className="font-semibold text-green-900 mb-2">Route Information</h4>
+                      <div className="space-y-1 text-sm">
+                        <p><span className="text-green-700">From:</span> <span className="font-medium">{quote.pickupLocation.town}</span></p>
+                        <p><span className="text-green-700">To:</span> <span className="font-medium">{quote.deliveryLocation.town}</span></p>
+                        <p><span className="text-green-700">Route:</span> <span className="font-medium">
+                          {quote.pickupLocation.district !== quote.deliveryLocation.district 
+                            ? `${quote.pickupLocation.district} → ${quote.deliveryLocation.district}`
+                            : `Within ${quote.pickupLocation.district}`
+                          }
+                        </span></p>
+                      </div>
+                    </div>
+
+                    <div className={`rounded-lg p-4 border ${
+                      quote.status === 'PENDING' ? 'bg-yellow-50 border-yellow-200' :
+                      quote.status === 'ACCEPTED' ? 'bg-green-50 border-green-200' :
+                      quote.status === 'REJECTED' ? 'bg-red-50 border-red-200' :
+                      'bg-gray-50 border-gray-200'
+                    }`}>
+                      <h4 className={`font-semibold mb-2 ${
+                        quote.status === 'PENDING' ? 'text-yellow-900' :
+                        quote.status === 'ACCEPTED' ? 'text-green-900' :
+                        quote.status === 'REJECTED' ? 'text-red-900' :
+                        'text-gray-900'
+                      }`}>Status Information</h4>
+                      <div className="space-y-1 text-sm">
+                        <p><span className={getStatusTextColor(quote.status)}>Status:</span> <span className="font-medium">{quote.status}</span></p>
+                        <p><span className="text-gray-700">Items:</span> <span className="font-medium">{quote.orderItems.length} items</span></p>
+                        <p><span className="text-gray-700">Created:</span> <span className="font-medium">{formatDate(quote.createdAt)}</span></p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* DELIVERY ROUTE */}
+                  <div className="bg-gradient-to-r from-green-50 to-blue-50 rounded-lg p-4 border border-green-200">
+                    <h4 className="font-semibold text-gray-900 mb-3 flex items-center">
+                      <svg className="h-5 w-5 mr-2 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                      </svg>
+                      Delivery Route
+                    </h4>
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                      {/* FROM Location */}
+                      <div className="bg-white rounded-lg p-4 border border-gray-200">
+                        <div className="flex items-center mb-2">
+                          <div className="w-4 h-4 bg-green-500 rounded-full mr-3"></div>
+                          <span className="font-semibold text-gray-900">PICKUP FROM</span>
+                        </div>
+                        <div className="ml-7 space-y-1">
+                          <p className="text-gray-800 font-medium">{quote.pickupLocation.address}</p>
+                          <p className="text-gray-600">
+                            {quote.pickupLocation.town}, {quote.pickupLocation.district}
+                          </p>
+                          <p className="text-sm text-gray-500">{quote.pickupLocation.province} Province</p>
+                        </div>
+                      </div>
+
+                      {/* TO Location */}
+                      <div className="bg-white rounded-lg p-4 border border-gray-200">
+                        <div className="flex items-center mb-2">
+                          <div className="w-4 h-4 bg-red-500 rounded-full mr-3"></div>
+                          <span className="font-semibold text-gray-900">DELIVER TO</span>
+                        </div>
+                        <div className="ml-7 space-y-1">
+                          <p className="text-gray-800 font-medium">{quote.deliveryLocation.address}</p>
+                          <p className="text-gray-600">
+                            {quote.deliveryLocation.town}, {quote.deliveryLocation.district}
+                          </p>
+                          <p className="text-sm text-gray-500">{quote.deliveryLocation.province} Province</p>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Route Summary */}
+                    <div className="mt-4 bg-blue-100 rounded-lg p-3">
+                      <p className="text-blue-800 font-medium text-center">
+                        🚚 Route: {quote.pickupLocation.town} → {quote.deliveryLocation.town}
+                        {quote.pickupLocation.district !== quote.deliveryLocation.district && 
+                          ` (${quote.pickupLocation.district} → ${quote.deliveryLocation.district})`
+                        }
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* ORDER DETAILS */}
+                  <div className="bg-gray-50 rounded-lg p-4">
+                    <h4 className="font-semibold text-gray-900 mb-3 flex items-center">
+                      <svg className="h-5 w-5 mr-2 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                      </svg>
+                      Order Items ({quote.orderItems.length})
+                    </h4>
+                    <div className="space-y-2">
+                      {quote.orderItems.map((item, index) => (
+                        <div key={index} className="flex justify-between items-center py-2 px-3 bg-white rounded border border-gray-200">
+                          <div className="flex-1">
+                            <span className="font-medium text-gray-900">{item.name}</span>
+                            <span className="text-gray-600 ml-2">x {item.quantity}</span>
+                          </div>
+                          <div className="text-right">
+                            <div className="font-semibold text-gray-900">{formatPrice(item.price * item.quantity)}</div>
+                            <div className="text-xs text-gray-500">({formatPrice(item.price)} each)</div>
+                          </div>
+                        </div>
+                      ))}
+                      <div className="flex justify-between items-center py-3 px-3 bg-blue-100 rounded font-bold text-lg border-2 border-blue-300">
+                        <span className="text-blue-900">Order Total:</span>
+                        <span className="text-blue-900">{formatPrice(quote.orderTotal)}</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
             ))
           )}
         </div>
-
-        {/* Modals */}
-        {showDetailsModal && selectedQuote && (
-          <QuoteDetailsModal
-            quote={selectedQuote}
-            onClose={() => setShowDetailsModal(false)}
-            onEdit={() => {
-              setShowDetailsModal(false);
-              setShowEditModal(true);
-            }}
-          />
-        )}
-
-        {showEditModal && selectedQuote && (
-          <EditQuoteModal
-            quote={selectedQuote}
-            onClose={() => setShowEditModal(false)}
-            onQuoteUpdated={handleQuoteUpdated}
-          />
-        )}
       </div>
     </div>
   );

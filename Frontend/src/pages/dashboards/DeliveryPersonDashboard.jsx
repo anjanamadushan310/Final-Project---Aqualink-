@@ -1,24 +1,26 @@
 import React, { useState } from 'react';
 import Sidebar from '../../components/deliveryperson/Sidebar';
-
+import DeliveryHistory from '../../components/deliveryperson/DeliveryHistory';
 import DeliveryRequests from '../../components/deliveryperson/DeliveryRequests';
 import QuoteManagement from '../../components/deliveryperson/QuoteManagement';
-import DeliveryTracking from '../../components/deliveryperson/DeliveryTracking';
 import CoverageAreaManagement from '../../components/deliveryperson/CoverageAreaManagement';
+import EarningsTracker from '../../components/deliveryperson/EarningsTracker';
+import CurrentDeliveries from '../../components/deliveryperson/CurrentDeliveries';
 
 
 
 const DeliveryPersonDashboard = () => {
-  const [activeComponent, setActiveComponent] = useState('dashboard');
+  const [activeComponent, setActiveComponent] = useState('dashboard');DeliveryHistory
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   const renderComponent = () => {
     switch (activeComponent) {
       case 'delivery-requests': return <DeliveryRequests />;
-     
+      case 'delivery-history': return <DeliveryHistory />;
       case 'quote-management': return <QuoteManagement />;
-      case 'delivery-tracking': return <DeliveryTracking />;
       case 'coverage-area-management': return <CoverageAreaManagement />;
+      case 'earnings-tracker': return <EarningsTracker />;
+      case 'current-deliveries': return <CurrentDeliveries />;
       default: return <DeliveryRequests />;
     }
   };

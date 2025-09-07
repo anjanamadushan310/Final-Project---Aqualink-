@@ -22,9 +22,13 @@ import UserProfile from "./pages/UserProfile";
 import Cart from './pages/Cart';
 import AboutPage from './pages/AboutPage';
 import Contact from './pages/Contact';
-import OrderPlacement from "./pages/AiDraftPages/OrderPlacement";
-import OrderStatusUpdates from "./pages/AiDraftPages/OrderStatusUpdates";
+
+
 import DeliveryQuoteSelection from "./pages/AiDraftPages/DeliveryQuoteSelection";
+import CartWithExpiry from "./pages/AiDraftPages/CartWithExpiry";
+import DeliveryQuoteRequest from "./pages/AiDraftPages/DeliveryQuoteRequest";
+import QuoteAcceptance from "./pages/AiDraftPages/QuoteAcceptance.jsx";
+import CheckoutFlow from "./pages/AiDraftPages/CheckoutFlow.jsx";
 
 
 
@@ -100,9 +104,14 @@ const App = () => {
             <Route path="/user-profile" element={<UserProfile />} />
             <Route path="/fish-ads-form" element={<FishAdsForm />} />
             <Route path="/orderUI" element={<OrderUI />} />
-            <Route path="/order-placement" element={<OrderPlacement />} />
+           
             <Route path="/delivery-quote-selection" element={<DeliveryQuoteSelection />} />
-            <Route path="/order-status-updates" element={<OrderStatusUpdates />} />
+           
+          <Route path="/cart" element={<CartWithExpiry />} />
+          <Route path="/delivery-request" element={<DeliveryQuoteRequest />} />
+          <Route path="/quotes" element={<QuoteAcceptance />} />
+          <Route path="/quote-acceptance" element={<QuoteAcceptance />} />
+          <Route path="/checkout" element={<CheckoutFlow />} />
 
     
           </Routes>

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import Orders from './../../components/shopowner/Orders';
+import OrdersManagement from './../../components/shopowner/OrdersManagement';
 import OrdersHistory from './../../components/shopowner/OrdersHistory';
 import Sidebar from '../../components/shopowner/Sidebar';
 import DeliveryTracking from '../../components/shopowner/DeliveryTracking';
@@ -13,10 +13,10 @@ const ShopOwnerDashboard= () => {
   const renderComponent = () => {
     switch (activeComponent) {
       
-      case 'orders': return <Orders/>;
+      case 'orders': return <OrdersManagement/>;
       case 'orders-history': return <OrdersHistory />;
       case 'delivery-tracking': return <DeliveryTracking />;
-      default: return <Orders />;
+      default: return <OrdersManagement />;
     }
   };
 
