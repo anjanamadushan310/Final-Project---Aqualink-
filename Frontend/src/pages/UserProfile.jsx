@@ -16,28 +16,50 @@ const UserProfile = () => {
     const [logoFile, setLogoFile] = useState(null);
     const [availableTowns, setAvailableTowns] = useState([]);
     const [loading, setLoading] = useState(false);
+    const [successMessage, setSuccessMessage] = useState('');
+
+    // API base URL
+    const API_BASE_URL = 'http://localhost:8080';
 
     useEffect(() => {
-        const fetchProfile = async () => {
-            setLoading(true);
-            try {
-                const response = await axios.get('http://localhost:8080/api/profile', {
-                    headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
-                });
-                setProfile(response.data);
-                setInitialProfile(response.data);
-                
-                if (response.data.addressDistrict) {
-                    setAvailableTowns(districtToTowns[response.data.addressDistrict] || []);
-                }
-            } catch (error) {
-                console.error("Failed to fetch profile:", error);
-            } finally {
-                setLoading(false);
-            }
-        };
         fetchProfile();
     }, []);
+
+    const fetchProfile = async () => {
+        setLoading(true);
+        try {
+            const token = localStorage.getItem('token');
+            if (!token) {
+                throw new Error('No authentication token found');
+            }
+
+            const response = await axios.get(`${API_BASE_URL}/api/profile`, {
+                headers: { 
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            console.log('Profile fetched successfully:', response.data);
+            setProfile(response.data);
+            setInitialProfile(response.data);
+            
+            if (response.data.addressDistrict) {
+                setAvailableTowns(districtToTowns[response.data.addressDistrict] || []);
+            }
+        } catch (error) {
+            console.error("Failed to fetch profile:", error);
+            if (error.response?.status === 401) {
+                // Handle authentication error
+                localStorage.removeItem('token');
+                window.location.href = '/login';
+            } else {
+                setErrors({ general: 'Failed to load profile. Please try again.' });
+            }
+        } finally {
+            setLoading(false);
+        }
+    };
 
     const handleInputChange = (e) => {
         const { name, value } = e.target;
@@ -54,6 +76,7 @@ const UserProfile = () => {
             setProfile({ ...profile, [name]: value });
         }
         
+        // Clear errors for this field
         if (errors[name]) {
             setErrors({ ...errors, [name]: null });
         }
@@ -71,10 +94,17 @@ const UserProfile = () => {
             return;
         }
 
+        // Check file type
+        const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif'];
+        if (!allowedTypes.includes(file.type)) {
+            setErrors({ ...errors, [name]: 'Only JPEG, PNG, and GIF images are allowed' });
+            return;
+        }
+        
         if (name === 'logo') {
             setLogoFile(file);
         }
-
+        
         if (errors[name]) {
             setErrors({ ...errors, [name]: null });
         }
@@ -113,30 +143,57 @@ const UserProfile = () => {
 
     const handleSave = async () => {
         if (!validate()) return;
-
-        setLoading(true);
-        const formData = new FormData();
-        formData.append('profileData', new Blob([JSON.stringify(profile)], { type: 'application/json' }));
         
-        if (logoFile) formData.append('logo', logoFile);
+        setLoading(true);
+        setErrors({});
+        setSuccessMessage('');
 
         try {
-            const response = await axios.put('/api/profile', formData, {
+            const token = localStorage.getItem('token');
+            if (!token) {
+                throw new Error('No authentication token found');
+            }
+
+            const formData = new FormData();
+            formData.append('profileData', JSON.stringify(profile));
+            
+            if (logoFile) {
+                formData.append('logo', logoFile);
+            }
+
+            const response = await axios.put(`${API_BASE_URL}/api/profile`, formData, {
                 headers: {
-                    'Content-Type': 'multipart/form-data',
-                    'Authorization': `Bearer ${localStorage.getItem('token')}`
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'multipart/form-data'
                 }
             });
+
+            console.log('Profile updated successfully:', response.data);
+            
+            // Update state with response data
             setProfile(response.data);
             setInitialProfile(response.data);
             setEditingSection(null);
             setErrors({});
             setLogoFile(null);
+            setSuccessMessage('Profile updated successfully!');
             
-            console.log('Profile updated successfully');
+            // Clear success message after 3 seconds
+            setTimeout(() => {
+                setSuccessMessage('');
+            }, 3000);
+
         } catch (error) {
             console.error("Failed to update profile:", error);
-            setErrors({ general: 'Failed to save changes. Please try again.' });
+            
+            if (error.response?.status === 401) {
+                localStorage.removeItem('token');
+                window.location.href = '/login';
+            } else if (error.response?.data?.error) {
+                setErrors({ general: error.response.data.error });
+            } else {
+                setErrors({ general: 'Failed to save changes. Please try again.' });
+            }
         } finally {
             setLoading(false);
         }
@@ -147,6 +204,7 @@ const UserProfile = () => {
         setEditingSection(null);
         setErrors({});
         setLogoFile(null);
+        setSuccessMessage('');
         
         if (initialProfile.addressDistrict) {
             setAvailableTowns(districtToTowns[initialProfile.addressDistrict] || []);
@@ -166,6 +224,13 @@ const UserProfile = () => {
             <h1 className="text-4xl font-bold text-center mb-8 text-gray-800">My Business Profile</h1>
             
             <ErrorDisplay error={errors.general} />
+            
+            {/* Success Message */}
+            {successMessage && (
+                <div className="mb-6 p-4 bg-green-100 border border-green-400 text-green-700 rounded">
+                    {successMessage}
+                </div>
+            )}
             
             {/* Basic Information Section */}
             <ProfileSection 

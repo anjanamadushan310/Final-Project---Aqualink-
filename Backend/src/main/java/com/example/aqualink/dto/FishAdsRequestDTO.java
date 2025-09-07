@@ -1,6 +1,7 @@
 package com.example.aqualink.dto;
-import lombok.Data;
 import org.springframework.web.multipart.MultipartFile;
+
+import lombok.Data;
 
 @Data
 public class FishAdsRequestDTO {
@@ -11,6 +12,7 @@ public class FishAdsRequestDTO {
     private Integer stock;
     private Double price;
     private Integer minimumQuantity;
+    private String userEmail;
 
     private MultipartFile[] images;
 

@@ -1,27 +1,38 @@
 package com.example.aqualink.service;
 
-import com.example.aqualink.dto.FishAdsRequestDTO;
-import com.example.aqualink.entity.Fish;
-import com.example.aqualink.repository.FishRepository;
+import java.io.IOException;
+import java.util.List;
+
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.io.IOException;
-import java.util.List;
+import com.example.aqualink.dto.FishAdsRequestDTO;
+import com.example.aqualink.entity.Fish;
+import com.example.aqualink.entity.UserProfile;
+import com.example.aqualink.repository.FishRepository;
+import com.example.aqualink.repository.UserProfileRepository;
 
 @Service
 public class FishAdsCreateService {
 
     private final FishRepository fishRepository;
     private final FishImgUploadService fishImgUploadService;
+    private final UserProfileRepository userProfileRepository; // Add this
 
-    public FishAdsCreateService(FishRepository fishRepository, FishImgUploadService fishImgUploadService) {
+    public FishAdsCreateService(FishRepository fishRepository, 
+                               FishImgUploadService fishImgUploadService,
+                               UserProfileRepository userProfileRepository) { // Add this parameter
         this.fishRepository = fishRepository;
         this.fishImgUploadService = fishImgUploadService;
+        this.userProfileRepository = userProfileRepository; // Add this
     }
 
     @Transactional
     public Fish saveFishAd(FishAdsRequestDTO fishAdsRequestDTO) throws IOException {
+        // Find user profile first using user email
+        UserProfile userProfile = userProfileRepository.findByUserEmail(fishAdsRequestDTO.getUserEmail())
+            .orElseThrow(() -> new RuntimeException("User profile not found for email: " + fishAdsRequestDTO.getUserEmail()));
+
         // Create Fish entity
         Fish fish = new Fish();
         fish.setName(fishAdsRequestDTO.getName());
@@ -30,6 +41,9 @@ public class FishAdsCreateService {
         fish.setStock(fishAdsRequestDTO.getStock());
         fish.setPrice(fishAdsRequestDTO.getPrice());
         fish.setMinimumQuantity(fishAdsRequestDTO.getMinimumQuantity());
+        
+        // Set user profile relationship (මෙන්න town access වෙන්නේ)
+        fish.setUserProfile(userProfile);
 
         // Save fish to get the ID
         Fish savedFish = fishRepository.save(fish);

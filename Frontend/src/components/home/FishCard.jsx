@@ -14,7 +14,7 @@ const FishCard = ({ fish, onPurchaseSuccess }) => {
   };
 
   const getImageUrl = (imagePath) => {
-    console.log("Image path received:", imagePath); // Debug log
+    console.log("Image path received:", imagePath);
     
     if (!imagePath) {
       return '/images/default-fish.jpg';
@@ -24,16 +24,14 @@ const FishCard = ({ fish, onPurchaseSuccess }) => {
       return imagePath;
     }
     
-    // If imagePath already starts with /uploads/, use it directly
     if (imagePath.startsWith('/uploads/')) {
       const fullUrl = `http://localhost:8080${imagePath}`;
-      console.log("Constructed URL:", fullUrl); // Debug log
+      console.log("Constructed URL:", fullUrl);
       return fullUrl;
     }
     
-    // Otherwise, construct the full path
     const fullUrl = `http://localhost:8080/uploads/${imagePath}`;
-    console.log("Constructed URL (fallback):", fullUrl); // Debug log
+    console.log("Constructed URL (fallback):", fullUrl);
     return fullUrl;
   };
 
@@ -67,7 +65,7 @@ const FishCard = ({ fish, onPurchaseSuccess }) => {
             onLoad={handleImageLoad}
             onError={handleImageError}
           />
-          <div className="absolute top-3 right-3">
+          <div className="absolute top-3 right-3 flex flex-col gap-1">
             <span className={`px-2 py-1 rounded-full text-xs font-medium ${
               fish.stock > 0 
                 ? 'bg-green-500 text-white' 
@@ -75,6 +73,13 @@ const FishCard = ({ fish, onPurchaseSuccess }) => {
             }`}>
               {fish.stock > 0 ? `In Stock: ${fish.stock}` : 'Out of Stock'}
             </span>
+            
+            {/* Verified Badge */}
+            {fish.activeStatus === 'VERIFIED' && (
+              <span className="px-2 py-1 rounded-full text-xs font-medium bg-blue-500 text-white">
+                ✓ Verified
+              </span>
+            )}
           </div>
         </div>
 
@@ -83,10 +88,21 @@ const FishCard = ({ fish, onPurchaseSuccess }) => {
             <h4 className="text-lg sm:text-xl font-semibold text-gray-900 mb-1 line-clamp-1">
               {fish.name}
             </h4>
-            <p className="text-sm text-gray-600 line-clamp-2">
-              {fish.description}
-            </p>
+            
           </div>
+
+          {/* Location */}
+          {fish.district && (
+            <div className="mb-2 flex items-center text-sm text-gray-500">
+              <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} 
+                      d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} 
+                      d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+              </svg>
+              <span>{fish.district}</span>
+            </div>
+          )}
 
           <div className="space-y-2 mb-4">
             <div className="flex justify-between items-center">

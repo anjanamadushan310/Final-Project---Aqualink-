@@ -30,7 +30,10 @@ const FishSection = () => {
 
   const fetchFishData = async () => {
     try {
-      const response = await fetch('http://localhost:8080/api/fish');
+       //const token = localStorage.getItem('token');
+      const response = await fetch('http://localhost:8080/api/fish', {
+        //headers: token ? { Authorization: `Bearer ${token}` } : {},
+      });
       const data = await response.json();
       setFishList(data);
       setFilteredFish(data);

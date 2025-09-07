@@ -65,7 +65,7 @@ const ProductManagement = () => {
         name: fish.name,
         category: 'Fish',
         seller: fish.nicNumber || 'Unknown Seller',
-        price: `$${fish.price?.toFixed(2) || '0.00'}`,
+        price: `LKR ${fish.price?.toFixed(2) || '0.00'}`,
         status: fish.activeStatus.toLowerCase(),
         // Use the first image URL or fallback to emoji
         image: fish.imageUrls && fish.imageUrls.length > 0 ? fish.imageUrls[0] : null,

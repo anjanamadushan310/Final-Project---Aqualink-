@@ -40,10 +40,12 @@ public class SecurityConfig {
                         .requestMatchers("/uploads/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/uploads/**").permitAll()
                         // Allow API endpoints
-                        .requestMatchers("/api/auth/**","/api/users/**", "/api/banners/**", "/api/v1/fish/**","/api/fish/**").permitAll()
+                        .requestMatchers("/api/auth/**","/api/users/**", "/api/banners/**", "/api/v1/fish/**","/api/fish/**","/api/profile/**").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/fish-ads").permitAll() // Allow POST for fish ads
-                        .requestMatchers(HttpMethod.GET, "/api/fish-ads").permitAll()  // Allow GET for fish ads
+                        .requestMatchers(HttpMethod.GET, "/api/fish-ads").permitAll()
+                        .requestMatchers("/uploads/profile-images/**").permitAll()// Allow GET for fish ads
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+
                         .anyRequest().authenticated()
                 )
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
