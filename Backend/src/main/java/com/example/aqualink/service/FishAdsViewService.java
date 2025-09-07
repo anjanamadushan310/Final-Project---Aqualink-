@@ -1,16 +1,18 @@
 package com.example.aqualink.service;
 
-import com.example.aqualink.dto.FishAdsResponseDTO;
-import com.example.aqualink.dto.FishPurchaseDTO;
-import com.example.aqualink.entity.Fish;
-import com.example.aqualink.entity.ActiveStatus;
-import com.example.aqualink.repository.FishRepository;
-import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Service;
-
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
+
+import org.springframework.stereotype.Service;
+
+import com.example.aqualink.dto.FishAdsResponseDTO;
+import com.example.aqualink.dto.FishPurchaseDTO;
+import com.example.aqualink.entity.ActiveStatus;
+import com.example.aqualink.entity.Fish;
+import com.example.aqualink.repository.FishRepository;
+
+import lombok.RequiredArgsConstructor;
 
 @Service
 @RequiredArgsConstructor
@@ -19,14 +21,14 @@ public class FishAdsViewService {
     private final FishRepository fishRepository;
 
     public List<FishAdsResponseDTO> getAllAvailableFish() {
-        List<Fish> fishList = fishRepository.findAvailableFish();
+        List<Fish> fishList = fishRepository.findAvailableFishWithProfile();
         return fishList.stream()
                 .map(this::convertToDTO)
                 .collect(Collectors.toList());
     }
 
     public Optional<FishAdsResponseDTO> getFishById(Long id) {
-        return fishRepository.findById(id)
+        return fishRepository.findByIdWithProfile(id) // Use method with profile
                 .map(this::convertToDTO);
     }
 
@@ -44,17 +46,12 @@ public class FishAdsViewService {
         if (fishOpt.isPresent()) {
             Fish fish = fishOpt.get();
 
-            // Check if enough stock available
             if (fish.getStock() >= purchaseDTO.getQuantity() &&
-                    purchaseDTO.getQuantity() >= fish.getMinimumQuantity()) {
+                    purchaseDTO.getQuantity() >= fish.getMinimumQuantity() &&
+                    fish.getActiveStatus() == ActiveStatus.VERIFIED) {
 
-                // Update stock
                 fish.setStock(fish.getStock() - purchaseDTO.getQuantity());
                 fishRepository.save(fish);
-
-                // Here you can add order creation logic
-                // createOrder(purchaseDTO, fish);
-
                 return true;
             }
         }
@@ -70,7 +67,15 @@ public class FishAdsViewService {
         dto.setPrice(fish.getPrice());
         dto.setMinimumQuantity(fish.getMinimumQuantity());
         dto.setCreateDateAndTime(fish.getCreateDateAndTime());
+        
+        // Get verified status from fish table itself
         dto.setActiveStatus(fish.getActiveStatus().toString());
+
+        // Get town from user profile (මෙන්න town ගන්නේ)
+        if (fish.getUserProfile() != null) {
+            dto.setDistrict(fish.getUserProfile().getAddressDistrict());
+            dto.setUserEmail(fish.getUserProfile().getUserEmail()); // Optional
+        }
 
         // Get first image if available
         if (fish.getImagePaths() != null && !fish.getImagePaths().isEmpty()) {
@@ -80,4 +85,3 @@ public class FishAdsViewService {
         return dto;
     }
 }
-

@@ -5,7 +5,8 @@ export default function useAuth() {
   const stored = JSON.parse(localStorage.getItem("user"));
   const [user, setUser] = useState(stored);
   
-  function login(data, navigate) {
+
+  function login(data,navigate) {
     setUser(data);
     localStorage.setItem("user", JSON.stringify(data));
     
@@ -19,7 +20,9 @@ export default function useAuth() {
   
   function logout() {
     setUser(null);
-    localStorage.removeItem("user");
+    localStorage.removeItem("token"); // Remove token on logout
+
+    //localStorage.removeItem("user");
   }
   
   return { user, login, logout };

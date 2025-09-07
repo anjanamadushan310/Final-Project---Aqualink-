@@ -1,4 +1,4 @@
-package com.example.aqualink.controller;
+/*package com.example.aqualink.controller;
 
 import com.example.aqualink.dto.FishAdsRequestDTO;
 import com.example.aqualink.entity.Fish;
@@ -35,6 +35,74 @@ public class FishAdsCreateController {
 
             // Set images
             fishAdsRequestDTO.setImages(images);
+
+            Fish savedFish = fishService.saveFishAd(fishAdsRequestDTO);
+            return new ResponseEntity<>(savedFish, HttpStatus.CREATED);
+
+        } catch (IOException e) {
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Error processing request: " + e.getMessage());
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body("Invalid request data: " + e.getMessage());
+        }
+    }
+}
+*/
+
+
+package com.example.aqualink.controller;
+
+import java.io.IOException;
+
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestPart;
+import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
+
+import com.example.aqualink.dto.FishAdsRequestDTO;
+import com.example.aqualink.entity.Fish;
+import com.example.aqualink.service.FishAdsCreateService;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
+@RestController
+@RequestMapping("/api/fish-ads")
+@CrossOrigin(origins = "http://localhost:5173")
+public class FishAdsCreateController {
+
+    private final FishAdsCreateService fishService;
+    private final ObjectMapper objectMapper;
+
+    public FishAdsCreateController(FishAdsCreateService fishService, ObjectMapper objectMapper) {
+        this.fishService = fishService;
+        this.objectMapper = objectMapper;
+    }
+
+    @PostMapping(consumes = {"multipart/form-data"})
+    public ResponseEntity<?> createFishAd(
+            @RequestPart("fishAdsRequest") String fishAdsRequestJson,
+            @RequestPart(value = "images", required = false) MultipartFile[] images,
+            Authentication authentication) {  // Add authentication parameter
+
+        try {
+            // Get current user email
+            String userEmail = authentication.getName();
+            
+            // Parse JSON string to DTO
+            FishAdsRequestDTO fishAdsRequestDTO = objectMapper.readValue(fishAdsRequestJson, FishAdsRequestDTO.class);
+
+            // Set images
+            fishAdsRequestDTO.setImages(images);
+            
+            // Set user email
+            fishAdsRequestDTO.setUserEmail(userEmail);
 
             Fish savedFish = fishService.saveFishAd(fishAdsRequestDTO);
             return new ResponseEntity<>(savedFish, HttpStatus.CREATED);

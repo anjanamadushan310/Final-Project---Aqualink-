@@ -23,3 +23,6 @@ const FilePreview = ({ fileUrl, newFile, altText, className = "w-24 h-24" }) => 
 };
 
 export default FilePreview;
+
+
+
