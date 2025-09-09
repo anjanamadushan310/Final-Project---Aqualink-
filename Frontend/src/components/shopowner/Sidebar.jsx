@@ -15,8 +15,10 @@ import {
 const Sidebar = ({ activeComponent, setActiveComponent, sidebarOpen, setSidebarOpen }) => {
   const menuItems = [
     { id: 'orders', label: 'Orders Management', icon: ClipboardDocumentListIcon },
-    { id: 'orders-history', label: 'Orders History', icon: ShoppingBagIcon },
-    { id: 'delivery-tracking', label: 'Delivery Tracking', icon: ClipboardDocumentListIcon },
+    { id: 'Cart', label: 'Cart', icon: ClipboardDocumentListIcon },
+    { id: 'delivery-quoteRequest', label: 'Delivery Quote Request', icon: ClipboardDocumentListIcon },
+    { id: 'quote-acceptance', label: 'Quote Acceptance', icon: ShoppingBagIcon },
+    
   
   ];
 

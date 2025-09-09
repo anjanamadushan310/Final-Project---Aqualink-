@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import Sidebar from '../../components/farmowner/Sidebar';
 import FishStockManagement from '../../components/farmowner/FishStockManagement';
-import FishOrders from './../../components/farmowner/FishOrders';
 import FishAdsForm from '../../components/farmowner/FishAdsForm';
+import FarmOwnerOrderManagement from '../../components/farmowner/FarmOwnerOrderManagement';
 
 
 
@@ -13,10 +13,10 @@ const FarmOwnerDashboard= () => {
   const renderComponent = () => {
     switch (activeComponent) {
       
-      case 'fish-order': return <FishOrders />;
+      case 'fish-order': return <FarmOwnerOrderManagement/>;
       case 'fish-stock-management': return <FishStockManagement />;
       case 'fish-ads-form': return <FishAdsForm />;
-      default: return <FishOrders />;
+      default: return <FarmOwnerOrderManagement />;
     }
   };
 

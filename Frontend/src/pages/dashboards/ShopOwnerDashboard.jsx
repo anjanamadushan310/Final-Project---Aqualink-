@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
 import OrdersManagement from './../../components/shopowner/OrdersManagement';
-import OrdersHistory from './../../components/shopowner/OrdersHistory';
 import Sidebar from '../../components/shopowner/Sidebar';
-import DeliveryTracking from '../../components/shopowner/DeliveryTracking';
+import QuoteAcceptance from './../../components/shopowner/QuoteAcceptance';
+import DeliveryQuoteRequest from './../../components/shopowner/DeliveryQuoteRequest';
+import Cart from '../../components/shopowner/Cart';
 
 
 
@@ -14,8 +15,9 @@ const ShopOwnerDashboard= () => {
     switch (activeComponent) {
       
       case 'orders': return <OrdersManagement/>;
-      case 'orders-history': return <OrdersHistory />;
-      case 'delivery-tracking': return <DeliveryTracking />;
+      case 'Cart': return <Cart/>;
+      case 'delivery-quoteRequest': return <DeliveryQuoteRequest/>;
+      case 'quote-acceptance': return <QuoteAcceptance />;
       default: return <OrdersManagement />;
     }
   };
