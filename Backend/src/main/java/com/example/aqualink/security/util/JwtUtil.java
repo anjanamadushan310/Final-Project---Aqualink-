@@ -1,11 +1,5 @@
 package com.example.aqualink.security.util;
 
-import com.example.aqualink.entity.Role;
-import io.jsonwebtoken.Claims;
-import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.SignatureAlgorithm;
-import org.springframework.stereotype.Component;
-
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
@@ -13,53 +7,65 @@ import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import org.springframework.stereotype.Component;
+
+import com.example.aqualink.entity.Role;
+
+import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.SignatureAlgorithm;
+
 @Component
 public class JwtUtil {
     private String secret = "O6z6I2xL8UeQ9nV0xD5hRpO3rYgCmJv6YzNcT0qLgBw=";
     private int jwtExpiration = 60*30*1000; // 30 min
 
-    public String generateToken(String email, Set<Role> roles) {
-        System.out.println("=== JWT TOKEN GENERATION DEBUG START ===");
+    public String generateToken(String email, Set<Role> roles, Long userId) {
+    System.out.println("=== JWT TOKEN GENERATION DEBUG START ===");
 
-        try {
-            System.out.println("Input email: " + email);
-            System.out.println("Input roles: " + roles);
-            System.out.println("Roles size: " + (roles != null ? roles.size() : "NULL"));
+    try {
+        System.out.println("Input email: " + email);
+        System.out.println("Input roles: " + roles);
+        System.out.println("Roles size: " + (roles != null ? roles.size() : "NULL"));
+        System.out.println("Input userId: " + userId);
 
-            if (email == null || email.trim().isEmpty()) {
-                throw new RuntimeException("Email cannot be null or empty for token generation");
-            }
-
-            Map<String, Object> claims = new HashMap<>();
-
-            // Convert roles to string list to avoid serialization issues
-            if (roles != null && !roles.isEmpty()) {
-                Set<String> roleNames = roles.stream()
-                        .map(Role::name)
-                        .collect(Collectors.toSet());
-                claims.put("roles", roleNames);
-                System.out.println("Adding roles to token: " + roleNames);
-            } else {
-                System.out.println("WARNING: No roles provided for token generation");
-            }
-
-            System.out.println("Creating token with claims: " + claims);
-            String token = createToken(claims, email);
-
-            System.out.println("Token created successfully");
-            System.out.println("Token length: " + (token != null ? token.length() : "NULL"));
-            System.out.println("=== JWT TOKEN GENERATION DEBUG END - SUCCESS ===");
-
-            return token;
-
-        } catch (Exception e) {
-            System.out.println("=== JWT TOKEN GENERATION DEBUG END - ERROR ===");
-            System.out.println("Exception type: " + e.getClass().getSimpleName());
-            System.out.println("Exception message: " + (e.getMessage() != null ? e.getMessage() : "NULL MESSAGE"));
-            e.printStackTrace();
-            throw new RuntimeException("Failed to generate token: " + e.getMessage(), e);
+        if (email == null || email.trim().isEmpty()) {
+            throw new RuntimeException("Email cannot be null or empty for token generation");
         }
+
+        Map<String, Object> claims = new HashMap<>();
+
+        // Convert roles to string list to avoid serialization issues
+        if (roles != null && !roles.isEmpty()) {
+            Set<String> roleNames = roles.stream()
+                    .map(Role::name)
+                    .collect(Collectors.toSet());
+            claims.put("roles", roleNames);
+            System.out.println("Adding roles to token: " + roleNames);
+        } else {
+            System.out.println("WARNING: No roles provided for token generation");
+        }
+
+        // Add userId to claims
+        claims.put("userId", userId);
+
+        System.out.println("Creating token with claims: " + claims);
+        String token = createToken(claims, email);
+
+        System.out.println("Token created successfully");
+        System.out.println("Token length: " + (token != null ? token.length() : "NULL"));
+        System.out.println("=== JWT TOKEN GENERATION DEBUG END - SUCCESS ===");
+
+        return token;
+
+    } catch (Exception e) {
+        System.out.println("=== JWT TOKEN GENERATION DEBUG END - ERROR ===");
+        System.out.println("Exception type: " + e.getClass().getSimpleName());
+        System.out.println("Exception message: " + (e.getMessage() != null ? e.getMessage() : "NULL MESSAGE"));
+        e.printStackTrace();
+        throw new RuntimeException("Failed to generate token: " + e.getMessage(), e);
     }
+}
 
     private String createToken(Map<String, Object> claims, String subject) {
         try {

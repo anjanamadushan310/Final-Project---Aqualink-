@@ -1,25 +1,26 @@
 package com.example.aqualink.security.service;
 
-import com.example.aqualink.entity.User;
-import com.example.aqualink.entity.UserRole;
-import com.example.aqualink.entity.Role;
-import com.example.aqualink.repository.UserRepository;
-import com.example.aqualink.repository.UserRoleRepository;
-import com.example.aqualink.security.dto.LoginRequest;
-import com.example.aqualink.security.dto.LoginResponse;
-import com.example.aqualink.security.util.JwtUtil;
-import com.example.aqualink.service.FileUploadService;
+import java.io.IOException;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.io.IOException;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
+import com.example.aqualink.entity.Role;
+import com.example.aqualink.entity.User;
+import com.example.aqualink.entity.UserRole;
+import com.example.aqualink.repository.UserRepository;
+import com.example.aqualink.repository.UserRoleRepository;
+import com.example.aqualink.security.dto.LoginRequest;
+import com.example.aqualink.security.dto.LoginResponse;
+import com.example.aqualink.security.util.JwtUtil;
+import com.example.aqualink.service.FileUploadService;
 
 @Service
 public class AuthService {
@@ -216,7 +217,7 @@ public class AuthService {
 
             String token;
             try {
-                token = jwtUtil.generateToken(user.getEmail(), roles);
+                token = jwtUtil.generateToken(user.getEmail(), roles, user.getId());
                 System.out.println("Token generated successfully");
             } catch (Exception e) {
                 System.out.println("ERROR: Failed to generate token: " + e.getMessage());
@@ -224,7 +225,7 @@ public class AuthService {
                 throw new RuntimeException("Failed to generate authentication token");
             }
 
-            LoginResponse response = new LoginResponse(token, roles, user.getNicNumber());
+            LoginResponse response = new LoginResponse(token, roles, user.getNicNumber(), null, user.getId());
             return response;
 
         } catch (RuntimeException e) {

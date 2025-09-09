@@ -14,30 +14,34 @@ import com.example.aqualink.entity.Fish;
 @Repository
 public interface FishRepository extends JpaRepository<Fish, Long> {
 
-    //add repo
-
     List<Fish> findByActiveStatus(ActiveStatus activeStatus);
 
     @Query("SELECT f FROM Fish f ORDER BY f.createDateAndTime DESC")
     List<Fish> findAllByOrderByCreateDateAndTimeDesc();
 
-
-    //loard fish adds
-
-    @Query("SELECT f FROM Fish f LEFT JOIN FETCH f.userProfile WHERE f.activeStatus = 'VERIFIED' AND f.stock > 0")
+    @Query("SELECT f FROM Fish f LEFT JOIN FETCH f.user WHERE f.activeStatus = 'VERIFIED' AND f.stock > 0")
     List<Fish> findAvailableFishWithProfile();
-    
-    @Query("SELECT f FROM Fish f LEFT JOIN FETCH f.userProfile WHERE f.activeStatus = 'VERIFIED' AND f.stock > 0")
+
+    @Query("SELECT f FROM Fish f LEFT JOIN FETCH f.user WHERE f.activeStatus = 'VERIFIED' AND f.stock > 0")
     List<Fish> findAvailableFish();
-    
+
     List<Fish> findByNameContainingIgnoreCase(String name);
 
-    @Query("SELECT f FROM Fish f LEFT JOIN FETCH f.userProfile WHERE f.id = :id")
+    //@Query("SELECT f FROM Fish f LEFT JOIN FETCH f.user WHERE f.id = :id")
+    //Optional<Fish> findByIdWithProfile(@Param("id") Long id);
+
+    // FIX THIS QUERY: use user.id instead of userProfile.user.id
+    @Query("SELECT f FROM Fish f LEFT JOIN FETCH f.user WHERE f.user.id = :userId")
+    List<Fish> findByUserIdWithProfile(@Param("userId") Long userId);
+
+    @Query("SELECT f FROM Fish f LEFT JOIN FETCH f.user WHERE f.id = :id")
     Optional<Fish> findByIdWithProfile(@Param("id") Long id);
 
-    @Query("SELECT f FROM Fish f LEFT JOIN FETCH f.userProfile WHERE f.userProfile.userEmail = :userEmail")
-    List<Fish> findByUserEmailWithProfile(@Param("userEmail") String userEmail);
+    @Query("SELECT f FROM Fish f LEFT JOIN FETCH f.user WHERE f.id = :id")
+    Optional<Fish> findByIdWithUser(@Param("id") Long id);
 
-}    
-    
-    
+    // If you need to fetch user and their profile together
+    @Query("SELECT f FROM Fish f LEFT JOIN FETCH f.user u LEFT JOIN FETCH u.userProfile WHERE f.id = :id")
+    Optional<Fish> findByIdWithUserAndProfile(@Param("id") Long id);
+
+}

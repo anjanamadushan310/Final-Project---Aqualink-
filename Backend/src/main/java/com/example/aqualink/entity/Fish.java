@@ -50,18 +50,14 @@ public class Fish {
     @Column(name = "image_path")
     private List<String> imagePaths;
 
-
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_email", referencedColumnName = "user_email")
-    private UserProfile userProfile;
+    @JoinColumn(name = "user_id", referencedColumnName = "id", nullable = false)
+    private User user;
+
+    //userprofile
 
     @PrePersist
     protected void onCreate() {
         createDateAndTime = LocalDateTime.now();
-    }
-
-    // Helper method to get user email
-    public String getUserEmail() {
-        return userProfile != null ? userProfile.getUserEmail() : null;
     }
 }

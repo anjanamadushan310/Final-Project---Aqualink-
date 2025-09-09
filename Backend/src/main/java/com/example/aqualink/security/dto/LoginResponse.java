@@ -1,6 +1,7 @@
 package com.example.aqualink.security.dto;
 
 import java.util.Set;
+
 import com.example.aqualink.entity.Role;
 
 public class LoginResponse {
@@ -8,6 +9,7 @@ public class LoginResponse {
     private Set<Role> roles;
     private String nicNumber;
     private String message; // Add message field for error handling
+    private Long userId;
 
 
     public LoginResponse() {}
@@ -17,6 +19,7 @@ public class LoginResponse {
         this.token = token;
         this.roles = roles;
         this.nicNumber = nicNumber;
+        
     }
 
     // Constructor with message (useful for error responses)
@@ -25,11 +28,12 @@ public class LoginResponse {
     }
 
 
-    public LoginResponse(String token, Set<Role> roles, String nicNumber, String message) {
+    public LoginResponse(String token, Set<Role> roles, String nicNumber, String message, Long userId) {
         this.token = token;
         this.roles = roles;
         this.nicNumber = nicNumber;
         this.message = message;
+        this.userId = userId;
     }
 
 
@@ -44,6 +48,9 @@ public class LoginResponse {
 
     public String getMessage() { return message; }
     public void setMessage(String message) { this.message = message; }
+    
+    public Long getUserId() { return userId; }
+    public void setUserId(Long userId) { this.userId = userId; }
 
     @Override
     public String toString() {
@@ -52,6 +59,7 @@ public class LoginResponse {
                 ", roles=" + roles +
                 ", nicNumber='" + nicNumber + '\'' +
                 ", message='" + message + '\'' +
+                ", userId=" + userId +
                 '}';
     }
 }
