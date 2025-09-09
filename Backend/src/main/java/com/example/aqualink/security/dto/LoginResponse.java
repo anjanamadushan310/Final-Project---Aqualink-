@@ -10,7 +10,7 @@ public class LoginResponse {
     private String nicNumber;
     private Long userId;
     private String message; // Add message field for error handling
-    private Long userId;
+
 
 
     public LoginResponse() {}
@@ -37,7 +37,6 @@ public class LoginResponse {
         this.token = token;
         this.roles = roles;
         this.nicNumber = nicNumber;
-        this.userId = userId;
         this.message = message;
         this.userId = userId;
     }
@@ -57,9 +56,6 @@ public class LoginResponse {
 
     public String getMessage() { return message; }
     public void setMessage(String message) { this.message = message; }
-    
-    public Long getUserId() { return userId; }
-    public void setUserId(Long userId) { this.userId = userId; }
 
     @Override
     public String toString() {
