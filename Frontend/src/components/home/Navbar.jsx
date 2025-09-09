@@ -46,7 +46,7 @@ function Navbar({
           <div className="flex items-center space-x-6">
             {!dashboardName && (
               <>
-                <Link to="/shopping-cart" className="text-white font-medium hover:underline">
+                <Link to="/cart" className="text-white font-medium hover:underline">
                   Shopping Cart
                 </Link>
                 <Link to="/about" className="text-white font-medium hover:underline">

@@ -8,6 +8,7 @@ public class LoginResponse {
     private String token;
     private Set<Role> roles;
     private String nicNumber;
+    private Long userId;
     private String message; // Add message field for error handling
     private Long userId;
 
@@ -15,11 +16,11 @@ public class LoginResponse {
     public LoginResponse() {}
 
 
-    public LoginResponse(String token, Set<Role> roles, String nicNumber) {
+    public LoginResponse(String token, Set<Role> roles,  String nicNumber, Long userId) {
         this.token = token;
         this.roles = roles;
         this.nicNumber = nicNumber;
-        
+
     }
 
     // Constructor with message (useful for error responses)
@@ -28,10 +29,15 @@ public class LoginResponse {
     }
 
 
+
     public LoginResponse(String token, Set<Role> roles, String nicNumber, String message, Long userId) {
+
+  
+
         this.token = token;
         this.roles = roles;
         this.nicNumber = nicNumber;
+        this.userId = userId;
         this.message = message;
         this.userId = userId;
     }
@@ -46,6 +52,9 @@ public class LoginResponse {
     public String getNicNumber() { return nicNumber; }
     public void setNicNumber(String nicNumber) { this.nicNumber = nicNumber; }
 
+    public Long getUserId() { return userId; }
+    public void setUserId(Long userId) { this.userId = userId; }
+
     public String getMessage() { return message; }
     public void setMessage(String message) { this.message = message; }
     
@@ -58,6 +67,7 @@ public class LoginResponse {
                 "token='" + (token != null ? "***" : null) + '\'' +
                 ", roles=" + roles +
                 ", nicNumber='" + nicNumber + '\'' +
+                ", userId=" + userId +
                 ", message='" + message + '\'' +
                 ", userId=" + userId +
                 '}';

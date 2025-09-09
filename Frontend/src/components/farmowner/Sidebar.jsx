@@ -14,7 +14,7 @@ import {
 
 const Sidebar = ({ activeComponent, setActiveComponent, sidebarOpen, setSidebarOpen }) => {
   const menuItems = [
-    { id: 'orders', label: 'FishOrders', icon: ShoppingBagIcon },
+    { id: 'fish-orders', label: 'FishOrders', icon: ShoppingBagIcon },
     { id: 'fish-stock-management', label: 'Stock Management', icon: ClipboardDocumentListIcon },
     { id: 'fish-ads-form', label: 'Create Ads', icon: ClipboardDocumentListIcon },
     

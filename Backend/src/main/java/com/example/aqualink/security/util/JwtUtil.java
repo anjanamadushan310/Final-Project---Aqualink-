@@ -20,6 +20,7 @@ public class JwtUtil {
     private String secret = "O6z6I2xL8UeQ9nV0xD5hRpO3rYgCmJv6YzNcT0qLgBw=";
     private int jwtExpiration = 60*30*1000; // 30 min
 
+
     public String generateToken(String email, Set<Role> roles, Long userId) {
     System.out.println("=== JWT TOKEN GENERATION DEBUG START ===");
 
@@ -28,6 +29,9 @@ public class JwtUtil {
         System.out.println("Input roles: " + roles);
         System.out.println("Roles size: " + (roles != null ? roles.size() : "NULL"));
         System.out.println("Input userId: " + userId);
+
+    
+
 
         if (email == null || email.trim().isEmpty()) {
             throw new RuntimeException("Email cannot be null or empty for token generation");
@@ -118,6 +122,34 @@ public class JwtUtil {
             throw e;
         }
     }
+    public Long extractUserId(String token) {
+        try {
+            Claims claims = extractAllClaims(token);
+            Object userIdClaim = claims.get("userId");
+
+            if (userIdClaim == null) {
+                System.out.println("WARNING: No userId found in token");
+                return null;
+            }
+
+            // Handle different number types that might be stored
+            if (userIdClaim instanceof Integer) {
+                return ((Integer) userIdClaim).longValue();
+            } else if (userIdClaim instanceof Long) {
+                return (Long) userIdClaim;
+            } else if (userIdClaim instanceof String) {
+                return Long.parseLong((String) userIdClaim);
+            }
+
+            System.out.println("Extracted userId: " + userIdClaim);
+            return Long.valueOf(userIdClaim.toString());
+
+        } catch (Exception e) {
+            System.out.println("Failed to extract userId from token: " + e.getMessage());
+            throw e;
+        }
+    }
+
 
     public Date extractExpiration(String token) {
         return extractClaim(token, Claims::getExpiration);

@@ -19,10 +19,12 @@ import DeliveryPersonDashboard from "./pages/dashboards/DeliveryPersonDashboard"
 import ProductApprove from "./components/admin/ProductApprove";
 import FishAdsForm from "./components/farmowner/FishAdsForm";
 import UserProfile from "./pages/UserProfile";
-import Cart from './pages/Cart';
 import AboutPage from './pages/AboutPage';
 import Contact from './pages/Contact';
 
+import QuoteAcceptance from "./components/shopowner/QuoteAcceptance";
+import DeliveryQuoteRequest from "./components/shopowner/DeliveryQuoteRequest";
+import Cart from "./components/shopowner/Cart";
 
 
 const App = () => {
@@ -74,8 +76,8 @@ const App = () => {
             {/* Public Routes */}
             <Route path="/" element={<HomePage />} />
             <Route path="/register" element={<RegistrationForm setShowLogin={setShowLogin} />} />
-            <Route path="/orderUI" element={<OrderUI />} />
-            <Route path="/shopping-cart" element={<Cart />} />
+            
+            <Route path="/cart" element={<Cart />} />
             <Route path="/about" element={<AboutPage />} />
             <Route path="/contact" element={<Contact/>} />
             
@@ -96,6 +98,15 @@ const App = () => {
             //not completed
             <Route path="/user-profile" element={<UserProfile />} />
             <Route path="/fish-ads-form" element={<FishAdsForm />} />
+            <Route path="/orderUI" element={<OrderUI />} />
+           
+
+           <Route path="/delivery-request" element={<DeliveryQuoteRequest />} />
+           <Route path="/quote-acceptance" element={<QuoteAcceptance />} />
+           
+          
+          
+        
 
     
           </Routes>

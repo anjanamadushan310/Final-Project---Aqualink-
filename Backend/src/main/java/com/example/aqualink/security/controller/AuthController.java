@@ -29,7 +29,10 @@ public class AuthController {
             System.out.println("Login failed: " + e.getMessage());
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     // Return empty response instead of null body
+
                     .body(new LoginResponse("Login failed" + e.getMessage()));
+
+
         }
     }
 }
