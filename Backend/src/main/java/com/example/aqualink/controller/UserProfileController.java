@@ -1,18 +1,27 @@
 package com.example.aqualink.controller;
 
-import com.example.aqualink.entity.UserProfile;
-import com.example.aqualink.service.UserProfileService;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import java.util.HashMap;
+import java.util.Map;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.util.HashMap;
-import java.util.Map;
+import com.example.aqualink.entity.User;
+import com.example.aqualink.entity.UserProfile;
+import com.example.aqualink.repository.UserRepository;
+import com.example.aqualink.security.util.JwtUtil;
+import com.example.aqualink.service.UserProfileService;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
+import jakarta.servlet.http.HttpServletRequest;
 
 @RestController
 @RequestMapping("/api/profile")
@@ -23,22 +32,29 @@ public class UserProfileController {
     private UserProfileService userprofileService;
 
     @Autowired
+    private UserRepository userRepository;
+
+    @Autowired
     private ObjectMapper objectMapper;
 
+    @Autowired
+    private JwtUtil jwtUtil;
+
     @GetMapping
-    public ResponseEntity<?> getUserProfile() {
+    public ResponseEntity<?> getUserProfile(HttpServletRequest request) {
         try {
-            String userEmail = getCurrentUserEmail();
-            if (userEmail == null) {
+            Long userId = getCurrentUserId(request);
+            if (userId == null) {
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                         .body(createErrorResponse("User not authenticated"));
             }
 
-            UserProfile profile = userprofileService.getProfileByEmail(userEmail);
+            UserProfile profile = userprofileService.getProfileByUserId(userId);
             if (profile == null) {
                 // Return empty profile for new users
                 profile = new UserProfile();
-                profile.setUserEmail(userEmail);
+                User user = userRepository.findById(userId).orElse(null);
+                profile.setUser(user);
             }
 
             return ResponseEntity.ok(profile);
@@ -51,18 +67,20 @@ public class UserProfileController {
 
     @PutMapping
     public ResponseEntity<?> updateUserProfile(
+            HttpServletRequest request,
             @RequestParam("profileData") String profileDataJson,
             @RequestParam(value = "logo", required = false) MultipartFile logoFile) {
         try {
-            String userEmail = getCurrentUserEmail();
-            if (userEmail == null) {
+            Long userId = getCurrentUserId(request);
+            if (userId == null) {
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                         .body(createErrorResponse("User not authenticated"));
             }
 
             // Parse the profile data from JSON
             UserProfile profileData = objectMapper.readValue(profileDataJson, UserProfile.class);
-            profileData.setUserEmail(userEmail);
+            User user = userRepository.findById(userId).orElse(null);
+            profileData.setUser(user);
 
             // Update the profile
             UserProfile updatedProfile = userprofileService.updateProfile(profileData, logoFile);
@@ -75,10 +93,23 @@ public class UserProfileController {
         }
     }
 
-    private String getCurrentUserEmail() {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        if (authentication != null && authentication.isAuthenticated()) {
-            return authentication.getName(); // This should be the email from JWT
+    // Helper method to get userId from JWT token claims
+    private Long getCurrentUserId(HttpServletRequest request) {
+        try {
+            String authHeader = request.getHeader("Authorization");
+            if (authHeader != null && authHeader.startsWith("Bearer ")) {
+                String token = authHeader.substring(7);
+                Object userIdObj = jwtUtil.extractClaim(token, claims -> claims.get("userId"));
+                if (userIdObj instanceof Integer) {
+                    return ((Integer) userIdObj).longValue();
+                } else if (userIdObj instanceof Long) {
+                    return (Long) userIdObj;
+                } else if (userIdObj instanceof String) {
+                    return Long.parseLong((String) userIdObj);
+                }
+            }
+        } catch (Exception e) {
+            // Log or handle exception if needed
         }
         return null;
     }

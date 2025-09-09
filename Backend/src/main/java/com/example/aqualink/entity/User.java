@@ -9,6 +9,8 @@ import lombok.Setter;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.Set;
@@ -61,6 +63,7 @@ public class User {
 
     // Changed back to LAZY to avoid ConcurrentModificationException
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @JsonIgnore
     private Set<UserRole> userRoles = new HashSet<>();
 
     @Column(nullable = false, columnDefinition = "BIT DEFAULT 1")
@@ -73,6 +76,10 @@ public class User {
     protected void onCreate() {
         createdAt = LocalDateTime.now();
     }
+
+    @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @JsonIgnore
+    private UserProfile userProfile;
 
     // Safe getRoles() method that won't cause concurrent modification
     public Set<Role> getRoles() {

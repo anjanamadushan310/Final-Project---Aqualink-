@@ -28,7 +28,7 @@ public class FishAdsViewService {
     }
 
     public Optional<FishAdsResponseDTO> getFishById(Long id) {
-        return fishRepository.findByIdWithProfile(id) // Use method with profile
+        return fishRepository.findByIdWithProfile(id)
                 .map(this::convertToDTO);
     }
 
@@ -67,14 +67,12 @@ public class FishAdsViewService {
         dto.setPrice(fish.getPrice());
         dto.setMinimumQuantity(fish.getMinimumQuantity());
         dto.setCreateDateAndTime(fish.getCreateDateAndTime());
-        
-        // Get verified status from fish table itself
         dto.setActiveStatus(fish.getActiveStatus().toString());
 
-        // Get town from user profile (මෙන්න town ගන්නේ)
-        if (fish.getUserProfile() != null) {
-            dto.setDistrict(fish.getUserProfile().getAddressDistrict());
-            dto.setUserEmail(fish.getUserProfile().getUserEmail()); // Optional
+        // Get district and userId from user profile
+        if (fish.getUser() != null && fish.getUser().getUserProfile() != null) {
+            dto.setDistrict(fish.getUser().getUserProfile().getAddressDistrict());
+            dto.setUserId(fish.getUser().getId());
         }
 
         // Get first image if available

@@ -16,7 +16,7 @@ public class FishAdsResponseDTO {
     private String imageUrl;
     private LocalDateTime createDateAndTime;
     private String activeStatus;
-    private String userEmail;
+    private Long userId;
 
     public String getDistrict() {
     return district;
@@ -27,8 +27,8 @@ public class FishAdsResponseDTO {
     }
 
 
-    public void setUserEmail(String userEmail) {
-    this.userEmail = userEmail;
+    public void setUserId(Long userId) {
+        this.userId = userId;
 }
 }
 

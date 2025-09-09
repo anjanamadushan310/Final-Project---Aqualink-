@@ -1,11 +1,12 @@
 package com.example.aqualink.repository;
 
-import com.example.aqualink.entity.User;
-import com.example.aqualink.entity.UserRole;
+import java.util.List;
+
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
-import java.util.List;
+import com.example.aqualink.entity.User;
+import com.example.aqualink.entity.UserRole;
 
 @Repository
 public interface UserRoleRepository extends JpaRepository<UserRole, Long> {

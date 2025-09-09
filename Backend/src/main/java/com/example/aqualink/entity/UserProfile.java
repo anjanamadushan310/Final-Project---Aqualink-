@@ -29,8 +29,10 @@ public class UserProfile {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "user_email", nullable = false, unique = true)
-    private String userEmail;
+    @OneToOne
+    @JoinColumn(name = "user_id", nullable = false, unique = true)
+    @JsonIgnore  // Prevent circular reference
+    private User user;
 
     @Column(name = "business_name")
     private String businessName;
@@ -65,11 +67,6 @@ public class UserProfile {
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 
-    @OneToOne
-    @JoinColumn(name = "user_id")
-    @JsonIgnore  // Prevent circular reference
-    private User user;
-
     @PrePersist
     protected void onCreate() {
         createdAt = LocalDateTime.now();
@@ -82,6 +79,6 @@ public class UserProfile {
     }
 
     public String getAddressDistrict() {
-    return addressDistrict;
-}
+        return addressDistrict;
+    }
 }

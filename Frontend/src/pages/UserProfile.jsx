@@ -22,22 +22,51 @@ const UserProfile = () => {
     const API_BASE_URL = 'http://localhost:8080';
 
     useEffect(() => {
-        fetchProfile();
+        // Add a small delay to ensure token is available after login
+        const timer = setTimeout(() => {
+            fetchProfile();
+        }, 100);
+        
+        return () => clearTimeout(timer);
     }, []);
+
+    const getAuthHeaders = () => {
+        const token = localStorage.getItem('token');
+        if (!token) {
+            return null;
+        }
+        return {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+        };
+    };
+
+    const handleAuthError = (error) => {
+        if (error.response?.status === 401) {
+            // Clear invalid tokens
+            localStorage.removeItem('token');
+            localStorage.removeItem('user');
+            // Redirect to login or show login modal
+            window.location.href = '/login';
+            return true;
+        }
+        return false;
+    };
 
     const fetchProfile = async () => {
         setLoading(true);
+        setErrors({});
+        
         try {
-            const token = localStorage.getItem('token');
-            if (!token) {
-                throw new Error('No authentication token found');
+            const headers = getAuthHeaders();
+            if (!headers) {
+                throw new Error('No authentication token found. Please log in again.');
             }
 
+            console.log('Fetching profile with headers:', headers);
+            
             const response = await axios.get(`${API_BASE_URL}/api/profile`, {
-                headers: { 
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json'
-                }
+                headers
             });
 
             console.log('Profile fetched successfully:', response.data);
@@ -49,12 +78,13 @@ const UserProfile = () => {
             }
         } catch (error) {
             console.error("Failed to fetch profile:", error);
-            if (error.response?.status === 401) {
-                // Handle authentication error
-                localStorage.removeItem('token');
-                window.location.href = '/login';
-            } else {
-                setErrors({ general: 'Failed to load profile. Please try again.' });
+            
+            if (!handleAuthError(error)) {
+                const errorMessage = error.response?.data?.message || 
+                                   error.response?.data?.error || 
+                                   error.message ||
+                                   'Failed to load profile. Please try again.';
+                setErrors({ general: errorMessage });
             }
         } finally {
             setLoading(false);
@@ -149,9 +179,9 @@ const UserProfile = () => {
         setSuccessMessage('');
 
         try {
-            const token = localStorage.getItem('token');
-            if (!token) {
-                throw new Error('No authentication token found');
+            const headers = getAuthHeaders();
+            if (!headers) {
+                throw new Error('No authentication token found. Please log in again.');
             }
 
             const formData = new FormData();
@@ -163,7 +193,7 @@ const UserProfile = () => {
 
             const response = await axios.put(`${API_BASE_URL}/api/profile`, formData, {
                 headers: {
-                    'Authorization': `Bearer ${token}`,
+                    ...headers,
                     'Content-Type': 'multipart/form-data'
                 }
             });
@@ -186,13 +216,11 @@ const UserProfile = () => {
         } catch (error) {
             console.error("Failed to update profile:", error);
             
-            if (error.response?.status === 401) {
-                localStorage.removeItem('token');
-                window.location.href = '/login';
-            } else if (error.response?.data?.error) {
-                setErrors({ general: error.response.data.error });
-            } else {
-                setErrors({ general: 'Failed to save changes. Please try again.' });
+            if (!handleAuthError(error)) {
+                const errorMessage = error.response?.data?.message || 
+                                   error.response?.data?.error || 
+                                   'Failed to save changes. Please try again.';
+                setErrors({ general: errorMessage });
             }
         } finally {
             setLoading(false);
@@ -215,8 +243,27 @@ const UserProfile = () => {
 
     const isEditing = (section) => editingSection === section;
 
+    // Show loading spinner during initial load
     if (loading && !profile.businessName) {
         return <LoadingSpinner message="Loading profile..." />;
+    }
+
+    // Show error if no token and profile couldn't be fetched
+    if (errors.general && !profile.businessName) {
+        return (
+            <div className="bg-gray-100 min-h-screen p-8">
+                <h1 className="text-4xl font-bold text-center mb-8 text-gray-800">My Business Profile</h1>
+                <ErrorDisplay error={errors.general} />
+                <div className="text-center mt-4">
+                    <button 
+                        onClick={fetchProfile}
+                        className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded"
+                    >
+                        Retry
+                    </button>
+                </div>
+            </div>
+        );
     }
 
     return (

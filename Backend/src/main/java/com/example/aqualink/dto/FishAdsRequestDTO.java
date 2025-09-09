@@ -12,7 +12,7 @@ public class FishAdsRequestDTO {
     private Integer stock;
     private Double price;
     private Integer minimumQuantity;
-    private String userEmail;
+    private Long userId;
 
     private MultipartFile[] images;
 
