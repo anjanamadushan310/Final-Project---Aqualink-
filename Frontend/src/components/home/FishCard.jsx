@@ -4,7 +4,6 @@ import ProductDetails from './ProductDetails.jsx';
 const FishCard = ({ fish, onPurchaseSuccess }) => {
   const [showProductDetails, setShowProductDetails] = useState(false);
   const [imageLoading, setImageLoading] = useState(true);
-  const [imageError, setImageError] = useState(false);
 
   const formatPrice = (price) => {
     return new Intl.NumberFormat('en-LK', {
@@ -15,21 +14,22 @@ const FishCard = ({ fish, onPurchaseSuccess }) => {
 
   const getImageUrl = (imagePath) => {
     console.log("Image path received:", imagePath);
-    
+
     if (!imagePath) {
-      return '/images/default-fish.jpg';
+      // Use a data URL for a placeholder image (gray square)
+      return 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTAwIiBoZWlnaHQ9IjEwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwIiBoZWlnaHQ9IjEwMCIgZmlsbD0iI2NjYyIvPjwvc3ZnPg==';
     }
-    
+
     if (imagePath.startsWith('http')) {
       return imagePath;
     }
-    
+
     if (imagePath.startsWith('/uploads/')) {
       const fullUrl = `http://localhost:8080${imagePath}`;
       console.log("Constructed URL:", fullUrl);
       return fullUrl;
     }
-    
+
     const fullUrl = `http://localhost:8080/uploads/${imagePath}`;
     console.log("Constructed URL (fallback):", fullUrl);
     return fullUrl;
@@ -37,14 +37,12 @@ const FishCard = ({ fish, onPurchaseSuccess }) => {
 
   const handleImageLoad = () => {
     setImageLoading(false);
-    setImageError(false);
   };
 
   const handleImageError = (e) => {
     console.error("Image failed to load:", e.target.src);
     setImageLoading(false);
-    setImageError(true);
-    e.target.src = '/images/default-fish.jpg';
+    e.target.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTAwIiBoZWlnaHQ9IjEwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwIiBoZWlnaHQ9IjEwMCIgZmlsbD0iI2NjYyIvPjwvc3ZnPg==';
   };
 
   return (
@@ -57,7 +55,7 @@ const FishCard = ({ fish, onPurchaseSuccess }) => {
             </div>
           )}
           <img
-            src={getImageUrl(fish.imageUrl)}
+            src={getImageUrl(fish.imageUrls?.[0])}
             alt={fish.name}
             className={`w-full h-full object-cover transition-opacity duration-300 ${
               imageLoading ? 'opacity-0' : 'opacity-100'

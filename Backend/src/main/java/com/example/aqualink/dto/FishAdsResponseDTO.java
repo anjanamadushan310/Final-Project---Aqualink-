@@ -1,6 +1,7 @@
 package com.example.aqualink.dto;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 import lombok.Data;
 
@@ -13,10 +14,13 @@ public class FishAdsResponseDTO {
     private Integer stock;
     private Double price;
     private Integer minimumQuantity;
-    private String imageUrl;
+    private List<String> imageUrls;
     private LocalDateTime createDateAndTime;
     private String activeStatus;
     private Long userId;
+    private Double rating;
+    private Long totalSold;
+    private Long reviewCount;
 
     public String getDistrict() {
     return district;

@@ -1,23 +1,43 @@
 import React, { useState, useCallback, useMemo } from 'react';
 import { Star, Heart, MessageCircle, ShoppingCart, Truck, User } from 'lucide-react';
 
-const ProductDetails = ({ fish, onClose, onPurchaseSuccess }) => {
+const ProductDetails = ({ fish, onPurchaseSuccess }) => {
   const [quantity, setQuantity] = useState(fish?.minimumQuantity || 1);
   const [selectedImage, setSelectedImage] = useState(0);
   const [isFavorited, setIsFavorited] = useState(false);
+
+  // Function to construct full image URL
+  const getImageUrl = (imagePath) => {
+    if (!imagePath) {
+      // Use a data URL for a placeholder image (gray square)
+      return 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTAwIiBoZWlnaHQ9IjEwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwIiBoZWlnaHQ9IjEwMCIgZmlsbD0iI2NjYyIvPjwvc3ZnPg==';
+    }
+
+    if (imagePath.startsWith('http')) {
+      return imagePath;
+    }
+
+    if (imagePath.startsWith('/uploads/')) {
+      const fullUrl = `http://localhost:8080${imagePath}`;
+      return fullUrl;
+    }
+
+    const fullUrl = `http://localhost:8080/uploads/${imagePath}`;
+    return fullUrl;
+  };
 
   // Use fish data from props
   const productData = useMemo(() => ({
     name: fish?.name || "Fish Product",
     price: fish?.price || 0,
-    rating: 4.9, // You can add this to your fish model later
-    totalSold: 1500, // You can add this to your fish model later
-    reviewCount: 21, // You can add this to your fish model later
+    rating: fish?.rating || 0, // Dynamic rating from backend
+    totalSold: fish?.totalSold || 0, // Dynamic total sold from backend
+    reviewCount: fish?.reviewCount || 0, // Dynamic review count from backend
     storeReviews: 3778, // You can add this to your fish model later
     minQuantity: fish?.minimumQuantity || 1,
     stock: fish?.stock || 0,
     description: fish?.description || "No description available",
-    images: fish?.imageUrls || ['/images/default-fish.jpg']
+    images: fish?.imageUrls?.length > 0 ? fish.imageUrls.map(getImageUrl) : [getImageUrl(null)]
   }), [fish]);
 
   // Memoized calculations
@@ -104,10 +124,12 @@ const ProductDetails = ({ fish, onClose, onPurchaseSuccess }) => {
             </div>
 
             <div className="flex items-center gap-4 text-sm">
-              <span className="text-gray-600">AquaLife Store</span>
-              <span className="bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs font-medium">
+              {/* Verified Badge */}
+            {fish.activeStatus === 'VERIFIED' && (
+              <span className="px-2 py-1 rounded-full text-xs font-medium bg-blue-500 text-white">
                 ✓ Verified
               </span>
+            )}
             
             </div>
           </header>
@@ -144,18 +166,7 @@ const ProductDetails = ({ fish, onClose, onPurchaseSuccess }) => {
                   className="w-full h-80 object-cover transition-transform hover:scale-110"
                 />
                 
-                {/* Favorite Button */}
-                <button
-                  onClick={toggleFavorite}
-                  className="absolute top-4 right-4 p-2 bg-white bg-opacity-80 rounded-full hover:bg-opacity-100 transition-all focus:outline-none focus:ring-2 focus:ring-red-500"
-                  aria-label={isFavorited ? "Remove from favorites" : "Add to favorites"}
-                >
-                  <Heart 
-                    className={`w-5 h-5 transition-colors ${
-                      isFavorited ? 'fill-red-500 text-red-500' : 'text-gray-600 hover:text-red-500'
-                    }`}
-                  />
-                </button>
+                
               </div>
             </div>
           </div>
@@ -213,10 +224,6 @@ const ProductDetails = ({ fish, onClose, onPurchaseSuccess }) => {
 
             {/* Action Buttons */}
             <div className="space-y-3">
-              <button className="w-full py-3 px-4 border-2 border-blue-600 text-blue-600 rounded-lg font-medium hover:bg-blue-50 transition-colors flex items-center justify-center gap-2">
-                <Truck className="w-5 h-5" />
-                Select Delivery Option
-              </button>
               <button 
                 onClick={handleAddToCart}
                 disabled={productData.stock === 0}
@@ -246,14 +253,6 @@ const ProductDetails = ({ fish, onClose, onPurchaseSuccess }) => {
             <p className="text-gray-700 leading-relaxed">
               {productData.description}
             </p>
-            <ul className="mt-4 space-y-2">
-              <li>• Minimum Quantity: {productData.minQuantity}</li>
-              <li>• Available Stock: {productData.stock}</li>
-              <li>• Temperature: 22-28°C</li>
-              <li>• pH: 6.5-7.5</li>
-              <li>• Lifespan: 2-3 years</li>
-              <li>• Diet: Omnivore</li>
-            </ul>
           </div>
         </div>
       </section>
@@ -281,7 +280,6 @@ const ProductDetails = ({ fish, onClose, onPurchaseSuccess }) => {
               <div className="flex-1">
                 <div className="flex items-center gap-3 mb-2">
                   <h3 className="font-medium">Sarah Johnson</h3>
-                  <span className="text-sm text-gray-500">2 weeks ago</span>
                 </div>
                 <div className="flex items-center gap-2 mb-3">
                   <StarRating rating={4.5} />

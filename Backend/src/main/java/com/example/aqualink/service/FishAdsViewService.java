@@ -11,6 +11,8 @@ import com.example.aqualink.dto.FishPurchaseDTO;
 import com.example.aqualink.entity.ActiveStatus;
 import com.example.aqualink.entity.Fish;
 import com.example.aqualink.repository.FishRepository;
+import com.example.aqualink.repository.OrderItemRepository;
+import com.example.aqualink.repository.ReviewRepository;
 
 import lombok.RequiredArgsConstructor;
 
@@ -19,6 +21,8 @@ import lombok.RequiredArgsConstructor;
 public class FishAdsViewService {
 
     private final FishRepository fishRepository;
+    private final ReviewRepository reviewRepository;
+    private final OrderItemRepository orderItemRepository;
 
     public List<FishAdsResponseDTO> getAllAvailableFish() {
         List<Fish> fishList = fishRepository.findAvailableFishWithProfile();
@@ -75,10 +79,24 @@ public class FishAdsViewService {
             dto.setUserId(fish.getUser().getId());
         }
 
-        // Get first image if available
+        // Get images
         if (fish.getImagePaths() != null && !fish.getImagePaths().isEmpty()) {
-            dto.setImageUrl(fish.getImagePaths().get(0));
+            dto.setImageUrls(fish.getImagePaths());
+        } else {
+            dto.setImageUrls(List.of("/images/default-fish.jpg"));
         }
+
+        // Calculate rating
+        Double averageRating = reviewRepository.findAverageRatingByProductId(fish.getId());
+        dto.setRating(averageRating != null ? averageRating : 0.0);
+
+        // Calculate total sold
+        Long totalSold = orderItemRepository.findTotalSoldByProductId(fish.getId());
+        dto.setTotalSold(totalSold != null ? totalSold : 0L);
+
+        // Calculate review count
+        Long reviewCount = reviewRepository.countReviewsByProductId(fish.getId());
+        dto.setReviewCount(reviewCount != null ? reviewCount : 0L);
 
         return dto;
     }
