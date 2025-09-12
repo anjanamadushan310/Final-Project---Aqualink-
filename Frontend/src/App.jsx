@@ -27,6 +27,10 @@ import DeliveryQuoteRequest from "./components/shopowner/DeliveryQuoteRequest";
 import Cart from "./components/shopowner/Cart";
 import IndustrialProductManagement from "./pages/Ai draft/IndustrialProductManagement";
 import IndustrialStuffForm from "./pages/Ai draft/IndustrialStuffForm";
+import AdminServicesDashboard from "./pages/Ai draft/AdminServicesDashboard";
+import ServiceProviderDashboardnew from "./pages/Ai draft/ServiceProviderDashboard";
+
+import MyBookings from "./pages/Ai draft/MyBookings";
 
 
 const App = () => {
@@ -108,12 +112,10 @@ const App = () => {
 
            <Route path="/industrialproductmanagement" element={<IndustrialProductManagement />} />
            <Route path="/industrialstuffform" element={<IndustrialStuffForm />} />
-           
+           <Route path="/adminservicesdashboard" element={<AdminServicesDashboard />} />
+           <Route path="/mybookings" element={<MyBookings />} />
+           <Route path="/serviceproviderdashboard" element={<ServiceProviderDashboardnew />} />
           
-          
-        
-
-    
           </Routes>
         </main>
       </div>
