@@ -44,24 +44,16 @@ const App = () => {
     return () => window.removeEventListener("show-login", f);
   }, []);
 
-  // When logout, close profile menu
-  const handleLogout = () => {
-    logout();
-    setShowProfileMenu(false);
-    
-  };
-
   return (
     <Router>
       <div>
-        
+
         {/* Navbar */}
         <Navbar
           user={user}
-          onLogout={handleLogout}
-          onProfileClick={() => setShowProfileMenu((s) => !s)}
           showProfileMenu={showProfileMenu}
           setShowProfileMenu={setShowProfileMenu}
+          onLogout={logout}
         />
 
         {/* Login Modal */}
@@ -120,12 +112,6 @@ const App = () => {
      
     </Router>
   );
-};
-
-// Wrapper component to handle dynamic dashboard types
-const DashboardWrapper = () => {
-  const { dashboardType } = useParams();
-  return <Dashboard dashboardName={dashboardType.toUpperCase()} />;
 };
 
 export default App;

@@ -199,7 +199,7 @@ const UserProfile = () => {
             });
 
             console.log('Profile updated successfully:', response.data);
-            
+
             // Update state with response data
             setProfile(response.data);
             setInitialProfile(response.data);
@@ -207,7 +207,14 @@ const UserProfile = () => {
             setErrors({});
             setLogoFile(null);
             setSuccessMessage('Profile updated successfully!');
-            
+
+            // Update user in localStorage with logoUrl
+            const storedUser = JSON.parse(localStorage.getItem('user'));
+            if (storedUser && response.data.logoUrl) {
+                storedUser.logoUrl = response.data.logoUrl;
+                localStorage.setItem('user', JSON.stringify(storedUser));
+            }
+
             // Clear success message after 3 seconds
             setTimeout(() => {
                 setSuccessMessage('');

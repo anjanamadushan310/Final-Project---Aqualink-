@@ -4,10 +4,11 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
-import com.example.aqualink.dto.IndustrialStuffResponseDTO;
 import com.example.aqualink.dto.IndustrialStuffPurchaseDTO;
+import com.example.aqualink.dto.IndustrialStuffResponseDTO;
 import com.example.aqualink.entity.ActiveStatus;
 import com.example.aqualink.entity.IndustrialStuff;
 import com.example.aqualink.repository.IndustrialStuffRepository;
@@ -19,6 +20,9 @@ import lombok.RequiredArgsConstructor;
 @Service
 @RequiredArgsConstructor
 public class IndustrialStuffViewService {
+
+    @Value("${app.base-url:http://localhost:8080}")
+    private String baseUrl;
 
     private final IndustrialStuffRepository industrialStuffRepository;
     private final ReviewRepository reviewRepository;
@@ -90,7 +94,10 @@ public class IndustrialStuffViewService {
 
         // Get images
         if (industrial.getImagePaths() != null && !industrial.getImagePaths().isEmpty()) {
-            dto.setImageUrls(industrial.getImagePaths());
+            List<String> fullImageUrls = industrial.getImagePaths().stream()
+                .map(path -> baseUrl + path)
+                .collect(Collectors.toList());
+            dto.setImageUrls(fullImageUrls);
         } else {
             dto.setImageUrls(List.of("/images/default-industrial.jpg"));
         }
