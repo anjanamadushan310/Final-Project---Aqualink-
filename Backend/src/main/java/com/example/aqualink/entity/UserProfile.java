@@ -3,6 +3,7 @@ package com.example.aqualink.entity;
 import java.time.LocalDateTime;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -80,5 +81,13 @@ public class UserProfile {
 
     public String getAddressDistrict() {
         return addressDistrict;
+    }
+
+    @JsonProperty("logoUrl")
+    public String getLogoUrl() {
+        if (logoPath != null && !logoPath.isEmpty()) {
+            return "http://localhost:8080/" + logoPath.replace("\\", "/");
+        }
+        return null;
     }
 }

@@ -7,7 +7,6 @@ function Navbar({
   user,
   onLogout,
   dashboardName,
-  onProfileClick,
   showProfileMenu,
   setShowProfileMenu,
  
@@ -87,7 +86,11 @@ function Navbar({
                   className="w-10 h-10 rounded-full bg-gradient-to-tr from-blue-400 to-cyan-300 border-2 border-white flex items-center justify-center text-xl text-white focus:outline-none"
                   title="Profile"
                 >
-                  <span>{user.nicNumber ? user.nicNumber[0].toUpperCase() : "U"}</span>
+                  {user.logoUrl ? (
+                    <img src={user.logoUrl} alt="Profile Logo" className="w-8 h-8 rounded-full object-cover" />
+                  ) : (
+                    <span>{user.nicNumber ? user.nicNumber[0].toUpperCase() : "U"}</span>
+                  )}
                 </button>
 
                 {/* Profile Menu */}
