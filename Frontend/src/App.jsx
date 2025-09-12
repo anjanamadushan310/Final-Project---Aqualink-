@@ -25,6 +25,8 @@ import Contact from './pages/Contact';
 import QuoteAcceptance from "./components/shopowner/QuoteAcceptance";
 import DeliveryQuoteRequest from "./components/shopowner/DeliveryQuoteRequest";
 import Cart from "./components/shopowner/Cart";
+import IndustrialProductManagement from "./pages/Ai draft/IndustrialProductManagement";
+import IndustrialStuffForm from "./pages/Ai draft/IndustrialStuffForm";
 
 
 const App = () => {
@@ -103,6 +105,9 @@ const App = () => {
 
            <Route path="/delivery-request" element={<DeliveryQuoteRequest />} />
            <Route path="/quote-acceptance" element={<QuoteAcceptance />} />
+
+           <Route path="/industrialproductmanagement" element={<IndustrialProductManagement />} />
+           <Route path="/industrialstuffform" element={<IndustrialStuffForm />} />
            
           
           
