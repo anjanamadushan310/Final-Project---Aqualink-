@@ -293,9 +293,14 @@ const AddServiceModal = ({ onClose, onSuccess }) => {
     duration: '',
     location: '',
     requirements: '',
-    imageUrl: ''
   });
+  const [images, setImages] = useState([]); // New state for images
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const handleImageChange = (e) => {
+    const selectedFiles = Array.from(e.target.files).slice(0, 5); // Limit to 5 files
+    setImages(selectedFiles);
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -303,24 +308,39 @@ const AddServiceModal = ({ onClose, onSuccess }) => {
 
     try {
       const token = localStorage.getItem('token');
+
+      // Create FormData to match backend expectations
+      const formDataToSend = new FormData();
+
+      // Convert service data to JSON string and append as 'serviceData'
+      const serviceData = {
+        ...formData,
+        price: parseFloat(formData.price),
+        maxPrice: formData.maxPrice ? parseFloat(formData.maxPrice) : null
+      };
+      formDataToSend.append('serviceData', JSON.stringify(serviceData));
+
+      // Append images to FormData
+      images.forEach((image, index) => {
+        formDataToSend.append('images', image);
+      });
+
       const response = await fetch('http://localhost:8080/api/service-provider/services', {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`
+          // Don't set Content-Type header - let the browser set it automatically for FormData
         },
-        body: JSON.stringify({
-          ...formData,
-          price: parseFloat(formData.price),
-          maxPrice: formData.maxPrice ? parseFloat(formData.maxPrice) : null
-        })
+        body: formDataToSend
       });
 
       if (response.ok) {
         alert('Service added successfully! It will be available after admin approval.');
         onSuccess();
       } else {
-        throw new Error('Failed to add service');
+        const errorData = await response.text();
+        console.error('Error response:', errorData);
+        throw new Error(`Failed to add service: ${response.status} ${response.statusText}`);
       }
     } catch (error) {
       console.error('Error adding service:', error);
@@ -331,134 +351,168 @@ const AddServiceModal = ({ onClose, onSuccess }) => {
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg p-6 w-full max-w-2xl mx-4 max-h-90vh overflow-y-auto">
-        <div className="flex justify-between items-center mb-4">
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+      <div className="bg-white rounded-lg w-full max-w-2xl max-h-[90vh] flex flex-col">
+        <div className="flex justify-between items-center p-6 border-b border-gray-200 flex-shrink-0">
           <h3 className="text-lg font-semibold">Add New Service</h3>
           <button onClick={onClose} className="text-gray-500 hover:text-gray-700">✕</button>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="grid grid-cols-2 gap-4">
+        <div className="flex-1 overflow-y-auto p-6">
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Service Name *</label>
+                <input
+                  type="text"
+                  value={formData.name}
+                  onChange={(e) => setFormData({...formData, name: e.target.value})}
+                  className="w-full border border-gray-300 rounded-md px-3 py-2"
+                  required
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Category *</label>
+                <select
+                  value={formData.category}
+                  onChange={(e) => setFormData({...formData, category: e.target.value})}
+                  className="w-full border border-gray-300 rounded-md px-3 py-2"
+                  required
+                >
+                  <option value="">Select a category</option>
+                  <option value="Plumbing">Plumbing</option>
+                  <option value="Electrical">Electrical</option>
+                  <option value="Cleaning">Cleaning</option>
+                  <option value="Gardening">Gardening</option>
+                  <option value="Painting">Painting</option>
+                </select>
+              </div>
+            </div>
+
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Service Name *</label>
-              <input
-                type="text"
-                value={formData.name}
-                onChange={(e) => setFormData({...formData, name: e.target.value})}
+              <label className="block text-sm font-medium text-gray-700 mb-1">Description *</label>
+              <textarea
+                value={formData.description}
+                onChange={(e) => setFormData({...formData, description: e.target.value})}
                 className="w-full border border-gray-300 rounded-md px-3 py-2"
+                rows="3"
                 required
               />
             </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Base Price *</label>
+                <input
+                  type="number"
+                  step="0.01"
+                  value={formData.price}
+                  onChange={(e) => setFormData({...formData, price: e.target.value})}
+                  className="w-full border border-gray-300 rounded-md px-3 py-2"
+                  required
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Max Price (Optional)</label>
+                <input
+                  type="number"
+                  step="0.01"
+                  value={formData.maxPrice}
+                  onChange={(e) => setFormData({...formData, maxPrice: e.target.value})}
+                  className="w-full border border-gray-300 rounded-md px-3 py-2"
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Duration</label>
+                <input
+                  type="text"
+                  value={formData.duration}
+                  onChange={(e) => setFormData({...formData, duration: e.target.value})}
+                  className="w-full border border-gray-300 rounded-md px-3 py-2"
+                  placeholder="e.g., 2 hours"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Service Location</label>
+                <input
+                  type="text"
+                  value={formData.location}
+                  onChange={(e) => setFormData({...formData, location: e.target.value})}
+                  className="w-full border border-gray-300 rounded-md px-3 py-2"
+                  placeholder="e.g., Customer location"
+                />
+              </div>
+            </div>
+
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Category *</label>
-              <input
-                type="text"
-                value={formData.category}
-                onChange={(e) => setFormData({...formData, category: e.target.value})}
+              <label className="block text-sm font-medium text-gray-700 mb-1">Requirements</label>
+              <textarea
+                value={formData.requirements}
+                onChange={(e) => setFormData({...formData, requirements: e.target.value})}
                 className="w-full border border-gray-300 rounded-md px-3 py-2"
-                required
+                rows="2"
+                placeholder="What customer needs to provide..."
               />
             </div>
-          </div>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Description *</label>
-            <textarea
-              value={formData.description}
-              onChange={(e) => setFormData({...formData, description: e.target.value})}
-              className="w-full border border-gray-300 rounded-md px-3 py-2"
-              rows="3"
-              required
-            />
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Base Price *</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Upload Images (up to 5)</label>
               <input
-                type="number"
-                step="0.01"
-                value={formData.price}
-                onChange={(e) => setFormData({...formData, price: e.target.value})}
-                className="w-full border border-gray-300 rounded-md px-3 py-2"
-                required
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Max Price (Optional)</label>
-              <input
-                type="number"
-                step="0.01"
-                value={formData.maxPrice}
-                onChange={(e) => setFormData({...formData, maxPrice: e.target.value})}
+                type="file"
+                multiple
+                accept="image/*"
+                onChange={handleImageChange}
                 className="w-full border border-gray-300 rounded-md px-3 py-2"
               />
+              {images.length > 0 && (
+                <div className="mt-3">
+                  <p className="text-sm text-gray-600 mb-2">Selected images ({images.length}/5):</p>
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+                    {images.map((image, index) => (
+                      <div key={index} className="relative">
+                        <img
+                          src={URL.createObjectURL(image)}
+                          alt={`Preview ${index + 1}`}
+                          className="w-full h-20 object-cover rounded-md border"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const newImages = images.filter((_, i) => i !== index);
+                            setImages(newImages);
+                          }}
+                          className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs hover:bg-red-600"
+                        >
+                          ×
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
-          </div>
 
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Duration</label>
-              <input
-                type="text"
-                value={formData.duration}
-                onChange={(e) => setFormData({...formData, duration: e.target.value})}
-                className="w-full border border-gray-300 rounded-md px-3 py-2"
-                placeholder="e.g., 2 hours"
-              />
+            <div className="flex space-x-3 pt-4">
+              <button
+                type="button"
+                onClick={onClose}
+                className="flex-1 px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                disabled={isSubmitting}
+                className="flex-1 px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 disabled:bg-gray-300"
+              >
+                {isSubmitting ? 'Adding...' : 'Add Service'}
+              </button>
             </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Service Location</label>
-              <input
-                type="text"
-                value={formData.location}
-                onChange={(e) => setFormData({...formData, location: e.target.value})}
-                className="w-full border border-gray-300 rounded-md px-3 py-2"
-                placeholder="e.g., Customer location"
-              />
-            </div>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Requirements</label>
-            <textarea
-              value={formData.requirements}
-              onChange={(e) => setFormData({...formData, requirements: e.target.value})}
-              className="w-full border border-gray-300 rounded-md px-3 py-2"
-              rows="2"
-              placeholder="What customer needs to provide..."
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Image URL</label>
-            <input
-              type="url"
-              value={formData.imageUrl}
-              onChange={(e) => setFormData({...formData, imageUrl: e.target.value})}
-              className="w-full border border-gray-300 rounded-md px-3 py-2"
-              placeholder="https://example.com/image.jpg"
-            />
-          </div>
-
-          <div className="flex space-x-3 pt-4">
-            <button
-              type="button"
-              onClick={onClose}
-              className="flex-1 px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
-            >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              disabled={isSubmitting}
-              className="flex-1 px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 disabled:bg-gray-300"
-            >
-              {isSubmitting ? 'Adding...' : 'Add Service'}
-            </button>
-          </div>
-        </form>
+          </form>
+        </div>
       </div>
     </div>
   );

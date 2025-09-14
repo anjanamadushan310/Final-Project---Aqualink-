@@ -243,7 +243,7 @@ public class AuthService {
     }
 
     public User findByEmail(String email) {
-        return userRepository.findByEmail(email)
+        return userRepository.findWithRolesByEmail(email)
                 .orElseThrow(() -> new RuntimeException("User not found"));
     }
 }
