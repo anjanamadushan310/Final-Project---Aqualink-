@@ -3,6 +3,7 @@ package com.example.aqualink.dto;
 import jakarta.validation.constraints.*;
 import lombok.Data;
 import java.math.BigDecimal;
+import java.util.List;
 
 @Data
 public class ServiceRequestDTO {
@@ -22,7 +23,7 @@ public class ServiceRequestDTO {
 
     private BigDecimal maxPrice;
 
-    private String imageUrl;
+    private List<String> imageUrls; // Changed from single imageUrl to list of imageUrls
 
     private String duration;
 

@@ -123,7 +123,7 @@ public class JwtAuthFilter extends OncePerRequestFilter {
             if (jwtUtil.validateToken(jwt, user.getEmail())) {
                 UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
                         user.getEmail(), null,
-                        user.getRoles().stream().map(role -> new SimpleGrantedAuthority("ROLE_" + role.name())).toList()
+                        user.getRoles().stream().map(role -> new SimpleGrantedAuthority(role.name())).toList()  // ROLE_
                 );
 
                 authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));

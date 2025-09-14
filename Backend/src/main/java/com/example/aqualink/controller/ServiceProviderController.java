@@ -1,40 +1,51 @@
 package com.example.aqualink.controller;
 
-import com.example.aqualink.entity.Service;
-import com.example.aqualink.entity.ServiceBooking;
-import com.example.aqualink.security.util.JwtUtil;
-import com.example.aqualink.service.ServiceService;
-import com.example.aqualink.dto.ServiceRequestDTO;
-import com.example.aqualink.dto.BookingUpdateRequestDTO;
-import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestPart;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
+
+import com.example.aqualink.dto.BookingUpdateRequestDTO;
+import com.example.aqualink.dto.ServiceRequestDTO;
+import com.example.aqualink.entity.Service;
+import com.example.aqualink.entity.ServiceBooking;
+import com.example.aqualink.security.util.JwtUtil;
+import com.example.aqualink.service.ServiceService;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
-import java.util.Map;
+import lombok.RequiredArgsConstructor;
 
 @RestController
 @RequestMapping("/api/service-provider/services")
 @RequiredArgsConstructor
-@CrossOrigin(origins = "*")
+@CrossOrigin(origins = {"http://localhost:5173", "http://localhost:3000"})
 @PreAuthorize("hasRole('SERVICE_PROVIDER')")
 public class ServiceProviderController {
 
     private final ServiceService serviceService;
     private final JwtUtil jwtUtils;
 
-    @PostMapping
+    @PostMapping(consumes = org.springframework.http.MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<Service> createService(
-            @Valid @RequestBody ServiceRequestDTO request,
+            @RequestPart("serviceData") ServiceRequestDTO request,
+            @RequestPart(value = "images", required = false) MultipartFile[] images,
             HttpServletRequest httpRequest) {
 
         Long serviceProviderId = getCurrentUserId(httpRequest);
-        Service service = serviceService.createService(request, serviceProviderId);
+        Service service = serviceService.createService(request, images, serviceProviderId);
         return ResponseEntity.ok(service);
     }
 

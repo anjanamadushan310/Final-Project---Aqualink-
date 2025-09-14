@@ -2,6 +2,7 @@ package com.example.aqualink.repository;
 
 import com.example.aqualink.entity.User;
 import com.example.aqualink.entity.UserProfile;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
@@ -27,6 +28,10 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
     // Find active user by email
     Optional<User> findByEmailAndActiveTrue(String email);
+
+    // New method to fetch user with roles eagerly
+    @EntityGraph(attributePaths = {"userRoles"})
+    Optional<User> findWithRolesByEmail(String email);
 
 
 

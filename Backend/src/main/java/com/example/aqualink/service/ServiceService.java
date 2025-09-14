@@ -1,7 +1,5 @@
 package com.example.aqualink.service;
 
-import com.example.aqualink.entity.Service;
-import com.example.aqualink.entity.Service.ApprovalStatus;
 import com.example.aqualink.entity.ServiceBooking;
 import com.example.aqualink.entity.ServiceReview;
 import com.example.aqualink.repository.ServiceRepository;
@@ -11,13 +9,15 @@ import com.example.aqualink.dto.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.stereotype.Service as SpringService;
+import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.List;
+import org.springframework.web.multipart.MultipartFile;
 
-@SpringService
+@Service
 @RequiredArgsConstructor
 @Transactional
 public class ServiceService {
@@ -25,47 +25,61 @@ public class ServiceService {
     private final ServiceRepository serviceRepository;
     private final ServiceBookingRepository bookingRepository;
     private final ServiceReviewRepository reviewRepository;
+    private final FileUploadService fileUploadService;
 
     // Public Methods (for customers)
-    public Page<Service> getAllApprovedServices(Pageable pageable) {
-        return serviceRepository.findByApprovalStatusAndAvailable(ApprovalStatus.APPROVED, true, pageable);
+    public Page<com.example.aqualink.entity.Service> getAllApprovedServices(Pageable pageable) {
+        return serviceRepository.findByApprovalStatusAndAvailable(
+                com.example.aqualink.entity.Service.ApprovalStatus.APPROVED, true, pageable);
     }
 
-    public Page<Service> searchApprovedServices(String search, Pageable pageable) {
+    public Page<com.example.aqualink.entity.Service> searchApprovedServices(String search, Pageable pageable) {
         return serviceRepository.searchApprovedServices(search, pageable);
     }
 
-    public Service getApprovedServiceById(Long id) {
+    public com.example.aqualink.entity.Service getApprovedServiceById(Long id) {
         return serviceRepository.findById(id)
-                .filter(service -> service.getApprovalStatus() == ApprovalStatus.APPROVED && service.getAvailable())
+                .filter(service -> service.getApprovalStatus() ==
+                        com.example.aqualink.entity.Service.ApprovalStatus.APPROVED && service.getAvailable())
                 .orElseThrow(() -> new RuntimeException("Service not found or not available"));
     }
 
-    public Page<Service> getServicesByCategory(String category, Pageable pageable) {
+    public Page<com.example.aqualink.entity.Service> getServicesByCategory(String category, Pageable pageable) {
         return serviceRepository.findByApprovalStatusAndCategoryAndAvailable(
-                ApprovalStatus.APPROVED, category, true, pageable);
+                com.example.aqualink.entity.Service.ApprovalStatus.APPROVED, category, true, pageable);
     }
 
     // Service Provider Methods
-    public Service createService(ServiceRequestDTO request, Long serviceProviderId) {
-        Service service = new Service();
+    public com.example.aqualink.entity.Service createService(ServiceRequestDTO request, MultipartFile[] images, Long serviceProviderId) {
+        com.example.aqualink.entity.Service service = new com.example.aqualink.entity.Service();
         service.setName(request.getName());
         service.setDescription(request.getDescription());
         service.setCategory(request.getCategory());
         service.setPrice(request.getPrice());
         service.setMaxPrice(request.getMaxPrice());
-        service.setImageUrl(request.getImageUrl());
         service.setDuration(request.getDuration());
         service.setLocation(request.getLocation());
         service.setRequirements(request.getRequirements());
         service.setServiceProviderId(serviceProviderId);
-        service.setApprovalStatus(ApprovalStatus.PENDING);
+        service.setApprovalStatus(com.example.aqualink.entity.Service.ApprovalStatus.PENDING);
+
+        if (images != null && images.length > 0) {
+            try {
+                // Save images and set image URL (use first image as main image)
+                List<String> imagePaths = fileUploadService.saveImages(images, serviceProviderId);
+                if (!imagePaths.isEmpty()) {
+                    service.setImageUrl(imagePaths.get(0)); // Set first image as main image URL
+                }
+            } catch (Exception e) {
+                throw new RuntimeException("Failed to save service images: " + e.getMessage());
+            }
+        }
 
         return serviceRepository.save(service);
     }
 
-    public Service updateService(Long id, ServiceRequestDTO request, Long serviceProviderId) {
-        Service service = serviceRepository.findById(id)
+    public com.example.aqualink.entity.Service updateService(Long id, ServiceRequestDTO request, Long serviceProviderId) {
+        com.example.aqualink.entity.Service service = serviceRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Service not found"));
 
         if (!service.getServiceProviderId().equals(serviceProviderId)) {
@@ -83,8 +97,8 @@ public class ServiceService {
         service.setRequirements(request.getRequirements());
 
         // Reset approval if service was modified
-        if (service.getApprovalStatus() == ApprovalStatus.APPROVED) {
-            service.setApprovalStatus(ApprovalStatus.PENDING);
+        if (service.getApprovalStatus() == com.example.aqualink.entity.Service.ApprovalStatus.APPROVED) {
+            service.setApprovalStatus(com.example.aqualink.entity.Service.ApprovalStatus.PENDING);
             service.setApprovedAt(null);
             service.setApprovedBy(null);
         }
@@ -92,13 +106,13 @@ public class ServiceService {
         return serviceRepository.save(service);
     }
 
-    public Page<Service> getServiceProviderServices(Long serviceProviderId, Pageable pageable) {
+    public Page<com.example.aqualink.entity.Service> getServiceProviderServices(Long serviceProviderId, Pageable pageable) {
         return serviceRepository.findByServiceProviderIdOrderByCreatedAtDesc(serviceProviderId, pageable);
     }
 
     // Booking Methods
     public ServiceBooking bookService(ServiceBookingRequestDTO request, Long customerId) {
-        Service service = getApprovedServiceById(request.getServiceId());
+        com.example.aqualink.entity.Service service = getApprovedServiceById(request.getServiceId());
 
         ServiceBooking booking = new ServiceBooking();
         booking.setService(service);
@@ -113,7 +127,7 @@ public class ServiceService {
         return bookingRepository.save(booking);
     }
 
-    public ServiceBooking updateBookingStatus(Long bookingId, BookingUpdateRequest request, Long serviceProviderId) {
+    public ServiceBooking updateBookingStatus(Long bookingId, BookingUpdateRequestDTO request, Long serviceProviderId) {
         ServiceBooking booking = bookingRepository.findById(bookingId)
                 .orElseThrow(() -> new RuntimeException("Booking not found"));
 
@@ -178,7 +192,7 @@ public class ServiceService {
         Double avgRating = reviewRepository.getAverageRating(serviceId);
         Long reviewCount = reviewRepository.countByServiceId(serviceId);
 
-        Service service = serviceRepository.findById(serviceId).orElse(null);
+        com.example.aqualink.entity.Service service = serviceRepository.findById(serviceId).orElse(null);
         if (service != null) {
             service.setReviewRate(avgRating != null ? avgRating : 0.0);
             service.setReviewCount(reviewCount.intValue());
@@ -187,15 +201,16 @@ public class ServiceService {
     }
 
     // Admin Methods
-    public Page<Service> getPendingApprovals(Pageable pageable) {
-        return serviceRepository.findByApprovalStatusOrderByCreatedAtAsc(ApprovalStatus.PENDING, pageable);
+    public Page<com.example.aqualink.entity.Service> getPendingApprovals(Pageable pageable) {
+        return serviceRepository.findByApprovalStatusOrderByCreatedAtAsc(
+                com.example.aqualink.entity.Service.ApprovalStatus.PENDING, pageable);
     }
 
-    public Service approveService(Long id, Long adminId) {
-        Service service = serviceRepository.findById(id)
+    public com.example.aqualink.entity.Service approveService(Long id, Long adminId) {
+        com.example.aqualink.entity.Service service = serviceRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Service not found"));
 
-        service.setApprovalStatus(ApprovalStatus.APPROVED);
+        service.setApprovalStatus(com.example.aqualink.entity.Service.ApprovalStatus.APPROVED);
         service.setApprovedAt(LocalDateTime.now());
         service.setApprovedBy(adminId);
         service.setRejectionReason(null);
@@ -203,11 +218,11 @@ public class ServiceService {
         return serviceRepository.save(service);
     }
 
-    public Service rejectService(Long id, String reason, Long adminId) {
-        Service service = serviceRepository.findById(id)
+    public com.example.aqualink.entity.Service rejectService(Long id, String reason, Long adminId) {
+        com.example.aqualink.entity.Service service = serviceRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Service not found"));
 
-        service.setApprovalStatus(ApprovalStatus.REJECTED);
+        service.setApprovalStatus(com.example.aqualink.entity.Service.ApprovalStatus.REJECTED);
         service.setRejectionReason(reason);
         service.setApprovedBy(adminId);
 
