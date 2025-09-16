@@ -159,13 +159,20 @@ const AdminServiceCard = ({ service, onApprove, onReject }) => {
             </p>
           </div>
           
-          {service.imageUrl && (
+          {service.imagePaths && service.imagePaths.length > 0 && (
             <div className="w-24 h-24 rounded-lg overflow-hidden ml-4">
               <img
-                src={service.imageUrl}
+                src={`http://localhost:8080${service.imagePaths[0]}`}
                 alt={service.name}
                 className="w-full h-full object-cover"
+                onError={(e) => {
+                  e.target.style.display = 'none';
+                  e.target.nextSibling.style.display = 'flex';
+                }}
               />
+              <div className="w-full h-full bg-gradient-to-br from-green-500 to-green-700 flex items-center justify-center" style={{ display: 'none' }}>
+                <div className="text-2xl text-white">🛠️</div>
+              </div>
             </div>
           )}
         </div>

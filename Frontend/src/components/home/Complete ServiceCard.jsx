@@ -41,11 +41,15 @@ const ServiceCard = ({ service, onBookingSuccess }) => {
     <div className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow duration-300">
       {/* Service Image */}
       <div className="h-48 overflow-hidden">
-        {service.imageUrl ? (
+        {service.imagePaths && service.imagePaths.length > 0 ? (
           <img
-            src={service.imageUrl}
+            src={`http://localhost:8080${service.imagePaths[0]}`}
             alt={service.name}
             className="w-full h-full object-cover"
+            onError={(e) => {
+              e.target.style.display = 'none';
+              e.target.nextSibling.style.display = 'flex';
+            }}
           />
         ) : (
           <div className="h-full bg-gradient-to-br from-green-500 to-green-700 flex items-center justify-center">
