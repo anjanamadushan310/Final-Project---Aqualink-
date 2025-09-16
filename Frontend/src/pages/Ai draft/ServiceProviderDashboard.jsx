@@ -88,7 +88,7 @@ const ServiceProviderDashboard = () => {
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {services.map((service) => (
-                <ServiceProviderCard key={service.id} service={service} onUpdate={fetchServices} />
+                <ServiceProviderCard key={service?.id || Math.random()} service={service} onUpdate={fetchServices} />
               ))}
             </div>
           </div>
@@ -132,23 +132,31 @@ const ServiceProviderCard = ({ service, onUpdate }) => {
     }
   };
 
+  if (!service) {
+    return (
+      <div className="bg-white rounded-lg shadow-md p-6">
+        <p className="text-gray-500">Service data not available</p>
+      </div>
+    );
+  }
+
   return (
     <div className="bg-white rounded-lg shadow-md p-6">
       <div className="flex justify-between items-start mb-4">
-        <h3 className="text-lg font-semibold text-gray-900">{service.name}</h3>
+        <h3 className="text-lg font-semibold text-gray-900">{service.name || 'Unnamed Service'}</h3>
         <span className={`px-2 py-1 text-xs font-medium rounded-full ${getStatusColor(service.approvalStatus)}`}>
-          {service.approvalStatus}
+          {service.approvalStatus || 'UNKNOWN'}
         </span>
       </div>
-      
-      <p className="text-gray-600 mb-4 line-clamp-2">{service.description}</p>
-      
+
+      <p className="text-gray-600 mb-4 line-clamp-2">{service.description || 'No description'}</p>
+
       <div className="space-y-2 text-sm text-gray-600">
-        <div>Category: {service.category}</div>
-        <div>Price: ${service.price}</div>
+        <div>Category: {service.category || 'N/A'}</div>
+        <div>Price: ${service.price || '0.00'}</div>
         <div>Rating: {service.reviewRate?.toFixed(1) || '0.0'} ({service.reviewCount || 0} reviews)</div>
       </div>
-      
+
       <div className="mt-4 flex space-x-2">
         <button className="flex-1 bg-blue-600 text-white px-3 py-2 rounded text-sm hover:bg-blue-700">
           Edit
@@ -166,6 +174,11 @@ const BookingCard = ({ booking, onUpdate }) => {
   const [isUpdating, setIsUpdating] = useState(false);
 
   const updateBookingStatus = async (status, quotedPrice = null) => {
+    if (!booking?.id) {
+      alert('Invalid booking data');
+      return;
+    }
+
     try {
       setIsUpdating(true);
       const token = localStorage.getItem('token');
@@ -205,34 +218,42 @@ const BookingCard = ({ booking, onUpdate }) => {
     }
   };
 
+  if (!booking) {
+    return (
+      <div className="bg-white rounded-lg shadow-md p-6">
+        <p className="text-gray-500">Booking data not available</p>
+      </div>
+    );
+  }
+
   return (
     <div className="bg-white rounded-lg shadow-md p-6">
       <div className="flex justify-between items-start mb-4">
         <div>
-          <h3 className="text-lg font-semibold text-gray-900">{booking.service?.name}</h3>
-          <p className="text-sm text-gray-600">Booking #{booking.id}</p>
+          <h3 className="text-lg font-semibold text-gray-900">{booking.service?.name || 'Service Name'}</h3>
+          <p className="text-sm text-gray-600">Booking #{booking.id || 'N/A'}</p>
         </div>
         <span className={`px-2 py-1 text-xs font-medium rounded-full ${getStatusColor(booking.status)}`}>
-          {booking.status}
+          {booking.status || 'UNKNOWN'}
         </span>
       </div>
 
       <div className="grid grid-cols-2 gap-4 text-sm text-gray-600 mb-4">
         <div>
           <div className="font-medium">Customer Requirements:</div>
-          <div>{booking.customerRequirements}</div>
+          <div>{booking.customerRequirements || 'N/A'}</div>
         </div>
         <div>
           <div className="font-medium">Preferred Date:</div>
-          <div>{new Date(booking.preferredDate).toLocaleDateString()}</div>
+          <div>{booking.preferredDate ? new Date(booking.preferredDate).toLocaleDateString() : 'N/A'}</div>
         </div>
         <div>
           <div className="font-medium">Location:</div>
-          <div>{booking.customerLocation}</div>
+          <div>{booking.customerLocation || 'N/A'}</div>
         </div>
         <div>
           <div className="font-medium">Phone:</div>
-          <div>{booking.customerPhone}</div>
+          <div>{booking.customerPhone || 'N/A'}</div>
         </div>
       </div>
 
@@ -325,6 +346,9 @@ const AddServiceModal = ({ onClose, onSuccess }) => {
         formDataToSend.append('images', image);
       });
 
+      console.log('Sending FormData with serviceData:', serviceData);
+      console.log('Number of images:', images.length);
+
       const response = await fetch('http://localhost:8080/api/service-provider/services', {
         method: 'POST',
         headers: {
@@ -340,6 +364,8 @@ const AddServiceModal = ({ onClose, onSuccess }) => {
       } else {
         const errorData = await response.text();
         console.error('Error response:', errorData);
+        console.error('Response status:', response.status);
+        console.error('Response headers:', response.headers);
         throw new Error(`Failed to add service: ${response.status} ${response.statusText}`);
       }
     } catch (error) {

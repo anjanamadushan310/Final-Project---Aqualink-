@@ -41,7 +41,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/uploads/**").permitAll()
                         // Allow API endpoints
                         .requestMatchers("/api/auth/**","/api/users/**", "/api/banners/**", "/api/v1/fish/**","/api/fish/**","/api/profile/**","/api/industrial-ads/**","/api/industrial/**","/api/v1/industrial/**","/api/services/**","/api/service-provider/services/**").permitAll()
-                        .requestMatchers(HttpMethod.POST, "/api/fish-ads","/api/service-provider/services/**").permitAll() // Allow POST for fish ads
+                        .requestMatchers(HttpMethod.POST, "/api/fish-ads").permitAll() // Allow POST for fish ads
                         .requestMatchers(HttpMethod.GET, "/api/fish-ads").permitAll()
                         .requestMatchers("/uploads/profile-images/**").permitAll()// Allow GET for fish ads
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()

@@ -1,21 +1,26 @@
 package com.example.aqualink.service;
 
-import com.example.aqualink.entity.ServiceBooking;
-import com.example.aqualink.entity.ServiceReview;
-import com.example.aqualink.repository.ServiceRepository;
-import com.example.aqualink.repository.ServiceBookingRepository;
-import com.example.aqualink.repository.ServiceReviewRepository;
-import com.example.aqualink.dto.*;
-import lombok.RequiredArgsConstructor;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.List;
+
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
-import java.util.List;
 import org.springframework.web.multipart.MultipartFile;
+
+import com.example.aqualink.dto.BookingUpdateRequestDTO;
+import com.example.aqualink.dto.ServiceBookingRequestDTO;
+import com.example.aqualink.dto.ServiceRequestDTO;
+import com.example.aqualink.dto.ServiceReviewRequestDTO;
+import com.example.aqualink.entity.ServiceBooking;
+import com.example.aqualink.entity.ServiceReview;
+import com.example.aqualink.repository.ServiceBookingRepository;
+import com.example.aqualink.repository.ServiceRepository;
+import com.example.aqualink.repository.ServiceReviewRepository;
+
+import lombok.RequiredArgsConstructor;
 
 @Service
 @RequiredArgsConstructor
@@ -65,11 +70,9 @@ public class ServiceService {
 
         if (images != null && images.length > 0) {
             try {
-                // Save images and set image URL (use first image as main image)
+                // Save images and set all image paths
                 List<String> imagePaths = fileUploadService.saveImages(images, serviceProviderId);
-                if (!imagePaths.isEmpty()) {
-                    service.setImageUrl(imagePaths.get(0)); // Set first image as main image URL
-                }
+                service.setImagePaths(imagePaths);
             } catch (Exception e) {
                 throw new RuntimeException("Failed to save service images: " + e.getMessage());
             }
@@ -91,7 +94,6 @@ public class ServiceService {
         service.setCategory(request.getCategory());
         service.setPrice(request.getPrice());
         service.setMaxPrice(request.getMaxPrice());
-        service.setImageUrl(request.getImageUrl());
         service.setDuration(request.getDuration());
         service.setLocation(request.getLocation());
         service.setRequirements(request.getRequirements());

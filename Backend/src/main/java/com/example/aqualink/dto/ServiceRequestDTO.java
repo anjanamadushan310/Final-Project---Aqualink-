@@ -1,9 +1,11 @@
 package com.example.aqualink.dto;
 
-import jakarta.validation.constraints.*;
-import lombok.Data;
 import java.math.BigDecimal;
-import java.util.List;
+
+import jakarta.validation.constraints.DecimalMin;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import lombok.Data;
 
 @Data
 public class ServiceRequestDTO {
@@ -22,8 +24,6 @@ public class ServiceRequestDTO {
     private BigDecimal price;
 
     private BigDecimal maxPrice;
-
-    private List<String> imageUrls; // Changed from single imageUrl to list of imageUrls
 
     private String duration;
 
