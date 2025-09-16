@@ -78,7 +78,6 @@ public class ServiceService {
         service.setPrice(request.getPrice());
         service.setMaxPrice(request.getMaxPrice());
         service.setDuration(request.getDuration());
-        service.setLocation(request.getLocation());
         service.setRequirements(request.getRequirements());
         service.setServiceProviderId(serviceProviderId);
         service.setApprovalStatus(com.example.aqualink.entity.Service.ApprovalStatus.PENDING);
@@ -110,7 +109,6 @@ public class ServiceService {
         service.setPrice(request.getPrice());
         service.setMaxPrice(request.getMaxPrice());
         service.setDuration(request.getDuration());
-        service.setLocation(request.getLocation());
         service.setRequirements(request.getRequirements());
 
         // Reset approval if service was modified
