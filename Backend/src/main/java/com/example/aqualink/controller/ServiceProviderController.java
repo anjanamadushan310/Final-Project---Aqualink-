@@ -11,9 +11,9 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -23,6 +23,7 @@ import com.example.aqualink.entity.Service;
 import com.example.aqualink.entity.ServiceBooking;
 import com.example.aqualink.security.util.JwtUtil;
 import com.example.aqualink.service.ServiceService;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
@@ -37,16 +38,22 @@ public class ServiceProviderController {
 
     private final ServiceService serviceService;
     private final JwtUtil jwtUtils;
+    private final ObjectMapper objectMapper;
 
     @PostMapping(consumes = org.springframework.http.MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<Service> createService(
-            @RequestPart("serviceData") ServiceRequestDTO request,
+            @RequestPart("serviceData") String serviceDataJson,
             @RequestPart(value = "images", required = false) MultipartFile[] images,
             HttpServletRequest httpRequest) {
 
-        Long serviceProviderId = getCurrentUserId(httpRequest);
-        Service service = serviceService.createService(request, images, serviceProviderId);
-        return ResponseEntity.ok(service);
+        try {
+            ServiceRequestDTO request = objectMapper.readValue(serviceDataJson, ServiceRequestDTO.class);
+            Long serviceProviderId = getCurrentUserId(httpRequest);
+            Service service = serviceService.createService(request, images, serviceProviderId);
+            return ResponseEntity.ok(service);
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to parse service data: " + e.getMessage());
+        }
     }
 
     @GetMapping
