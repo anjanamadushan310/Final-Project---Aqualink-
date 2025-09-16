@@ -18,7 +18,6 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
-import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -26,7 +25,6 @@ import lombok.NoArgsConstructor;
 @Table(name = "services")
 @Data
 @NoArgsConstructor
-@AllArgsConstructor
 public class Service {
 
     @Id
@@ -72,10 +70,13 @@ public class Service {
 
     private String duration; // Service duration
 
-    private String location; // Service location/area
+    //private String location; // Service location/area
 
     @Column(columnDefinition = "TEXT")
-    private String requirements; // What customer needs to provide
+    private String requirements;
+
+    @jakarta.persistence.Transient
+    private String district; // Service provider's district from profile
 
     @Column(nullable = false)
     private LocalDateTime createdAt = LocalDateTime.now();

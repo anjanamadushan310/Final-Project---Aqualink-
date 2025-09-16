@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
 
 const ServiceCard = ({ service, onBookingSuccess }) => {
-  const [isBooking, setIsBooking] = useState(false);
+
   const [showBookingModal, setShowBookingModal] = useState(false);
+  const [imageLoading, setImageLoading] = useState(true);
 
   const handleBookService = () => {
     const token = localStorage.getItem('token');
@@ -15,35 +16,81 @@ const ServiceCard = ({ service, onBookingSuccess }) => {
 
   const formatPrice = (price, maxPrice) => {
     if (maxPrice && maxPrice > price) {
-      return `$${price} - $${maxPrice}`;
+      return `LKR ${price} - LKR ${maxPrice}`;
     }
-    return `from $${price}`;
+    return `from LKR ${price}`;
+  };
+
+  const getImageUrl = (imagePath) => {
+    console.log("Image path received:", imagePath);
+
+    if (!imagePath) {
+      // Use a data URL for a placeholder image (gray square)
+      return 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTAwIiBoZWlnaHQ9IjEwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwIiBoZWlnaHQ9IjEwMCIgZmlsbD0iI2NjYyIvPjwvc3ZnPg==';
+    }
+
+    if (imagePath.startsWith('http')) {
+      return imagePath;
+    }
+
+    if (imagePath.startsWith('/uploads/')) {
+      const fullUrl = `http://localhost:8080${imagePath}`;
+      console.log("Constructed URL:", fullUrl);
+      return fullUrl;
+    }
+
+    const fullUrl = `http://localhost:8080/uploads/${imagePath}`;
+    console.log("Constructed URL (fallback):", fullUrl);
+    return fullUrl;
+  };
+
+  const handleImageLoad = () => {
+    setImageLoading(false);
+  };
+
+  const handleImageError = (e) => {
+    console.error("Image failed to load:", e.target.src);
+    setImageLoading(false);
+    e.target.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTAwIiBoZWlnaHQ9IjEwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwIiBoZWlnaHQ9IjEwMCIgZmlsbD0iI2NjYyIvPjwvc3ZnPg==';
   };
 
   return (
     <>
       <div className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow duration-300">
         {/* Service Image */}
-        <div className="h-48 overflow-hidden">
-          {service.imageUrl ? (
-            <img
-              src={service.imageUrl}
-              alt={service.name}
-              className="w-full h-full object-cover"
-            />
-          ) : (
-            <div className="h-full bg-gradient-to-br from-green-500 to-green-700 flex items-center justify-center">
-              <div className="text-4xl text-white">🛠️</div>
+        <div className="relative h-48 overflow-hidden bg-gray-200">
+          {imageLoading && (
+            <div className="absolute inset-0 flex items-center justify-center">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-600"></div>
             </div>
           )}
+          <img
+            src={getImageUrl(service.imagePaths?.[0])}
+            alt={service.name}
+            className={`w-full h-full object-cover transition-opacity duration-300 ${
+              imageLoading ? 'opacity-0' : 'opacity-100'
+            }`}
+            onLoad={handleImageLoad}
+            onError={handleImageError}
+          />
         </div>
 
         <div className="p-6">
           {/* Service Name */}
           <h3 className="text-xl font-semibold text-gray-900 mb-2">{service.name}</h3>
-          
-          {/* Service Description */}
-          <p className="text-gray-600 mb-4 line-clamp-3">{service.description}</p>
+
+          {/* Location */}
+          {service.district && (
+            <div className="mb-2 flex items-center text-sm text-gray-500">
+              <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                      d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                      d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+              </svg>
+              <span>{service.district}</span>
+            </div>
+          )}
           
           {/* Review Rate Section */}
           <div className="flex items-center mb-3">
@@ -82,11 +129,6 @@ const ServiceCard = ({ service, onBookingSuccess }) => {
               </div>
             )}
             
-            {service.location && (
-              <div className="text-sm text-gray-600">
-                📍 Location: {service.location}
-              </div>
-            )}
           </div>
 
           {/* Availability Status */}
@@ -101,16 +143,16 @@ const ServiceCard = ({ service, onBookingSuccess }) => {
           </div>
 
           {/* Book Service Button */}
-          <button 
+          <button
             onClick={handleBookService}
-            disabled={isBooking || service.available === false}
+            disabled={service.available === false}
             className={`w-full px-4 py-2 rounded-md font-medium transition-colors ${
-              isBooking || service.available === false
+              service.available === false
                 ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
                 : 'bg-green-600 text-white hover:bg-green-700'
             }`}
           >
-            {isBooking ? 'Booking...' : 'Book Service'}
+            Book Service
           </button>
         </div>
       </div>
