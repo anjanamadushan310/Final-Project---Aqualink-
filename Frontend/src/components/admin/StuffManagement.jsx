@@ -25,7 +25,7 @@ const industrialApi = {
   deleteIndustrial: (id) => api.delete(`/${id}`),
 };
 
-const IndustrialProductManagement = () => {
+const StuffManagement = () => {
   const [filter, setFilter] = useState('pending');
   const [products, setProducts] = useState([]);
   const [stats, setStats] = useState({
@@ -296,4 +296,4 @@ const IndustrialProductManagement = () => {
   );
 };
 
-export default IndustrialProductManagement;
+export default StuffManagement;

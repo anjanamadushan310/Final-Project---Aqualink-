@@ -15,10 +15,13 @@ const Sidebar = ({ activeComponent, setActiveComponent, sidebarOpen, setSidebarO
   const menuItems = [
     { id: 'user-verification', label: 'User Verification', icon: UserPlusIcon },
     { id: 'product-management', label: 'Product Management', icon: CubeIcon },
+    { id: 'Stuff-management', label: 'Stuff Management', icon: CubeIcon },
+    { id: 'Service-management', label: 'Service Management', icon: CubeIcon },
     { id: 'user-management', label: 'User Management', icon: UsersIcon },
     { id: 'reviews', label: 'Reviews Management', icon: StarIcon },
     { id: 'earnings', label: 'Earnings & Payments', icon: CurrencyDollarIcon },
     { id: 'banners', label: 'Banner Management', icon: PhotoIcon },
+    
   ];
 
   return (

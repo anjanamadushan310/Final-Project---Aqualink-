@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 
-const AdminServicesDashboard = () => {
+const ServicesManagement = () => {
   const [pendingServices, setPendingServices] = useState([]);
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState({ pendingCount: 0 });
@@ -299,4 +299,4 @@ const RejectModal = ({ serviceName, onReject, onClose }) => {
   );
 };
 
-export default AdminServicesDashboard;
+export default ServicesManagement;
