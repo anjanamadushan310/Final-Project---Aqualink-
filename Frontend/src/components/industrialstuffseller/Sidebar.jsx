@@ -17,6 +17,7 @@ const Sidebar = ({ activeComponent, setActiveComponent, sidebarOpen, setSidebarO
     
     { id: 'industrial-stuff-orders', label: 'Orders', icon: ClipboardDocumentListIcon },
     { id: 'industrial-stuff-Stock-management', label: 'Stock Management', icon: ShoppingBagIcon },
+    { id: 'industrial-stuff-form', label: 'Create Ads', icon: ShoppingBagIcon },
     
   ];
 

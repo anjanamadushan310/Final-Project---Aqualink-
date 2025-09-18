@@ -16,6 +16,7 @@ const Sidebar = ({ activeComponent, setActiveComponent, sidebarOpen, setSidebarO
   const menuItems = [
     { id: 'service-requests', label: 'Service Requests', icon: ClipboardDocumentListIcon },
     { id: 'service-history', label: 'Service History', icon: ShoppingBagIcon },
+    { id: 'service-ads-form', label: 'Create Ads', icon: ShoppingBagIcon },
   
   ];
 

@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import Sidebar from '../../components/industrialstuffseller/Sidebar';
 import IndustrialStuffOrder from '../../components/industrialstuffseller/IndustrialStuffOrders';
 import IndustrialStuffFishStockManagement from '../../components/industrialstuffseller/IndustrialStuffStockManagement';
+import IndustrialStuffForm from '../../components/industrialstuffseller/IndustrialStuffForm';
 
 
 const IndustrialStuffSellerDashboard = () => {
@@ -13,7 +14,7 @@ const IndustrialStuffSellerDashboard = () => {
       
       case 'industrial-stuff-orders': return <IndustrialStuffOrder />;
       case 'industrial-stuff-Stock-management': return <IndustrialStuffFishStockManagement />;
-     
+      case 'industrial-stuff-form': return <IndustrialStuffForm />;
       default: return <IndustrialStuffOrder/>;
     }
   };

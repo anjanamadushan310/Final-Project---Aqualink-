@@ -4,6 +4,7 @@ import Sidebar from '../../components/shopowner/Sidebar';
 import QuoteAcceptance from './../../components/shopowner/QuoteAcceptance';
 import DeliveryQuoteRequest from './../../components/shopowner/DeliveryQuoteRequest';
 import Cart from '../../components/shopowner/Cart';
+import MyBookings from '../../components/shopowner/MyBookings';
 
 
 
@@ -18,6 +19,7 @@ const ShopOwnerDashboard= () => {
       case 'Cart': return <Cart/>;
       case 'delivery-quoteRequest': return <DeliveryQuoteRequest/>;
       case 'quote-acceptance': return <QuoteAcceptance />;
+      case 'my-bookings': return <MyBookings />;
       default: return <OrdersManagement />;
     }
   };

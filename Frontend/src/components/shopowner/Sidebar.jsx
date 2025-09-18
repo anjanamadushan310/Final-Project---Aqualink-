@@ -18,6 +18,7 @@ const Sidebar = ({ activeComponent, setActiveComponent, sidebarOpen, setSidebarO
     { id: 'Cart', label: 'Cart', icon: ClipboardDocumentListIcon },
     { id: 'delivery-quoteRequest', label: 'Delivery Quote Request', icon: ClipboardDocumentListIcon },
     { id: 'quote-acceptance', label: 'Quote Acceptance', icon: ShoppingBagIcon },
+    { id: 'my-bookings', label: 'My Bookings', icon: ShoppingBagIcon },
     
   
   ];

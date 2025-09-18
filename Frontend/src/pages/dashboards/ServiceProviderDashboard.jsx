@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import Sidebar from '../../components/serviceprovider/Sidebar';
 import ServiceHistory from '../../components/serviceprovider/ServiceHistory';
 import ServiceRequests from './../../components/serviceprovider/ServiceRequests';
+import ServiceAdsForm from '../../components/serviceprovider/ServiceAdsForm';
 
 
 
@@ -14,6 +15,7 @@ const ServiceProviderDashboard= () => {
       
       case 'fish-order': return <ServiceRequests />;
       case 'service-history': return <ServiceHistory />;
+      case 'service-ads-form': return <ServiceAdsForm />;
       default: return <ServiceRequests />;
     }
   };

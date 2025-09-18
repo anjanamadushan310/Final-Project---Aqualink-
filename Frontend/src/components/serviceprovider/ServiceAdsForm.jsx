@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 
-const ServiceProviderDashboard = () => {
+const ServiceAdsForm = () => {
   const [services, setServices] = useState([]);
   const [bookings, setBookings] = useState([]);
   const [activeTab, setActiveTab] = useState('services');
@@ -544,4 +544,4 @@ const AddServiceModal = ({ onClose, onSuccess }) => {
   );
 };
 
-export default ServiceProviderDashboard;
+export default ServiceAdsForm;
