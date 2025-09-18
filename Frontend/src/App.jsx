@@ -14,14 +14,11 @@ import CollectorDashboard from "./pages/dashboards/CollectorDashboard";
 import ServiceProviderDashboard from "./pages/dashboards/ServiceProviderDashboard";
 import IndustrialStuffSellerDashboard from "./pages/dashboards/IndustrialStuffSellerDashboard";
 import DeliveryPersonDashboard from "./pages/dashboards/DeliveryPersonDashboard";
-
-
 import ProductApprove from "./components/admin/ProductApprove";
 import FishAdsForm from "./components/farmowner/FishAdsForm";
 import UserProfile from "./pages/UserProfile";
 import AboutPage from './pages/AboutPage';
 import Contact from './pages/Contact';
-
 import QuoteAcceptance from "./components/shopowner/QuoteAcceptance";
 import DeliveryQuoteRequest from "./components/shopowner/DeliveryQuoteRequest";
 import Cart from "./components/shopowner/Cart";
