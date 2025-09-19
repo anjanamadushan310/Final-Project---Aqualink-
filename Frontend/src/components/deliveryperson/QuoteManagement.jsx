@@ -20,7 +20,7 @@ const QuoteManagement = () => {
       ],
       orderTotal: 6000,
       quotePrice: 1200,
-      deliveryDate: '2025-09-10',
+      deliveryDate: '2025-10-10',
       validUntil: '2025-09-06T10:30:00',
       createdAt: '2025-09-04T11:15:00',
       status: 'PENDING', // PENDING, ACCEPTED, REJECTED, EXPIRED

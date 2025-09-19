@@ -19,23 +19,6 @@ const QuoteModal = ({ request, onClose, onQuoteSubmitted }) => {
     return null;
   }
 
-  // Calculate suggested pricing
-  const calculateSuggestedPrice = () => {
-    const baseRate = 500; // Base delivery charge
-    const perKmRate = 50; // Per kilometer rate
-    const liverishCharge = request.hasLivefish ? 200 : 0;
-    const distanceCharge = (request.estimatedDistance || 0) * perKmRate;
-    
-    return {
-      base: baseRate,
-      distance: distanceCharge,
-      livefish: liverishCharge,
-      total: baseRate + distanceCharge + liverishCharge
-    };
-  };
-
-  const suggestedPricing = calculateSuggestedPrice();
-
   const handleInputChange = (field, value) => {
     setFormData(prev => ({
       ...prev,
@@ -92,17 +75,6 @@ const QuoteModal = ({ request, onClose, onQuoteSubmitted }) => {
     }, 1000);
   };
 
-  const useSuggestedPrice = () => {
-    setFormData(prev => ({
-      ...prev,
-      quotedPrice: suggestedPricing.total.toString(),
-      basePrice: suggestedPricing.base.toString(),
-      distanceCharge: suggestedPricing.distance.toString(),
-      specialHandling: suggestedPricing.livefish.toString(),
-      priceBreakdown: `Base delivery: Rs.${suggestedPricing.base}\nDistance (${request.estimatedDistance || 0}km): Rs.${suggestedPricing.distance}\n${request.hasLivefish ? `Live fish handling: Rs.${suggestedPricing.livefish}\n` : ''}Total: Rs.${suggestedPricing.total}`
-    }));
-  };
-
   const formatPrice = (price) => {
     if (!price || isNaN(price)) return 'Rs.0.00';
     return `Rs.${parseFloat(price).toLocaleString('en-US', { 
@@ -153,7 +125,7 @@ const QuoteModal = ({ request, onClose, onQuoteSubmitted }) => {
 
         <div className="p-6">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            {/* Left Column - Order Details */}
+            {/* Left Column - Order Details - UNCHANGED FROM ORIGINAL */}
             <div className="space-y-6">
               <div className="bg-gradient-to-br from-gray-50 to-gray-100 rounded-xl p-5">
                 <h3 className="font-bold text-gray-900 mb-4 flex items-center">
@@ -188,45 +160,6 @@ const QuoteModal = ({ request, onClose, onQuoteSubmitted }) => {
                     }`}>
                       {request.hasLivefish ? 'Live Fish' : 'Standard Items'}
                     </span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Suggested Pricing */}
-              <div className="bg-gradient-to-br from-blue-50 to-indigo-100 rounded-xl p-5 border border-blue-200">
-                <div className="flex items-center justify-between mb-4">
-                  <h3 className="font-bold text-gray-900 flex items-center">
-                    <svg className="h-5 w-5 mr-2 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
-                    </svg>
-                    Suggested Pricing
-                  </h3>
-                  <button 
-                    type="button" 
-                    onClick={useSuggestedPrice}
-                    className="px-4 py-2 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition duration-200 font-medium shadow-sm"
-                  >
-                    Use This
-                  </button>
-                </div>
-                <div className="space-y-3 text-sm">
-                  <div className="flex justify-between items-center">
-                    <span className="text-gray-700">Base delivery:</span>
-                    <span className="font-semibold text-gray-900">Rs.{suggestedPricing.base}</span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-gray-700">Distance ({request.estimatedDistance || 0}km):</span>
-                    <span className="font-semibold text-gray-900">Rs.{suggestedPricing.distance}</span>
-                  </div>
-                  {request.hasLivefish && (
-                    <div className="flex justify-between items-center">
-                      <span className="text-gray-700">Live fish handling:</span>
-                      <span className="font-semibold text-gray-900">Rs.{suggestedPricing.livefish}</span>
-                    </div>
-                  )}
-                  <div className="border-t border-blue-300 pt-3 flex justify-between items-center">
-                    <span className="font-bold text-gray-900">Suggested Total:</span>
-                    <span className="font-bold text-xl text-blue-800">Rs.{suggestedPricing.total}</span>
                   </div>
                 </div>
               </div>

@@ -8,7 +8,7 @@ const DeliveryHistory = () => {
   const [statusFilter, setStatusFilter] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
 
-  // Mock delivery history data - WITHOUT DISTANCE
+  // Mock delivery history data - UPDATED (customerSignature removed)
   const mockDeliveries = [
     {
       id: 1,
@@ -41,7 +41,6 @@ const DeliveryHistory = () => {
       rating: 5,
       feedback: 'Excellent service, fish arrived in perfect condition!',
       confirmationCode: 'ABC123',
-      customerSignature: 'Saman Perera',
       deliveryNotes: 'Fish were healthy and active upon delivery. Customer was very satisfied.'
     },
     {
@@ -75,7 +74,6 @@ const DeliveryHistory = () => {
       rating: 4,
       feedback: 'Good delivery, but slightly delayed',
       confirmationCode: 'XYZ789',
-      customerSignature: 'K. Silva',
       deliveryNotes: 'Minor delay due to traffic, but customer understood. Items delivered safely.'
     },
     {
@@ -108,76 +106,7 @@ const DeliveryHistory = () => {
       rating: null,
       feedback: 'Customer cancelled - not available',
       confirmationCode: null,
-      customerSignature: null,
       deliveryNotes: null
-    },
-    {
-      id: 4,
-      orderId: 'ORD004',
-      quoteId: 'QT004',
-      customerName: 'Priya Jayawardena',
-      customerPhone: '0764567890',
-      orderItems: [
-        { name: 'Betta Fish Pair', quantity: 2, price: 1500 },
-        { name: 'Small Tank (10L)', quantity: 2, price: 2500 }
-      ],
-      orderTotal: 7000,
-      pickupLocation: {
-        address: 'Aqualink Fish Store, Main Road',
-        town: 'Colombo 03',
-        district: 'Colombo',
-        province: 'Western'
-      },
-      deliveryLocation: {
-        address: '321 Coral Gardens, Apartment 5B',
-        town: 'Colombo 07',
-        district: 'Colombo',
-        province: 'Western'
-      },
-      deliveryFee: 800,
-      status: 'DELIVERED',
-      startTime: '2025-08-30T08:00:00',
-      completedTime: '2025-08-30T12:45:00',
-      deliveryTime: '4h 45m',
-      rating: 5,
-      feedback: 'Perfect timing and great care with items',
-      confirmationCode: 'DEF456',
-      customerSignature: 'Priya J.',
-      deliveryNotes: 'Long distance delivery completed successfully. Fish plants kept in optimal condition.'
-    },
-    {
-      id: 5,
-      orderId: 'ORD005',
-      quoteId: 'QT005',
-      customerName: 'Ruwan Wickramasinghe',
-      customerPhone: '0751234567',
-      orderItems: [
-        { name: 'Fish Tank Cleaner', quantity: 1, price: 800 },
-        { name: 'pH Test Kit', quantity: 1, price: 650 }
-      ],
-      orderTotal: 1450,
-      pickupLocation: {
-        address: 'Aqualink Fish Store, Main Road',
-        town: 'Colombo 03',
-        district: 'Colombo',
-        province: 'Western'
-      },
-      deliveryLocation: {
-        address: '654 Station Road, Moratuwa',
-        town: 'Moratuwa',
-        district: 'Colombo',
-        province: 'Western'
-      },
-      deliveryFee: 900,
-      status: 'DELIVERED',
-      startTime: '2025-08-29T16:30:00',
-      completedTime: '2025-08-29T17:45:00',
-      deliveryTime: '1h 15m',
-      rating: 4,
-      feedback: 'Quick and efficient delivery',
-      confirmationCode: 'GHI789',
-      customerSignature: 'R. Wickramasinghe',
-      deliveryNotes: 'Quick delivery completed in excellent time. Customer appreciated the speed.'
     }
   ];
 
@@ -195,12 +124,10 @@ const DeliveryHistory = () => {
   const filterDeliveries = () => {
     let filtered = [...deliveries];
 
-    // Status filter
     if (statusFilter) {
       filtered = filtered.filter(delivery => delivery.status === statusFilter);
     }
 
-    // Date filter
     if (dateFilter) {
       const today = new Date();
       const filterDate = new Date();
@@ -226,7 +153,6 @@ const DeliveryHistory = () => {
       }
     }
 
-    // Search filter
     if (searchTerm) {
       filtered = filtered.filter(delivery =>
         delivery.customerName.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -235,9 +161,7 @@ const DeliveryHistory = () => {
       );
     }
 
-    // Sort by date (newest first)
     filtered.sort((a, b) => new Date(b.startTime) - new Date(a.startTime));
-
     setFilteredDeliveries(filtered);
   };
 
@@ -319,15 +243,12 @@ const DeliveryHistory = () => {
   return (
     <div className="p-6 bg-gray-50 min-h-screen">
       <div className="max-w-7xl mx-auto space-y-6">
-        {/* Header */}
         <div className="bg-white p-6 rounded-lg shadow-sm">
           <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center">
             <div>
               <h1 className="text-3xl font-bold text-gray-900 mb-2">Delivery History</h1>
               <p className="text-gray-600">Track and review your completed deliveries</p>
             </div>
-            
-            {/* Quick Stats */}
             <div className="grid grid-cols-2 lg:grid-cols-3 gap-4 mt-4 lg:mt-0">
               <div className="bg-green-50 p-3 rounded-lg text-center border border-green-200">
                 <div className="text-2xl font-bold text-green-800">
@@ -348,8 +269,6 @@ const DeliveryHistory = () => {
             </div>
           </div>
         </div>
-
-        {/* Filters */}
         <div className="bg-white p-6 rounded-lg shadow-sm">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             <div>
@@ -362,7 +281,6 @@ const DeliveryHistory = () => {
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
             </div>
-
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">Status</label>
               <select
@@ -376,7 +294,6 @@ const DeliveryHistory = () => {
                 <option value="RETURNED">Returned</option>
               </select>
             </div>
-
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">Date Range</label>
               <select
@@ -390,7 +307,6 @@ const DeliveryHistory = () => {
                 <option value="month">Last 30 Days</option>
               </select>
             </div>
-
             <div className="flex items-end">
               <button
                 onClick={() => {
@@ -405,8 +321,6 @@ const DeliveryHistory = () => {
             </div>
           </div>
         </div>
-
-        {/* Delivery History Cards */}
         <div className="space-y-4">
           {filteredDeliveries.length === 0 ? (
             <div className="bg-white rounded-lg shadow-sm p-12 text-center">
@@ -422,7 +336,6 @@ const DeliveryHistory = () => {
           ) : (
             filteredDeliveries.map(delivery => (
               <div key={delivery.id} className={`bg-white rounded-lg shadow-sm border overflow-hidden ${getBorderColor(delivery.status)}`}>
-                {/* Header */}
                 <div className="bg-gradient-to-r from-blue-50 to-indigo-50 p-6 border-b border-gray-200">
                   <div className="flex justify-between items-start">
                     <div className="flex items-center space-x-4">
@@ -459,7 +372,6 @@ const DeliveryHistory = () => {
                 </div>
 
                 <div className="p-6 space-y-6">
-                  {/* DELIVERY ROUTE - WITHOUT DISTANCE */}
                   <div className="bg-gradient-to-r from-green-50 to-blue-50 rounded-lg p-4 border border-green-200">
                     <h4 className="font-semibold text-gray-900 mb-3 flex items-center">
                       <svg className="h-5 w-5 mr-2 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -469,7 +381,6 @@ const DeliveryHistory = () => {
                       Delivery Route
                     </h4>
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                      {/* FROM Location */}
                       <div className="bg-white rounded-lg p-4 border border-gray-200">
                         <div className="flex items-center mb-2">
                           <div className="w-4 h-4 bg-green-500 rounded-full mr-3"></div>
@@ -483,8 +394,6 @@ const DeliveryHistory = () => {
                           <p className="text-sm text-gray-500">{delivery.pickupLocation.province} Province</p>
                         </div>
                       </div>
-
-                      {/* TO Location */}
                       <div className="bg-white rounded-lg p-4 border border-gray-200">
                         <div className="flex items-center mb-2">
                           <div className="w-4 h-4 bg-red-500 rounded-full mr-3"></div>
@@ -499,8 +408,6 @@ const DeliveryHistory = () => {
                         </div>
                       </div>
                     </div>
-
-                    {/* Route Summary - WITHOUT DISTANCE */}
                     <div className="mt-4 bg-blue-100 rounded-lg p-3">
                       <p className="text-blue-800 font-medium text-center">
                         🚚 Route: {delivery.pickupLocation.town} → {delivery.deliveryLocation.town}
@@ -511,7 +418,6 @@ const DeliveryHistory = () => {
                     </div>
                   </div>
 
-                  {/* ORDER DETAILS */}
                   <div className="bg-gray-50 rounded-lg p-4">
                     <h4 className="font-semibold text-gray-900 mb-3 flex items-center">
                       <svg className="h-5 w-5 mr-2 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -539,7 +445,6 @@ const DeliveryHistory = () => {
                     </div>
                   </div>
 
-                  {/* Delivery Confirmation Details - Only for DELIVERED */}
                   {delivery.status === 'DELIVERED' && delivery.confirmationCode && (
                     <div className="bg-green-50 rounded-lg p-4 border border-green-200">
                       <h4 className="font-semibold text-gray-900 mb-3 flex items-center">
@@ -555,10 +460,6 @@ const DeliveryHistory = () => {
                             {delivery.confirmationCode}
                           </span>
                         </div>
-                        <div>
-                          <span className="text-gray-600">Received By:</span>
-                          <span className="ml-2 font-semibold text-gray-900">{delivery.customerSignature}</span>
-                        </div>
                       </div>
                       {delivery.deliveryNotes && (
                         <div className="pt-3 border-t border-green-200">
@@ -569,7 +470,6 @@ const DeliveryHistory = () => {
                     </div>
                   )}
 
-                  {/* Rating & Feedback - Only for DELIVERED */}
                   {delivery.status === 'DELIVERED' && (
                     <div className="bg-gray-50 rounded-lg p-4">
                       <div className="flex justify-between items-start">
@@ -587,12 +487,11 @@ const DeliveryHistory = () => {
                     </div>
                   )}
 
-                  {/* Cancelled/Returned Info */}
                   {(delivery.status === 'CANCELLED' || delivery.status === 'RETURNED') && (
                     <div className="bg-red-50 rounded-lg p-4 border border-red-200">
                       <h4 className="font-semibold text-gray-900 mb-2 flex items-center">
                         <svg className="h-5 w-5 mr-2 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                         </svg>
                         Status Note
                       </h4>
