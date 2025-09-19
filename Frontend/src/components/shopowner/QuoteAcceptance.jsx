@@ -29,9 +29,31 @@ const QuoteAcceptance = () => {
       return;
     }
 
+    // ADD delivery date to each quote in mock data
+    const quotesWithDeliveryDate = savedQuotes.quotes.map(quote => ({
+      ...quote,
+      deliveryDate: getRandomDeliveryDate() // Add delivery date to existing quotes
+    }));
+
     setOrderData(savedOrder);
-    setQuotes(savedQuotes.quotes);
+    setQuotes(quotesWithDeliveryDate);
     setLoading(false);
+  };
+
+  // Helper function to generate random delivery dates (1-3 days from today)
+  const getRandomDeliveryDate = () => {
+    const date = new Date();
+    date.setDate(date.getDate() + Math.floor(Math.random() * 3) + 1);
+    return date.toISOString().split('T')[0]; // Format: YYYY-MM-DD
+  };
+
+  // Helper function to format date for display
+  const formatDate = (dateString) => {
+    return new Date(dateString).toLocaleDateString('en-US', {
+      weekday: 'short',
+      month: 'short',
+      day: 'numeric'
+    });
   };
 
   const formatPrice = (price) => {
@@ -120,7 +142,7 @@ const QuoteAcceptance = () => {
           rating: quote.rating,
           completedDeliveries: quote.completedDeliveries
         },
-        deliveryDate: orderData.preferences.preferredDeliveryDate,
+        deliveryDate: quote.deliveryDate, // Use quote's delivery date instead of preferences
         orderDate: new Date().toISOString(),
         status: 'CONFIRMED'
       };
@@ -177,23 +199,7 @@ const QuoteAcceptance = () => {
           <p className="text-gray-600">Choose your delivery partner and payment method to place your order</p>
         </div>
 
-        {/* Order Information */}
-        {orderData?.preferences && (
-          <div className="bg-gradient-to-r from-blue-50 to-indigo-50 p-6 rounded-lg border border-blue-200">
-            <h2 className="text-lg font-bold text-blue-900 mb-3">Order Information</h2>
-            <div className="bg-white p-4 rounded-lg inline-block">
-              <div className="text-blue-600 font-semibold mb-1">📅 Delivery Date</div>
-              <div className="text-lg font-bold text-gray-900">
-                {new Date(orderData.preferences.preferredDeliveryDate).toLocaleDateString('en-US', {
-                  weekday: 'long',
-                  year: 'numeric',
-                  month: 'long', 
-                  day: 'numeric'
-                })}
-              </div>
-            </div>
-          </div>
-        )}
+        {/* REMOVED: Order Information section with delivery date display */}
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Quotes Selection */}
@@ -297,7 +303,13 @@ const QuoteAcceptance = () => {
                               <span className="font-semibold">{quote.completedDeliveries}</span>
                             </div>
 
-                            <div className="flex justify-between col-span-2">
+                            {/* ADDED: Delivery Date Display */}
+                            <div className="flex justify-between">
+                              <span className="text-gray-600">Delivery Date:</span>
+                              <span className="font-semibold text-green-700">{formatDate(quote.deliveryDate)}</span>
+                            </div>
+
+                            <div className="flex justify-between">
                               <span className="text-gray-600">Quote Status:</span>
                               <span className={`font-semibold ${status.color}`}>{status.text}</span>
                             </div>

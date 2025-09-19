@@ -111,15 +111,12 @@ const EnhancedDeliveryRequest = () => {
   };
 
   const generateQuotesFromSelectedPersons = (selectedIds, orderData) => {
-    const selectedPersons = deliveryPersons.filter(person => selectedIds.includes(person.id));
+    const selectedPersonsList = deliveryPersons.filter(person => selectedIds.includes(person.id));
     
-    return selectedPersons.map(person => {
+    return selectedPersonsList.map(person => {
       const preferences = orderData.preferences;
       
-      // Base delivery fee calculation
       let baseFee = 800 + Math.floor(Math.random() * 400); // 800-1200 base
-      
-      // Adjust based on person's rating (higher rating = higher fee)
       baseFee += Math.floor(person.rating * 100);
 
       return {
@@ -133,7 +130,6 @@ const EnhancedDeliveryRequest = () => {
         completedDeliveries: person.completedDeliveries,
         specialOffers: getSpecialOffer(person),
         quoteValidUntil: preferences.quotesExpireOn,
-        canDeliverOn: preferences.preferredDeliveryDate,
         notes: `Professional delivery service provider`,
         coverageArea: 'Western Province'
       };
@@ -171,27 +167,15 @@ const EnhancedDeliveryRequest = () => {
           <p className="text-gray-600">Select delivery partners to send quote requests for your order</p>
         </div>
 
-        {/* Order Information Display */}
+        {/* Order Information Display - UPDATED: Date section removed */}
         {orderData?.preferences && (
           <div className="bg-gradient-to-r from-blue-50 to-indigo-50 p-6 rounded-lg border border-blue-200">
             <h2 className="text-lg font-bold text-blue-900 mb-3">Order Information</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-              <div className="bg-white p-4 rounded-lg">
-                <div className="text-blue-600 font-semibold mb-1">📅 Delivery Date</div>
-                <div className="text-gray-900 text-lg font-semibold">
-                  {new Date(orderData.preferences.preferredDeliveryDate).toLocaleDateString('en-US', {
-                    weekday: 'long',
-                    year: 'numeric', 
-                    month: 'long',
-                    day: 'numeric'
-                  })}
-                </div>
-              </div>
-              
+            <div className="max-w-md">
               <div className="bg-white p-4 rounded-lg">
                 <div className="text-blue-600 font-semibold mb-1">⏰ Quote Response Time</div>
                 <div className="text-gray-900 text-lg font-semibold">
-                  {orderData.preferences.quotesExpireAfter} day{orderData.preferences.quotesExpireAfter > 1 ? 's' : ''}
+                  {orderData.preferences.quotesExpireAfter} hour{orderData.preferences.quotesExpireAfter > 1 ? 's' : ''}
                 </div>
               </div>
             </div>
@@ -344,7 +328,7 @@ const EnhancedDeliveryRequest = () => {
                 }
               </div>
               <div className="text-green-700 text-xs mt-1">
-                They will have {orderData?.preferences.quotesExpireAfter} day{orderData?.preferences.quotesExpireAfter > 1 ? 's' : ''} to respond with quotes
+                They will have {orderData?.preferences.quotesExpireAfter} hour{orderData?.preferences.quotesExpireAfter > 1 ? 's' : ''} to respond with quotes
               </div>
             </div>
           )}

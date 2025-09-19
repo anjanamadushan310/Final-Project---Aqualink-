@@ -7,24 +7,10 @@ const Cart = () => {
   ]);
   
   const [orderPreferences, setOrderPreferences] = useState({
-    preferredDeliveryDate: '',
-    quotesExpireAfter: 1
+    quotesExpireAfter: 1 // Default to 1 hour
   });
 
   const [isRequestingSent, setIsRequestingSent] = useState(false);
-  const [errors, setErrors] = useState({});
-
-  const getTomorrowDate = () => {
-    const tomorrow = new Date();
-    tomorrow.setDate(tomorrow.getDate() + 1);
-    return tomorrow.toISOString().split('T')[0];
-  };
-
-  const getMaxDate = () => {
-    const maxDate = new Date();
-    maxDate.setDate(maxDate.getDate() + 30);
-    return maxDate.toISOString().split('T')[0];
-  };
 
   const formatPrice = (price) => {
     return `Rs.${parseFloat(price).toLocaleString('en-US', { 
@@ -58,35 +44,6 @@ const Cart = () => {
       ...prev,
       [field]: value
     }));
-
-    // Clear error when user starts typing
-    if (errors[field]) {
-      setErrors(prev => ({
-        ...prev,
-        [field]: null
-      }));
-    }
-  };
-
-  const validateForm = () => {
-    const newErrors = {};
-
-    // Delivery date validation
-    if (!orderPreferences.preferredDeliveryDate) {
-      newErrors.preferredDeliveryDate = 'Preferred delivery date is required';
-    } else {
-      const selectedDate = new Date(orderPreferences.preferredDeliveryDate);
-      const tomorrow = new Date();
-      tomorrow.setDate(tomorrow.getDate() + 1);
-      tomorrow.setHours(0, 0, 0, 0);
-      
-      if (selectedDate < tomorrow) {
-        newErrors.preferredDeliveryDate = 'Delivery date must be at least tomorrow';
-      }
-    }
-
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
   };
 
   const requestDeliveryQuotes = () => {
@@ -95,14 +52,11 @@ const Cart = () => {
       return;
     }
 
-    if (!validateForm()) {
-      return;
-    }
-
     setIsRequestingSent(true);
 
     const quoteExpiryDate = new Date();
-    quoteExpiryDate.setDate(quoteExpiryDate.getDate() + orderPreferences.quotesExpireAfter);
+    // Calculating expiry by hours
+    quoteExpiryDate.setHours(quoteExpiryDate.getHours() + orderPreferences.quotesExpireAfter);
 
     const orderData = {
       sessionId: 'SESSION_' + Date.now(),
@@ -213,37 +167,13 @@ const Cart = () => {
           </div>
         )}
 
-        {/* Delivery Preferences Section */}
+        {/* Quote Response Time Preference Section */}
         {cartItems.length > 0 && (
           <div className="bg-white rounded-lg shadow-sm mb-6">
             <div className="p-6">
-              <h2 className="text-xl font-bold text-gray-900 mb-4">Delivery Preferences</h2>
+              <h2 className="text-xl font-bold text-gray-900 mb-4">Quote Request Settings</h2>
               
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {/* Preferred Delivery Date */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Preferred Delivery Date *
-                  </label>
-                  <input
-                    type="date"
-                    name="preferredDeliveryDate"
-                    value={orderPreferences.preferredDeliveryDate}
-                    min={getTomorrowDate()}
-                    max={getMaxDate()}
-                    onChange={(e) => handlePreferenceChange('preferredDeliveryDate', e.target.value)}
-                    className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-lg ${
-                      errors.preferredDeliveryDate ? 'border-red-500' : 'border-gray-300'
-                    }`}
-                  />
-                  {errors.preferredDeliveryDate && (
-                    <p className="text-red-500 text-sm mt-1">{errors.preferredDeliveryDate}</p>
-                  )}
-                  <p className="text-xs text-gray-500 mt-1">
-                    Select when you'd like your order delivered
-                  </p>
-                </div>
-
+              <div className="max-w-md">
                 {/* Quote Expiry Preference */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -254,10 +184,16 @@ const Cart = () => {
                     onChange={(e) => handlePreferenceChange('quotesExpireAfter', parseInt(e.target.value))}
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-lg"
                   >
-                    <option value={1}>1 Day</option>
-                    <option value={2}>2 Days</option>
-                    <option value={3}>3 Days</option>
-                    <option value={7}>1 Week</option>
+                    <option value={1}>1 Hour</option>
+                    <option value={2}>2 Hours</option>
+                    <option value={3}>3 Hours</option>
+                    <option value={4}>4 Hours</option>
+                    <option value={5}>5 Hours</option>
+                    <option value={6}>6 Hours</option>
+                    <option value={7}>7 Hours</option>
+                    <option value={8}>8 Hours</option>
+                    <option value={9}>9 Hours</option>
+                    <option value={10}>10 Hours</option>
                   </select>
                   <p className="text-xs text-gray-500 mt-1">
                     Delivery partners will have this much time to send quotes
@@ -265,20 +201,14 @@ const Cart = () => {
                 </div>
               </div>
               
-              {orderPreferences.preferredDeliveryDate && (
-                <div className="mt-6 p-4 bg-blue-50 rounded-lg border border-blue-200">
-                  <h4 className="font-semibold text-blue-900 mb-2">Selected Preferences:</h4>
-                  <div className="text-sm text-blue-800 space-y-1">
-                    <div>📅 Delivery Date: {new Date(orderPreferences.preferredDeliveryDate).toLocaleDateString('en-US', { 
-                      weekday: 'long', 
-                      year: 'numeric', 
-                      month: 'long', 
-                      day: 'numeric' 
-                    })}</div>
-                    <div>⏰ Quote Response Time: {orderPreferences.quotesExpireAfter} day{orderPreferences.quotesExpireAfter > 1 ? 's' : ''}</div>
-                  </div>
+              <div className="mt-6 p-4 bg-blue-50 rounded-lg border border-blue-200">
+                <h4 className="font-semibold text-blue-900 mb-2">Quote Request Summary:</h4>
+                <div className="text-sm text-blue-800 space-y-1">
+                  <div>📦 Items: {cartItems.length} item{cartItems.length > 1 ? 's' : ''}</div>
+                  <div>💰 Subtotal: {formatPrice(getTotalAmount())}</div>
+                  <div>⏰ Quote Response Time: {orderPreferences.quotesExpireAfter} hour{orderPreferences.quotesExpireAfter > 1 ? 's' : ''}</div>
                 </div>
-              )}
+              </div>
             </div>
           </div>
         )}
@@ -289,7 +219,7 @@ const Cart = () => {
             <div className="p-6 text-center">
               <button 
                 onClick={requestDeliveryQuotes}
-                disabled={isRequestingSent || !orderPreferences.preferredDeliveryDate}
+                disabled={isRequestingSent}
                 className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-bold py-4 px-8 rounded-lg text-lg disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center mx-auto"
               >
                 {isRequestingSent ? (
@@ -304,12 +234,6 @@ const Cart = () => {
               <p className="text-gray-600 text-sm mt-3">
                 Get quotes from multiple delivery partners and choose the best option
               </p>
-              
-              {!orderPreferences.preferredDeliveryDate && (
-                <p className="text-orange-600 text-sm mt-2 font-semibold">
-                  Please select your preferred delivery date to continue
-                </p>
-              )}
             </div>
           </div>
         )}

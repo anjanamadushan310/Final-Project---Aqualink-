@@ -7,6 +7,11 @@ const DeliveryRequests = () => {
   const [showQuoteModal, setShowQuoteModal] = useState(false);
   const [selectedRequest, setSelectedRequest] = useState(null);
 
+  // UPDATED: Configuration constant for quote expiration threshold
+  // This makes it easy to change the threshold time (currently 2 hours)
+  // When backend integration happens, this can be replaced with a value from API
+  const EXPIRING_SOON_THRESHOLD_MS = 2 * 60 * 60 * 1000; // 2 hours
+
   // Mock requests data - ONLY PENDING REQUESTS
   const mockRequests = [
     {
@@ -33,7 +38,7 @@ const DeliveryRequests = () => {
         province: 'Western'
       },
       requestedDate: '2025-09-04T10:30:00',
-      requestExpiry: '2025-09-05T10:30:00'
+      requestExpiry: '2025-11-05T10:30:00'
     },
     {
       id: 2,
@@ -59,7 +64,7 @@ const DeliveryRequests = () => {
         province: 'Western'
       },
       requestedDate: '2025-09-04T09:15:00',
-      requestExpiry: '2025-09-04T18:00:00'
+      requestExpiry: '2025-11-04T18:00:00'
     }
   ];
 
@@ -87,14 +92,18 @@ const DeliveryRequests = () => {
     });
   };
 
+  // UPDATED: Now uses the constant variable defined above instead of hardcoded value
   const isExpiringSoon = (expiryDateTime) => {
+    if (!expiryDateTime) return false;
     const now = new Date();
     const expiry = new Date(expiryDateTime);
     const timeDiff = expiry.getTime() - now.getTime();
-    return timeDiff <= 2 * 60 * 60 * 1000 && timeDiff > 0;
+    // Use the configurable threshold instead of hardcoded 2 hours
+    return timeDiff <= EXPIRING_SOON_THRESHOLD_MS && timeDiff > 0;
   };
 
   const isExpired = (expiryDateTime) => {
+    if (!expiryDateTime) return false;
     const now = new Date();
     const expiry = new Date(expiryDateTime);
     return now > expiry;
@@ -298,8 +307,6 @@ const DeliveryRequests = () => {
                     </div>
                   </div>
 
-                  {/* REMOVED: Customer Information Section */}
-
                   {/* CREATE QUOTE BUTTON */}
                   <div className="pt-4 border-t border-gray-200">
                     {isExpired(request.requestExpiry) ? (
@@ -335,7 +342,7 @@ const DeliveryRequests = () => {
   );
 };
 
-// CreateQuoteModal component remains the same
+// CreateQuoteModal component remains the same as provided
 const CreateQuoteModal = ({ isOpen, onClose, request }) => {
   const [quotePrice, setQuotePrice] = useState('');
   const [validUntil, setValidUntil] = useState('');
