@@ -7,6 +7,7 @@ import RegistrationForm from "./components/RegistrationForm";
 import HomePage from "./pages/HomePage";
 import OrderUI from "./pages/OrderUI";
 import AdminDashboard from "./pages/dashboards/AdminDashboard";
+import UserVerificationDashboard from "./components/admin/AdminDashboard";
 import ShopOwnerDashboard from "./pages/dashboards/ShopOwnerDashboard";
 import FarmOwnerDashboard from "./pages/dashboards/FarmOwnerDashboard";
 import CollectorDashboard from "./pages/dashboards/CollectorDashboard";
@@ -151,6 +152,7 @@ const AppRouter = ({ showLogin, setShowLogin, showProfileMenu, setShowProfileMen
           <Route path="/dashboard/Industrial-Stuff-Seller" element={<IndustrialStuffSellerDashboard/>}/>
           <Route path="/dashboard/Delivery-Person" element={<DeliveryPersonDashboard />}/>
           <Route path="/dashboard/admin" element={<AdminDashboard />} />
+          <Route path="/admin/verification" element={<UserVerificationDashboard />} />
 
           <Route path="/productaprove" element={<ProductApprove />} />
 
