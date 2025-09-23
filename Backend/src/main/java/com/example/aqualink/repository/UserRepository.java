@@ -39,6 +39,13 @@ public interface UserRepository extends JpaRepository<User, Long> {
     @EntityGraph(attributePaths = {"userRoles"})
     Optional<User> findWithRolesByEmail(String email);
 
+    // Admin verification methods
+    List<User> findByActiveFalseOrderByCreatedAtDesc();
+    
+    List<User> findByActiveTrueOrderByCreatedAtDesc();
+    
+    List<User> findAllByOrderByCreatedAtDesc();
+
 
 
 

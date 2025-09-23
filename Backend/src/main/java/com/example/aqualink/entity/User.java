@@ -66,8 +66,8 @@ public class User {
     @JsonIgnore
     private Set<UserRole> userRoles = new HashSet<>();
 
-    @Column(nullable = false, columnDefinition = "BIT DEFAULT 1")
-    private boolean active = true;
+    @Column(nullable = false, columnDefinition = "BIT DEFAULT 0")
+    private boolean active = false;
 
     @Column(name = "created_at")
     private LocalDateTime createdAt;

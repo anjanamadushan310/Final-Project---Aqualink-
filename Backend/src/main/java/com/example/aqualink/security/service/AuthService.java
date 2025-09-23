@@ -96,7 +96,7 @@ public class AuthService {
             user.setNicFrontDocumentPath(nicFrontPath);
             user.setNicBackDocumentPath(nicBackPath);
             user.setSelfieDocumentPath(selfiePath);
-            user.setActive(true);
+            user.setActive(false); // Set inactive by default for admin verification
 
             // Save user first to get ID
             userRepository.save(user);
