@@ -7,8 +7,10 @@ import BasicInformationSection from '../components/user-profile/BasicInformation
 import AddressSection from './../components/user-profile/AddressSection';
 import ActionButtons from '../components/user-profile/ActionButtons';
 import { districtToTowns } from '../components/user-profile/locationData';
+import { useAuth } from '../context/AuthContext';
 
 const UserProfile = () => {
+    const { refreshUserData } = useAuth();
     const [profile, setProfile] = useState({});
     const [initialProfile, setInitialProfile] = useState({});
     const [editingSection, setEditingSection] = useState(null);
@@ -72,6 +74,27 @@ const UserProfile = () => {
             console.log('Profile fetched successfully:', response.data);
             setProfile(response.data);
             setInitialProfile(response.data);
+            
+            // Update localStorage with profile data on initial load
+            const storedUser = JSON.parse(localStorage.getItem('user'));
+            if (storedUser) {
+                let userUpdated = false;
+                
+                if (response.data.logoUrl && !storedUser.logoUrl) {
+                    storedUser.logoUrl = response.data.logoUrl;
+                    userUpdated = true;
+                }
+                
+                if (response.data.businessName && !storedUser.businessName) {
+                    storedUser.businessName = response.data.businessName;
+                    userUpdated = true;
+                }
+                
+                if (userUpdated) {
+                    localStorage.setItem('user', JSON.stringify(storedUser));
+                    refreshUserData();
+                }
+            }
             
             if (response.data.addressDistrict) {
                 setAvailableTowns(districtToTowns[response.data.addressDistrict] || []);
@@ -208,11 +231,26 @@ const UserProfile = () => {
             setLogoFile(null);
             setSuccessMessage('Profile updated successfully!');
 
-            // Update user in localStorage with logoUrl
+            // Update user in localStorage with logoUrl and businessName
             const storedUser = JSON.parse(localStorage.getItem('user'));
-            if (storedUser && response.data.logoUrl) {
-                storedUser.logoUrl = response.data.logoUrl;
-                localStorage.setItem('user', JSON.stringify(storedUser));
+            if (storedUser) {
+                let userUpdated = false;
+                
+                if (response.data.logoUrl) {
+                    storedUser.logoUrl = response.data.logoUrl;
+                    userUpdated = true;
+                }
+                
+                if (response.data.businessName) {
+                    storedUser.businessName = response.data.businessName;
+                    userUpdated = true;
+                }
+                
+                if (userUpdated) {
+                    localStorage.setItem('user', JSON.stringify(storedUser));
+                    // Refresh user data in AuthContext to reflect the updated data
+                    refreshUserData();
+                }
             }
 
             // Clear success message after 3 seconds

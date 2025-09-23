@@ -148,13 +148,15 @@ export default LoginForm;
 
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
 
-function LoginForm({ onLogin, onClose }) {
+function LoginForm({ onClose }) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [errMsg, setErrMsg] = useState("");
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
+  const { login } = useAuth();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -162,52 +164,16 @@ function LoginForm({ onLogin, onClose }) {
     setLoading(true);
     
     try {
-      const res = await fetch("http://localhost:8080/api/auth/login", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({ email, password })
-      });
+      await login(email, password);
       
-      if (!res.ok) {
-        const errorData = await res.json();
-        throw new Error(errorData.message || "Invalid credentials");
-      }
-      
-      const data = await res.json();
-      console.log("Login response:", data);
-      
-      // Check if token exists in response
-      if (data.token) {
-        // Save token to localStorage
-        localStorage.setItem('token', data.token);
-        
-        // Optional: Save user info
-        if (data.user) {
-          localStorage.setItem('user', JSON.stringify(data.user));
-        }
-        
-        console.log("Token saved successfully");
-        
-        // Call onLogin callback if provided
-        if (onLogin) {
-          onLogin(data, navigate);
-        }
-        
-        // Close modal
-        onClose();
-        
-        // Navigate to profile or dashboard
-        
-        
-      } else {
-        throw new Error("No token received from server");
-      }
+      // Close modal and redirect based on user role
+      onClose();
+      // You can add role-based navigation here if needed
+      navigate('/');
       
     } catch (error) {
       console.error("Login error:", error);
-      setErrMsg(error.message || "Login failed. Please check credentials.");
+      setErrMsg(error.message || "Login failed. Please try again.");
     } finally {
       setLoading(false);
     }

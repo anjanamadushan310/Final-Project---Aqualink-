@@ -1,4 +1,5 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
 import { 
   HomeIcon, 
   UserPlusIcon, 
@@ -40,12 +41,12 @@ const Sidebar = ({ activeComponent, setActiveComponent, sidebarOpen, setSidebarO
         
         {/* Logo */}
         <div className="flex items-center justify-between p-6 border-b border-blue-700">
-          <div className="flex items-center space-x-3">
+          <Link to="/" className="flex items-center space-x-3 hover:opacity-80 transition-opacity">
             <div className="bg-white bg-opacity-20 p-2 mt-2 rounded-full">
-                <img src="/logo.png" alt="Logo" className="w-8 h-8 rounded-full"/>
+                <img src="/logo.png" alt="AquaLink Logo" className="w-8 h-8 rounded-full"/>
               </div>
             <h2 className="text-xl font-bold">Shop Owner</h2>
-          </div>
+          </Link>
           <button 
             onClick={() => setSidebarOpen(false)}
             className="lg:hidden p-1 rounded-md hover:bg-cyan-800"

@@ -3,6 +3,7 @@ import Sidebar from '../../components/industrialstuffseller/Sidebar';
 import IndustrialStuffOrder from '../../components/industrialstuffseller/IndustrialStuffOrders';
 import IndustrialStuffFishStockManagement from '../../components/industrialstuffseller/IndustrialStuffStockManagement';
 import IndustrialStuffForm from '../../components/industrialstuffseller/IndustrialStuffForm';
+import DashboardFooter from '../../components/common/DashboardFooter';
 
 
 const IndustrialStuffSellerDashboard = () => {
@@ -20,7 +21,7 @@ const IndustrialStuffSellerDashboard = () => {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50">
+    <div className="min-h-screen bg-slate-50 flex flex-col">
       {/* Sidebar */}
       <Sidebar 
         activeComponent={activeComponent}
@@ -30,12 +31,13 @@ const IndustrialStuffSellerDashboard = () => {
       />
       
       {/* Main Content */}
-      <div className="lg:ml-64">
-       
-     
-        <main className="p-4 lg:p-8">
+      <div className="lg:ml-64 flex flex-col flex-1">
+        <main className="p-4 lg:p-8 flex-1">
           {renderComponent()}
         </main>
+        
+        {/* Footer */}
+        <DashboardFooter />
       </div>
     </div>
   );

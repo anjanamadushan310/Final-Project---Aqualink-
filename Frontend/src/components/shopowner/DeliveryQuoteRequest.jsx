@@ -1,150 +1,104 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
+import { AuthContext } from '../../context/AuthContext';
+import deliveryService from '../../services/deliveryService';
 
 const EnhancedDeliveryRequest = () => {
-  const [deliveryPersons, setDeliveryPersons] = useState([]);
-  const [selectedPersons, setSelectedPersons] = useState([]);
+  const { user } = useContext(AuthContext);
   const [orderData, setOrderData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(false);
-
-  const mockDeliveryPersons = [
-    {
-      id: 1,
-      name: 'Saman Express',
-      rating: 4.8,
-      completedDeliveries: 245,
-      isAvailable: true
-    },
-    {
-      id: 2,
-      name: 'Quick Delivery Service',
-      rating: 4.6,
-      completedDeliveries: 189,
-      isAvailable: true
-    },
-    {
-      id: 3,
-      name: 'Fast Track Delivery',
-      rating: 4.9,
-      completedDeliveries: 321,
-      isAvailable: false
-    },
-    {
-      id: 4,
-      name: 'Express Logistics',
-      rating: 4.7,
-      completedDeliveries: 198,
-      isAvailable: true
-    },
-    {
-      id: 5,
-      name: 'Premium Delivery Co',
-      rating: 4.9,
-      completedDeliveries: 156,
-      isAvailable: true
-    }
-  ];
+  const [error, setError] = useState(null);
 
   useEffect(() => {
-    const savedOrder = JSON.parse(localStorage.getItem('aqualink_order_data') || 'null');
-    
-    if (!savedOrder || savedOrder.status !== 'REQUESTING_QUOTES') {
-      alert('No order data found. Please start from cart.');
-      window.location.href = '/cart';
-      return;
-    }
+    const initializeQuoteRequest = async () => {
+      try {
+        // Get order data from localStorage
+        const savedOrder = JSON.parse(localStorage.getItem('aqualink_order_data') || 'null');
+        
+        if (!savedOrder) {
+          alert('No order data found. Please start from cart.');
+          window.location.href = '/cart';
+          return;
+        }
 
-    setOrderData(savedOrder);
-    setTimeout(() => {
-      setDeliveryPersons(mockDeliveryPersons);
-      setLoading(false);
-    }, 1000);
-  }, []);
+        if (savedOrder.status !== 'REQUESTING_QUOTES') {
+          alert('Invalid order status. Please start from cart.');
+          window.location.href = '/cart';
+          return;
+        }
 
-  const togglePersonSelection = (personId) => {
-    setSelectedPersons(prev => 
-      prev.includes(personId) 
-        ? prev.filter(id => id !== personId)
-        : [...prev, personId]
-    );
-  };
+        console.log('Order data loaded:', savedOrder);
+        setOrderData(savedOrder);
 
-  const selectAll = () => {
-    const availablePersons = deliveryPersons.filter(person => person.isAvailable).map(person => person.id);
-    setSelectedPersons(availablePersons);
-  };
+        // Instead of selecting specific delivery persons, we'll create a quote request
+        // that all delivery partners can see and respond to
+        setLoading(false);
 
-  const clearSelection = () => {
-    setSelectedPersons([]);
-  };
-
-  const sendQuoteRequests = async () => {
-    if (selectedPersons.length === 0) {
-      alert('Please select at least one delivery partner');
-      return;
-    }
-
-    setSending(true);
-
-    const requestData = {
-      ...orderData,
-      selectedDeliveryPersons: selectedPersons,
-      requestSentAt: new Date().toISOString(),
-      status: 'QUOTES_REQUESTED'
+      } catch (error) {
+        console.error('Error initializing quote request:', error);
+        setError('Failed to load delivery partners. Please try again.');
+        setLoading(false);
+      }
     };
 
-    localStorage.setItem('aqualink_order_data', JSON.stringify(requestData));
+    initializeQuoteRequest();
+  }, []);
 
-    // Simulate sending requests and generate quotes
-    setTimeout(() => {
-      const quotes = generateQuotesFromSelectedPersons(selectedPersons, orderData);
-      localStorage.setItem('aqualink_received_quotes', JSON.stringify({
-        sessionId: orderData.sessionId,
-        quotes: quotes,
-        receivedAt: new Date().toISOString()
-      }));
+  const sendQuoteRequests = async () => {
+    setSending(true);
+    setError(null);
 
-      setSending(false);
-      alert(`Quote requests sent to ${selectedPersons.length} delivery partners!`);
-      window.location.href = '/quote-acceptance';
-    }, 2500);
-  };
-
-  const generateQuotesFromSelectedPersons = (selectedIds, orderData) => {
-    const selectedPersonsList = deliveryPersons.filter(person => selectedIds.includes(person.id));
-    
-    return selectedPersonsList.map(person => {
-      const preferences = orderData.preferences;
-      
-      let baseFee = 800 + Math.floor(Math.random() * 400); // 800-1200 base
-      baseFee += Math.floor(person.rating * 100);
-
-      return {
-        id: `Q${person.id.toString().padStart(3, '0')}`,
-        deliveryPersonId: person.id,
-        deliveryPersonName: person.name,
-        deliveryPersonPhone: `077${Math.floor(1000000 + Math.random() * 9000000)}`,
-        deliveryFee: baseFee,
-        estimatedDeliveryTime: '45-90 minutes',
-        rating: person.rating,
-        completedDeliveries: person.completedDeliveries,
-        specialOffers: getSpecialOffer(person),
-        quoteValidUntil: preferences.quotesExpireOn,
-        notes: `Professional delivery service provider`,
-        coverageArea: 'Western Province'
+    try {
+      // Create delivery quote request using the backend API
+      const quoteRequestData = {
+        customerName: user?.name || 'Customer',
+        customerEmail: user?.email || '',
+        customerPhone: user?.phone || 'Phone not specified',
+        deliveryAddress: orderData.deliveryAddress || 'Address not specified',
+        orderItems: orderData.items.map(item => ({
+          productName: item.name,
+          quantity: item.quantity,
+          price: item.price
+        })),
+        totalAmount: orderData.subtotal,
+        specialInstructions: orderData.preferences?.specialInstructions || 'No special instructions',
+        urgencyLevel: orderData.preferences?.urgencyLevel || 'NORMAL',
+        preferredDeliveryTime: orderData.preferences?.preferredTime || new Date().toISOString(),
+        quotesExpireAfter: orderData.preferences?.quotesExpireAfter || 24
       };
-    });
-  };
 
-  const getSpecialOffer = (person) => {
-    const offers = [
-      'Best price guarantee - will match any lower quote',
-      'Express handling - priority delivery',
-      'Free specialized packaging for live fish',
-      'White glove service - careful handling guaranteed',
-      'Reliable delivery service'
-    ];
-    return offers[Math.floor(Math.random() * offers.length)];
+      console.log('Sending quote request:', quoteRequestData);
+      
+      const response = await deliveryService.createQuoteRequest(quoteRequestData);
+      
+      if (response.success) {
+        // Update order data with the backend session ID
+        const updatedOrderData = {
+          ...orderData,
+          sessionId: response.data.sessionId,
+          requestSentAt: new Date().toISOString(),
+          status: 'QUOTES_REQUESTED'
+        };
+
+        localStorage.setItem('aqualink_order_data', JSON.stringify(updatedOrderData));
+
+        alert(`Quote request created successfully! Session ID: ${response.data.sessionId}\nDelivery partners will now be able to see your request and provide quotes.`);
+        
+        // Small delay to let user see the success message, then redirect
+        setTimeout(() => {
+          // Redirect to quote acceptance page where customer can view incoming quotes
+          window.location.href = '/quote-acceptance';
+        }, 2000);
+      } else {
+        throw new Error(response.message || 'Failed to create quote request');
+      }
+
+    } catch (error) {
+      console.error('Error sending quote requests:', error);
+      setError(error.message || 'Failed to send quote requests. Please try again.');
+    } finally {
+      setSending(false);
+    }
   };
 
   if (loading) {
@@ -153,6 +107,24 @@ const EnhancedDeliveryRequest = () => {
         <div className="text-center">
           <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-blue-600 mx-auto mb-4"></div>
           <p className="text-gray-600">Loading delivery partners...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex items-center justify-center h-64 bg-gray-50">
+        <div className="text-center bg-white p-8 rounded-lg shadow-md">
+          <div className="text-red-500 text-6xl mb-4">⚠️</div>
+          <h2 className="text-xl font-bold text-gray-900 mb-2">Error Loading Page</h2>
+          <p className="text-red-600 mb-4">{error}</p>
+          <button 
+            onClick={() => window.location.reload()} 
+            className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700"
+          >
+            Try Again
+          </button>
         </div>
       </div>
     );
@@ -204,134 +176,75 @@ const EnhancedDeliveryRequest = () => {
           </div>
         </div>
 
-        {/* Selection Controls */}
+        {/* Quote Request Information */}
         <div className="bg-white p-6 rounded-lg shadow-sm">
-          <div className="flex justify-between items-center mb-4">
-            <h2 className="text-xl font-bold text-gray-900">
-              Available Delivery Partners ({deliveryPersons.filter(p => p.isAvailable).length})
-            </h2>
-            <div className="space-x-3">
-              <button 
-                onClick={selectAll}
-                className="px-4 py-2 bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 transition-colors"
-              >
-                Select All Available
-              </button>
-              <button 
-                onClick={clearSelection}
-                className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors"
-              >
-                Clear Selection
-              </button>
-            </div>
-          </div>
-          <div className="flex items-center justify-between">
-            <p className="text-sm text-gray-600">
-              Selected: <span className="font-semibold">{selectedPersons.length}</span> delivery partners
-            </p>
-            <p className="text-xs text-gray-500">
-              They will receive your quote request and respond within your specified timeframe
-            </p>
-          </div>
-        </div>
-
-        {/* Delivery Partners List */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {deliveryPersons.map(person => (
-            <div 
-              key={person.id} 
-              className={`bg-white rounded-lg shadow-sm border-2 transition-all cursor-pointer ${
-                selectedPersons.includes(person.id) 
-                  ? 'border-blue-500 bg-blue-50 shadow-md' 
-                  : person.isAvailable 
-                    ? 'border-gray-200 hover:border-gray-300 hover:shadow-md' 
-                    : 'border-gray-200 bg-gray-50 cursor-not-allowed opacity-60'
-              }`}
-              onClick={() => person.isAvailable && togglePersonSelection(person.id)}
-            >
-              <div className="p-6">
-                <div className="flex justify-between items-start mb-4">
-                  <div className="flex items-center space-x-3">
-                    <div className="bg-blue-100 p-3 rounded-full">
-                      <svg className="h-6 w-6 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
-                      </svg>
-                    </div>
-                    <div>
-                      <h3 className="font-bold text-gray-900 text-lg">{person.name}</h3>
-                    </div>
-                  </div>
-                  
-                  {person.isAvailable ? (
-                    <div className={`w-6 h-6 rounded border-2 flex items-center justify-center transition-colors ${
-                      selectedPersons.includes(person.id) 
-                        ? 'bg-blue-500 border-blue-500' 
-                        : 'border-gray-300 hover:border-blue-300'
-                    }`}>
-                      {selectedPersons.includes(person.id) && (
-                        <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                        </svg>
-                      )}
-                    </div>
-                  ) : (
-                    <span className="bg-red-100 text-red-800 px-3 py-1 rounded text-sm font-medium">Unavailable</span>
-                  )}
-                </div>
-
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center">
-                      <span className="text-yellow-500 mr-1">⭐</span>
-                      <span className="font-semibold text-lg">{person.rating}</span>
-                    </div>
-                    <div className="text-gray-600 text-sm">
-                      {person.completedDeliveries} deliveries
-                    </div>
-                  </div>
-                </div>
+          <h2 className="text-xl font-bold text-gray-900 mb-4">Create Delivery Quote Request</h2>
+          <div className="bg-blue-50 rounded-lg p-4 border border-blue-200">
+            <div className="flex items-start space-x-3">
+              <svg className="h-6 w-6 text-blue-600 mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              <div>
+                <h3 className="font-semibold text-blue-900 mb-2">How it works:</h3>
+                <ul className="text-blue-800 text-sm space-y-1">
+                  <li>• Your quote request will be published to all available delivery partners</li>
+                  <li>• Delivery partners will review your order and submit competitive quotes</li>
+                  <li>• You'll receive quotes within {orderData?.preferences?.quotesExpireAfter || 24} hour{(orderData?.preferences?.quotesExpireAfter || 24) > 1 ? 's' : ''}</li>
+                  <li>• You can then compare and select the best quote for your delivery</li>
+                </ul>
               </div>
             </div>
-          ))}
+          </div>
         </div>
 
         {/* Send Requests Button */}
         <div className="bg-white p-6 rounded-lg shadow-sm text-center">
-          <button 
-            onClick={sendQuoteRequests}
-            disabled={selectedPersons.length === 0 || sending}
-            className="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white font-bold py-4 px-8 rounded-lg text-lg disabled:opacity-50 disabled:cursor-not-allowed transition-all"
-          >
-            {sending ? (
-              <div className="flex items-center">
-                <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
-                Sending Requests to {selectedPersons.length} Partners...
-              </div>
-            ) : (
-              `Send Quote Requests to ${selectedPersons.length} Partners`
-            )}
-          </button>
-          <p className="text-gray-600 text-sm mt-3">
-            {selectedPersons.length === 0 
-              ? 'Please select delivery partners to send quote requests'
-              : `Quote requests will be sent to ${selectedPersons.length} delivery partners`
-            }
-          </p>
-          
-          {selectedPersons.length > 0 && (
-            <div className="mt-4 p-4 bg-green-50 border border-green-200 rounded-lg">
-              <div className="text-green-800 text-sm font-medium">
-                📋 Selected Partners: {deliveryPersons
-                  .filter(p => selectedPersons.includes(p.id))
-                  .map(p => p.name)
-                  .join(', ')
-                }
-              </div>
-              <div className="text-green-700 text-xs mt-1">
-                They will have {orderData?.preferences.quotesExpireAfter} hour{orderData?.preferences.quotesExpireAfter > 1 ? 's' : ''} to respond with quotes
-              </div>
+          {error && (
+            <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg">
+              <p className="text-red-600">{error}</p>
             </div>
           )}
+          
+          <div className="space-y-4">
+            <button 
+              onClick={sendQuoteRequests}
+              disabled={sending}
+              className="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white font-bold py-4 px-8 rounded-lg text-lg disabled:opacity-50 disabled:cursor-not-allowed transition-all w-full"
+            >
+              {sending ? (
+                <div className="flex items-center justify-center">
+                  <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
+                  Creating Quote Request...
+                </div>
+              ) : (
+                `Create Delivery Quote Request`
+              )}
+            </button>
+
+            {/* Alternative navigation button */}
+            <div className="text-center">
+              <div className="text-gray-500 text-sm mb-2">Or if you already have a quote request pending:</div>
+              <button 
+                onClick={() => window.location.href = '/quote-acceptance'}
+                className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-6 rounded-lg transition-all"
+              >
+                View Pending Quotes
+              </button>
+            </div>
+          </div>
+          
+          <p className="text-gray-600 text-sm mt-3">
+            Your quote request will be published to all available delivery partners
+          </p>
+          
+          <div className="mt-4 p-4 bg-green-50 border border-green-200 rounded-lg">
+            <div className="text-green-800 text-sm font-medium">
+              📋 Ready to create quote request for your order
+            </div>
+            <div className="text-green-700 text-xs mt-1">
+              Delivery partners will have {orderData?.preferences?.quotesExpireAfter || 24} hour{(orderData?.preferences?.quotesExpireAfter || 24) > 1 ? 's' : ''} to respond with quotes
+            </div>
+          </div>
         </div>
       </div>
     </div>

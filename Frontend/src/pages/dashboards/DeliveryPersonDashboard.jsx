@@ -6,6 +6,7 @@ import QuoteManagement from '../../components/deliveryperson/QuoteManagement';
 import CoverageAreaManagement from '../../components/deliveryperson/CoverageAreaManagement';
 import EarningsTracker from '../../components/deliveryperson/EarningsTracker';
 import CurrentDeliveries from '../../components/deliveryperson/CurrentDeliveries';
+import DashboardFooter from '../../components/common/DashboardFooter';
 
 
 
@@ -26,7 +27,7 @@ const DeliveryPersonDashboard = () => {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50">
+    <div className="min-h-screen bg-slate-50 flex flex-col">
       {/* Sidebar */}
       <Sidebar
         activeComponent={activeComponent}
@@ -36,12 +37,13 @@ const DeliveryPersonDashboard = () => {
       />
       
       {/* Main Content */}
-      <div className="lg:ml-64">
-       
-     
-        <main className="p-4 lg:p-8">
+      <div className="lg:ml-64 flex flex-col flex-1">
+        <main className="p-4 lg:p-8 flex-1">
           {renderComponent()}
         </main>
+        
+        {/* Footer */}
+        <DashboardFooter />
       </div>
     </div>
   );

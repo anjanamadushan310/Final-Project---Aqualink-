@@ -5,6 +5,7 @@ import QuoteAcceptance from './../../components/shopowner/QuoteAcceptance';
 import DeliveryQuoteRequest from './../../components/shopowner/DeliveryQuoteRequest';
 import Cart from '../../components/shopowner/Cart';
 import MyBookings from '../../components/shopowner/MyBookings';
+import DashboardFooter from '../../components/common/DashboardFooter';
 
 
 
@@ -25,7 +26,7 @@ const ShopOwnerDashboard= () => {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50">
+    <div className="min-h-screen bg-slate-50 flex flex-col">
       {/* Sidebar */}
       <Sidebar
         activeComponent={activeComponent}
@@ -35,12 +36,13 @@ const ShopOwnerDashboard= () => {
       />
       
       {/* Main Content */}
-      <div className="lg:ml-64">
-       
-     
-        <main className="p-4 lg:p-8">
+      <div className="lg:ml-64 flex flex-col flex-1">
+        <main className="p-4 lg:p-8 flex-1">
           {renderComponent()}
         </main>
+        
+        {/* Footer */}
+        <DashboardFooter />
       </div>
     </div>
   );

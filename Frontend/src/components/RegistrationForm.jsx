@@ -164,10 +164,24 @@ const RegistrationForm = ({ setShowLogin }) => {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData(prevState => ({
-      ...prevState,
-      [name]: value
-    }));
+    
+    // Phone number validation - only allow numbers
+    if (name === 'phoneNumber') {
+      // Remove any non-numeric characters
+      const numericValue = value.replace(/\D/g, '');
+      // Limit to 9 digits
+      const limitedValue = numericValue.slice(0, 9);
+      
+      setFormData(prevState => ({
+        ...prevState,
+        [name]: limitedValue
+      }));
+    } else {
+      setFormData(prevState => ({
+        ...prevState,
+        [name]: value
+      }));
+    }
 
     if (errors[name]) {
       setErrors(prevErrors => ({

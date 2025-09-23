@@ -3,6 +3,7 @@ import Sidebar from '../../components/serviceprovider/Sidebar';
 import ServiceHistory from '../../components/serviceprovider/ServiceHistory';
 import ServiceRequests from './../../components/serviceprovider/ServiceRequests';
 import ServiceAdsForm from '../../components/serviceprovider/ServiceAdsForm';
+import DashboardFooter from '../../components/common/DashboardFooter';
 
 
 
@@ -21,7 +22,7 @@ const ServiceProviderDashboard= () => {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50">
+    <div className="min-h-screen bg-slate-50 flex flex-col">
       {/* Sidebar */}
       <Sidebar
         activeComponent={activeComponent}
@@ -31,12 +32,13 @@ const ServiceProviderDashboard= () => {
       />
       
       {/* Main Content */}
-      <div className="lg:ml-64">
-       
-     
-        <main className="p-4 lg:p-8">
+      <div className="lg:ml-64 flex flex-col flex-1">
+        <main className="p-4 lg:p-8 flex-1">
           {renderComponent()}
         </main>
+        
+        {/* Footer */}
+        <DashboardFooter />
       </div>
     </div>
   );

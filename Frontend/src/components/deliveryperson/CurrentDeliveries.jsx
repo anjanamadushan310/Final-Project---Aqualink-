@@ -1,9 +1,38 @@
 import React, { useState, useEffect } from 'react';
+import deliveryService from '../../services/deliveryService';
+import { useAuth } from '../../context/AuthContext';
 
 const CurrentDeliveries = () => {
+  const { user, token } = useAuth();
   const [deliveries, setDeliveries] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [showConfirmation, setShowConfirmation] = useState({});
+
+  // Fetch current deliveries from backend
+  useEffect(() => {
+    const fetchDeliveries = async () => {
+      if (!token) {
+        setError('Please log in to view current deliveries');
+        setLoading(false);
+        return;
+      }
+
+      try {
+        setLoading(true);
+        setError(null);
+        const deliveriesData = await deliveryService.getCurrentDeliveries();
+        setDeliveries(deliveriesData);
+      } catch (err) {
+        console.error('Error fetching current deliveries:', err);
+        setError('Failed to load current deliveries. Please try again.');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchDeliveries();
+  }, [token]);
 
   // Mock current deliveries data - WITH PAYMENT INFO
   const mockDeliveries = [
