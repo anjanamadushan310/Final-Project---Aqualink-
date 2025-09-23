@@ -1,6 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
+import { AuthContext } from '../../context/AuthContext';
+import deliveryService from '../../services/deliveryService';
 
 const QuoteAcceptance = () => {
+  const { user } = useContext(AuthContext);
   const [quotes, setQuotes] = useState([]);
   const [orderData, setOrderData] = useState(null);
   const [selectedQuote, setSelectedQuote] = useState(null);
@@ -8,43 +11,103 @@ const QuoteAcceptance = () => {
   const [loading, setLoading] = useState(true);
   const [isProcessing, setIsProcessing] = useState(false);
   const [sortBy, setSortBy] = useState('price');
+  const [error, setError] = useState(null);
+  const [autoRefresh, setAutoRefresh] = useState(true);
+  const [refreshInterval, setRefreshInterval] = useState(null);
 
   useEffect(() => {
     loadOrderAndQuotes();
-  }, []);
-
-  const loadOrderAndQuotes = () => {
-    const savedOrder = JSON.parse(localStorage.getItem('aqualink_order_data') || 'null');
-    const savedQuotes = JSON.parse(localStorage.getItem('aqualink_received_quotes') || 'null');
     
-    if (!savedOrder || !savedQuotes) {
-      alert('No quotes found. Please start from cart.');
-      window.location.href = '/cart';
-      return;
+    // Set up auto-refresh if enabled
+    if (autoRefresh) {
+      const interval = setInterval(() => {
+        console.log('Auto-refreshing quotes...');
+        loadOrderAndQuotes();
+      }, 30000); // Refresh every 30 seconds
+      
+      setRefreshInterval(interval);
+      
+      return () => {
+        if (interval) {
+          clearInterval(interval);
+        }
+      };
     }
+  }, [autoRefresh]);
 
-    if (savedOrder.sessionId !== savedQuotes.sessionId) {
-      alert('Session mismatch. Please start over.');
-      window.location.href = '/cart';
-      return;
+  const loadOrderAndQuotes = async (showLoadingSpinner = false) => {
+    try {
+      if (showLoadingSpinner) {
+        setLoading(true);
+      }
+
+      // Get order data from localStorage (this contains the sessionId)
+      const savedOrder = JSON.parse(localStorage.getItem('aqualink_order_data') || 'null');
+      
+      if (!savedOrder) {
+        console.log('No order data found in localStorage');
+        setError('No order session found. Please start from cart.');
+        setLoading(false);
+        return;
+      }
+      
+      if (!savedOrder.sessionId) {
+        console.log('No session ID found in order data');
+        setError('Invalid order session. Please create a new quote request.');
+        setLoading(false);
+        return;
+      }
+
+      setOrderData(savedOrder);
+
+      // Fetch quotes from backend using the sessionId
+      console.log('Fetching quotes for session:', savedOrder.sessionId);
+      const response = await deliveryService.getQuotesForRequest(savedOrder.sessionId);
+      
+      if (response.success && response.data) {
+        // Transform backend quote data to match frontend format
+        const transformedQuotes = response.data.map(quote => ({
+          id: quote.id,
+          deliveryPersonId: quote.deliveryPersonId,
+          deliveryPersonName: quote.deliveryPersonName || `Delivery Partner ${quote.deliveryPersonId}`,
+          deliveryPersonPhone: quote.deliveryPersonPhone || 'Not provided',
+          deliveryFee: quote.deliveryFee,
+          estimatedDeliveryTime: quote.estimatedDeliveryTime || '45-90 minutes',
+          rating: quote.rating || 4.5,
+          completedDeliveries: quote.completedDeliveries || 100,
+          specialOffers: quote.specialOffers || 'Professional delivery service',
+          quoteValidUntil: quote.expiresAt,
+          notes: quote.notes || 'Professional delivery service provider',
+          coverageArea: quote.coverageArea || 'Service area',
+          deliveryDate: quote.deliveryDate || getDefaultDeliveryDate(),
+          status: quote.status
+        }));
+
+        console.log('Transformed quotes:', transformedQuotes);
+        setQuotes(transformedQuotes);
+        
+        // Clear any previous errors
+        setError(null);
+      } else {
+        // If no quotes yet, show empty state
+        console.log('No quotes available yet');
+        setQuotes([]);
+      }
+
+      setLoading(false);
+
+    } catch (error) {
+      console.error('Error loading quotes:', error);
+      setError('Failed to load quotes. Please try again.');
+      setLoading(false);
     }
-
-    // ADD delivery date to each quote in mock data
-    const quotesWithDeliveryDate = savedQuotes.quotes.map(quote => ({
-      ...quote,
-      deliveryDate: getRandomDeliveryDate() // Add delivery date to existing quotes
-    }));
-
-    setOrderData(savedOrder);
-    setQuotes(quotesWithDeliveryDate);
-    setLoading(false);
   };
 
-  // Helper function to generate random delivery dates (1-3 days from today)
-  const getRandomDeliveryDate = () => {
+  // Helper function to get default delivery date (2-3 days from today)
+  const getDefaultDeliveryDate = () => {
     const date = new Date();
-    date.setDate(date.getDate() + Math.floor(Math.random() * 3) + 1);
-    return date.toISOString().split('T')[0]; // Format: YYYY-MM-DD
+    date.setDate(date.getDate() + 2);
+    return date.toISOString().split('T')[0];
   };
 
   // Helper function to format date for display
@@ -123,48 +186,60 @@ const QuoteAcceptance = () => {
     }
 
     setIsProcessing(true);
+    setError(null);
 
     try {
-      // Simulate order placement API call
-      await new Promise(resolve => setTimeout(resolve, 3000));
+      // Accept the quote using the backend API
+      const response = await deliveryService.acceptQuote(selectedQuote);
 
-      // Create order object
-      const finalOrder = {
-        orderId: 'ORD' + Date.now(),
-        sessionId: orderData.sessionId,
-        items: orderData.items,
-        subtotal: orderData.subtotal,
-        deliveryFee: quote.deliveryFee,
-        totalAmount: orderData.subtotal + quote.deliveryFee,
-        paymentMethod: paymentMethod,
-        deliveryPartner: {
-          name: quote.deliveryPersonName,
-          rating: quote.rating,
-          completedDeliveries: quote.completedDeliveries
-        },
-        deliveryDate: quote.deliveryDate, // Use quote's delivery date instead of preferences
-        orderDate: new Date().toISOString(),
-        status: 'CONFIRMED'
-      };
+      if (response.success) {
+        // Create order object for frontend tracking
+        const finalOrder = {
+          orderId: response.data.id || 'ORD' + Date.now(),
+          sessionId: orderData.sessionId,
+          items: orderData.items,
+          subtotal: orderData.subtotal,
+          deliveryFee: quote.deliveryFee,
+          totalAmount: orderData.subtotal + quote.deliveryFee,
+          paymentMethod: paymentMethod,
+          deliveryPartner: {
+            name: quote.deliveryPersonName,
+            rating: quote.rating,
+            completedDeliveries: quote.completedDeliveries
+          },
+          deliveryDate: quote.deliveryDate,
+          orderDate: new Date().toISOString(),
+          status: 'CONFIRMED',
+          backendOrderId: response.data.id
+        };
 
-      // Store order in localStorage (in real app, this would be sent to server)
-      const existingOrders = JSON.parse(localStorage.getItem('customerOrders') || '[]');
-      existingOrders.push(finalOrder);
-      localStorage.setItem('customerOrders', JSON.stringify(existingOrders));
+        // Store order in localStorage for frontend tracking
+        const existingOrders = JSON.parse(localStorage.getItem('customerOrders') || '[]');
+        existingOrders.push(finalOrder);
+        localStorage.setItem('customerOrders', JSON.stringify(existingOrders));
 
-      // Clear cart and quote data
-      localStorage.removeItem('selected_delivery_quote');
-      localStorage.removeItem('aqualink_order_data');
-      localStorage.removeItem('aqualink_received_quotes');
+        // Clear cart and quote data
+        localStorage.removeItem('selected_delivery_quote');
+        localStorage.removeItem('aqualink_order_data');
+        localStorage.removeItem('aqualink_received_quotes');
 
-      alert(`Order placed successfully! Order ID: ${finalOrder.orderId}`);
-      
-      // Redirect to order confirmation
-      window.location.href = `/order-confirmation/${finalOrder.orderId}`;
+        // Stop auto-refresh
+        if (refreshInterval) {
+          clearInterval(refreshInterval);
+        }
+
+        alert(`Order placed successfully! Order ID: ${finalOrder.orderId}\n\nYour order has been confirmed and assigned to ${quote.deliveryPersonName}.\nYou will receive updates on the delivery progress.`);
+        
+        // Redirect to order confirmation or dashboard
+        window.location.href = `/order-confirmation/${finalOrder.orderId}`;
+
+      } else {
+        throw new Error(response.message || 'Failed to accept quote');
+      }
 
     } catch (error) {
-      alert('Failed to place order. Please try again.');
       console.error('Order placement error:', error);
+      setError(error.message || 'Failed to place order. Please try again.');
     } finally {
       setIsProcessing(false);
     }
@@ -176,6 +251,32 @@ const QuoteAcceptance = () => {
         <div className="text-center">
           <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-blue-600 mx-auto mb-4"></div>
           <p className="text-gray-600">Loading quotes from delivery partners...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex items-center justify-center h-64 bg-gray-50">
+        <div className="text-center bg-white p-8 rounded-lg shadow-md">
+          <div className="text-red-500 text-6xl mb-4">⚠️</div>
+          <h2 className="text-xl font-bold text-gray-900 mb-2">Error Loading Quotes</h2>
+          <p className="text-red-600 mb-4">{error}</p>
+          <div className="space-x-4">
+            <button 
+              onClick={() => window.location.reload()} 
+              className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700"
+            >
+              Try Again
+            </button>
+            <button 
+              onClick={() => window.location.href = '/cart'}
+              className="bg-gray-600 text-white px-6 py-2 rounded-lg hover:bg-gray-700"
+            >
+              Back to Cart
+            </button>
+          </div>
         </div>
       </div>
     );
@@ -222,6 +323,31 @@ const QuoteAcceptance = () => {
                   </select>
                 </div>
               </div>
+
+              {/* Auto-refresh controls */}
+              <div className="flex items-center justify-between bg-blue-50 p-3 rounded-lg border border-blue-200">
+                <div className="flex items-center space-x-3">
+                  <label className="flex items-center space-x-2">
+                    <input
+                      type="checkbox"
+                      checked={autoRefresh}
+                      onChange={(e) => setAutoRefresh(e.target.checked)}
+                      className="text-blue-600"
+                    />
+                    <span className="text-blue-800 text-sm font-medium">Auto-refresh quotes (every 30s)</span>
+                  </label>
+                  {autoRefresh && (
+                    <span className="text-blue-600 text-xs">🔄 Active</span>
+                  )}
+                </div>
+                <button 
+                  onClick={() => loadOrderAndQuotes(true)}
+                  className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 text-sm"
+                  disabled={loading}
+                >
+                  {loading ? 'Refreshing...' : 'Refresh Now'}
+                </button>
+              </div>
               
               {expiredQuotes.length > 0 && (
                 <div className="mb-4 p-3 bg-orange-50 border border-orange-200 rounded-lg">
@@ -235,17 +361,23 @@ const QuoteAcceptance = () => {
             {/* Quotes Display */}
             {sortedQuotes.length === 0 ? (
               <div className="bg-white p-12 rounded-lg shadow-sm text-center">
-                <div className="text-6xl mb-4">😔</div>
-                <h3 className="text-xl font-bold text-gray-900 mb-2">No Valid Quotes Available</h3>
+                <div className="text-6xl mb-4">⏳</div>
+                <h3 className="text-xl font-bold text-gray-900 mb-2">Waiting for Quotes</h3>
                 <p className="text-gray-600 mb-6">
-                  All quotes have expired or are no longer valid for your delivery date.
+                  Your quote request has been sent to delivery partners. Please check back soon for responses.
                 </p>
                 <div className="space-x-4">
                   <button 
-                    onClick={() => window.location.href = '/delivery-request'}
+                    onClick={() => loadOrderAndQuotes()}
                     className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700"
                   >
-                    Request New Quotes
+                    Refresh Quotes
+                  </button>
+                  <button 
+                    onClick={() => window.location.href = '/delivery-request'}
+                    className="bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700"
+                  >
+                    Send New Request
                   </button>
                   <button 
                     onClick={() => window.location.href = '/cart'}
@@ -451,6 +583,12 @@ const QuoteAcceptance = () => {
                   'Select Quote to Continue'
                 )}
               </button>
+
+              {error && (
+                <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-lg">
+                  <p className="text-red-600 text-sm">{error}</p>
+                </div>
+              )}
 
               {!selectedQuote && (
                 <p className="text-orange-600 text-sm text-center mt-2 font-medium">

@@ -1,10 +1,18 @@
-import React, { useState, useCallback, useMemo } from 'react';
+import React, { useState, useCallback, useMemo, useContext } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Star, Heart, MessageCircle, ShoppingCart, Truck, User } from 'lucide-react';
+import { useCart } from '../../context/CartContext';
+import { useAuth } from '../../context/AuthContext';
 
 const ProductDetails = ({ fish, onPurchaseSuccess }) => {
+  const { addToCart, isLoading } = useCart();
+  const { user, token, isAuthenticated } = useAuth();
+  const navigate = useNavigate();
   const [quantity, setQuantity] = useState(fish?.minimumQuantity || 1);
   const [selectedImage, setSelectedImage] = useState(0);
   const [isFavorited, setIsFavorited] = useState(false);
+  const [addingToCart, setAddingToCart] = useState(false);
+  const [showSuccessMessage, setShowSuccessMessage] = useState(false);
 
   // Function to construct full image URL
   const getImageUrl = (imagePath) => {
@@ -79,13 +87,43 @@ const ProductDetails = ({ fish, onPurchaseSuccess }) => {
     setIsFavorited(prev => !prev);
   }, []);
 
-  const handleAddToCart = useCallback(() => {
-    // You can implement add to cart logic here
-    console.log('Adding to cart:', { fish, quantity });
-    if (onPurchaseSuccess) {
-      onPurchaseSuccess({ fish, quantity });
+  const handleAddToCart = useCallback(async () => {
+    if (!isAuthenticated()) {
+      alert('Please log in to add items to cart');
+      return;
     }
-  }, [fish, quantity, onPurchaseSuccess]);
+
+    if (!fish || !fish.id) {
+      alert('Product information is missing');
+      return;
+    }
+
+    try {
+      setAddingToCart(true);
+      
+      // Call addToCart with correct parameters: productId, productType, quantity
+      await addToCart(fish.id, 'fish', quantity);
+      
+      // Show success message
+      setShowSuccessMessage(true);
+      
+      // Optional: Call onPurchaseSuccess callback
+      if (onPurchaseSuccess) {
+        onPurchaseSuccess({ fish, quantity });
+      }
+      
+      // Auto-navigate to cart page after successful addition
+      setTimeout(() => {
+        navigate('/cart');
+      }, 1500); // Allow time to see success message
+      
+    } catch (error) {
+      console.error('Error adding to cart:', error);
+      alert('Failed to add item to cart. Please try again.');
+    } finally {
+      setAddingToCart(false);
+    }
+  }, [fish, quantity, addToCart, isAuthenticated, onPurchaseSuccess, navigate]);
 
   // Star rating component
   const StarRating = ({ rating, size = 'w-4 h-4' }) => (
@@ -222,19 +260,51 @@ const ProductDetails = ({ fish, onPurchaseSuccess }) => {
               <div className="text-sm text-gray-600">({quantity} fish × {formattedPrice})</div>
             </div>
 
+            {/* Success Message */}
+            {showSuccessMessage && (
+              <div className="mb-4 p-4 bg-green-100 border border-green-400 text-green-700 rounded-lg">
+                <div className="flex items-center">
+                  <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                  </svg>
+                  <span className="font-medium">
+                    Added {quantity} {fish?.name} to cart! Redirecting to cart...
+                  </span>
+                </div>
+              </div>
+            )}
+
             {/* Action Buttons */}
             <div className="space-y-3">
               <button 
                 onClick={handleAddToCart}
-                disabled={productData.stock === 0}
+                disabled={productData.stock === 0 || addingToCart || !isAuthenticated}
                 className={`w-full py-3 px-4 rounded-lg font-medium transition-colors flex items-center justify-center gap-2 ${
                   productData.stock === 0
                     ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                    : !isAuthenticated
+                    ? 'bg-gray-400 text-gray-600 cursor-not-allowed'
+                    : addingToCart
+                    ? 'bg-blue-400 text-white cursor-not-allowed'
                     : 'bg-blue-600 text-white hover:bg-blue-700'
                 }`}
               >
-                <ShoppingCart className="w-5 h-5" />
-                {productData.stock === 0 ? 'Out of Stock' : 'Add to Cart'}
+                {addingToCart ? (
+                  <>
+                    <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+                    Adding to Cart...
+                  </>
+                ) : (
+                  <>
+                    <ShoppingCart className="w-5 h-5" />
+                    {productData.stock === 0 
+                      ? 'Out of Stock' 
+                      : !isAuthenticated 
+                      ? 'Login to Add to Cart'
+                      : 'Add to Cart'
+                    }
+                  </>
+                )}
               </button>
               <button className="w-full py-3 px-4 border-2 border-green-600 text-green-600 rounded-lg font-medium hover:bg-green-50 transition-colors flex items-center justify-center gap-2">
                 <MessageCircle className="w-5 h-5" />

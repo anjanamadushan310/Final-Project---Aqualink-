@@ -5,7 +5,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import java.math.BigDecimal;
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Entity
@@ -17,35 +17,55 @@ public class Order {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long orderId;
+    private Long id;
 
-    @Column(name = "nic_number")
-    private String nicNumber;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "buyer_user_id", nullable = false)
+    private User buyerUser;
 
-    @Column(name = "order_date")
-    private LocalDate orderDate;
+    @Column(name = "order_date_time")
+    private LocalDateTime orderDateTime;
 
-    @Column(name = "shipping_address")
-    private String shippingAddress;
+    // Shipping Address Components
+    @Column(name = "address_place")
+    private String addressPlace;
 
+    @Column(name = "address_street")
+    private String addressStreet;
+
+    @Column(name = "address_district")
+    private String addressDistrict;
+
+    @Column(name = "address_town")
+    private String addressTown;
+
+    @Enumerated(EnumType.STRING)
     @Column(name = "order_status")
-    private String orderStatus; // pending, shipped, delivered, canceled
+    private OrderStatus orderStatus;
 
-    @Column(name = "total_amount")
+    @Column(name = "total_amount", precision = 10, scale = 2)
     private BigDecimal totalAmount;
 
-    @Column(name = "delivery_fee")
-    private BigDecimal deliveryFee;
+    @Column(name = "accepted_delivery_quote_id")
+    private Long acceptedDeliveryQuoteId;
 
-    @Column(name = "delivery_guy_nic_number")
-    private String deliveryGuyNicNumber;
-
-    @Column(name = "delivery_required_status")
-    private String deliveryRequiredStatus; // verified, not yet
-
-    @Column(name = "delivery_start_date")
-    private LocalDate deliveryStartDate;
+    @ElementCollection
+    @CollectionTable(
+        name = "order_delivery_quote_requests", 
+        joinColumns = @JoinColumn(name = "order_id")
+    )
+    @Column(name = "delivery_quote_request_id")
+    private List<Long> deliveryQuoteRequestIds;
 
     @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<OrderItem> orderItems;
+
+    // Order Status Enum
+    public enum OrderStatus {
+        DELIVERY_PENDING,
+        ORDER_PENDING,
+        SHIPPED,
+        DELIVERED,
+        CANCELED
+    }
 }

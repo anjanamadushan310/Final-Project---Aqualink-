@@ -29,6 +29,12 @@ public interface UserRepository extends JpaRepository<User, Long> {
     // Find active user by email
     Optional<User> findByEmailAndActiveTrue(String email);
 
+    // Find user by NIC number
+    Optional<User> findByNicNumber(String nicNumber);
+    
+    // Find active user by NIC number
+    Optional<User> findByNicNumberAndActiveTrue(String nicNumber);
+
     // New method to fetch user with roles eagerly
     @EntityGraph(attributePaths = {"userRoles"})
     Optional<User> findWithRolesByEmail(String email);

@@ -14,9 +14,10 @@ const DistrictSelector = ({ districts, coverageData, onUpdate }) => {
 
     const newSelectedTowns = { ...selectedTowns };
     if (!selectedDistricts.includes(district)) {
-      newSelectedTowns[district] = districts[selectedProvince][district];
+      // Initialize empty array for towns - user will manually select
+      newSelectedTowns[district] = [];
     } else {
-      
+      // Remove the district and all its selected towns
       delete newSelectedTowns[district];
     }
 
