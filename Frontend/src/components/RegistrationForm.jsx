@@ -142,7 +142,7 @@ const RegistrationForm = ({ setShowLogin }) => {
       setAvailableRoles([
         { value: 'SHOP_OWNER', label: 'Shop Owner' },
         { value: 'FARM_OWNER', label: 'Farm Owner' },
-        { value: 'COLLECTOR', label: 'Collector' },
+        { value: 'EXPORTER', label: 'Exporter' },
         { value: 'SERVICE_PROVIDER', label: 'Service Provider' },
         { value: 'INDUSTRIAL_STUFF_SELLER', label: 'Industrial Stuff Seller' },
         { value: 'DELIVERY_PERSON', label: 'Delivery Person' }

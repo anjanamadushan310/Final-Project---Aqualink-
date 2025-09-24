@@ -10,7 +10,7 @@ import AdminDashboard from "./pages/dashboards/AdminDashboard";
 import UserVerificationDashboard from "./components/admin/AdminDashboard";
 import ShopOwnerDashboard from "./pages/dashboards/ShopOwnerDashboard";
 import FarmOwnerDashboard from "./pages/dashboards/FarmOwnerDashboard";
-import CollectorDashboard from "./pages/dashboards/CollectorDashboard";
+import ExporterDashboard from "./pages/dashboards/ExporterDashboard";
 import ServiceProviderDashboard from "./pages/dashboards/ServiceProviderDashboard";
 import IndustrialStuffSellerDashboard from "./pages/dashboards/IndustrialStuffSellerDashboard";
 import DeliveryPersonDashboard from "./pages/dashboards/DeliveryPersonDashboard";
@@ -23,6 +23,8 @@ import QuoteAcceptance from "./components/shopowner/QuoteAcceptance";
 import DeliveryQuoteRequest from "./components/shopowner/DeliveryQuoteRequest";
 import OrderConfirmation from "./components/shopowner/OrderConfirmation";
 import Cart from "./components/shopowner/Cart";
+import BlogPage from "./pages/BlogPage";
+import BlogPostPage from "./pages/BlogPostPage";
 import { AuthProvider } from "./context/AuthContext";
 import { CartProvider } from "./context/CartContext";
 import { useCart } from "./context/CartContext";
@@ -77,8 +79,8 @@ const AppRouter = ({ showLogin, setShowLogin, showProfileMenu, setShowProfileMen
           return 'Shop Owner Dashboard';
         case 'Farm-Owner':
           return 'Farm Owner Dashboard';
-        case 'Collector':
-          return 'Collector Dashboard';
+        case 'Exporter':
+          return 'Exporter Dashboard';
         case 'Service-Provider':
           return 'Service Provider Dashboard';
         case 'Industrial-Stuff-Seller':
@@ -143,11 +145,16 @@ const AppRouter = ({ showLogin, setShowLogin, showProfileMenu, setShowProfileMen
           <Route path="/cart" element={<Cart />} />
           <Route path="/about" element={<AboutPage />} />
           <Route path="/contact" element={<Contact/>} />
+          <Route path="/blog" element={<BlogPage />} />
+          <Route path="/blog/:postId" element={<BlogPostPage />} />
           
           {/* Protected Dashboard Routes */}
           <Route path="/dashboard/shop-owner" element={<ShopOwnerDashboard />}/>
           <Route path="/dashboard/Farm-Owner" element={<FarmOwnerDashboard />}/>
-          <Route path="/dashboard/Collector" element={<CollectorDashboard />}/>
+          <Route path="/dashboard/Exporter" element={<ExporterDashboard />}/>
+          <Route path="/dashboard/Exporter/blog" element={<ExporterDashboard />}/>
+          <Route path="/dashboard/Exporter/blog/create" element={<ExporterDashboard />}/>
+          <Route path="/dashboard/Exporter/blog/edit/:postId" element={<ExporterDashboard />}/>
           <Route path="/dashboard/Service-Provider" element={<ServiceProviderDashboard />}/>
           <Route path="/dashboard/Industrial-Stuff-Seller" element={<IndustrialStuffSellerDashboard/>}/>
           <Route path="/dashboard/Delivery-Person" element={<DeliveryPersonDashboard />}/>

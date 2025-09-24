@@ -4,7 +4,7 @@ package com.example.aqualink.entity;
 public enum Role {
     SHOP_OWNER("Shop Owner"),
     FARM_OWNER("Farm Owner"),
-    COLLECTOR("Collector"),
+    EXPORTER("Exporter"),
     SERVICE_PROVIDER("Service Provider"),
     INDUSTRIAL_STUFF_SELLER("Industrial Stuff Seller"),
     DELIVERY_PERSON("Delivery Person"),

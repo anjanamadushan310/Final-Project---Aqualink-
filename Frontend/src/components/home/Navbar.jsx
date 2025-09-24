@@ -81,6 +81,9 @@ function Navbar({
                 <Link to="/cart" className="text-white font-medium hover:underline">
                   Shopping Cart
                 </Link>
+                <Link to="/blog" className="text-white font-medium hover:underline">
+                  Blog
+                </Link>
                 <Link to="/about" className="text-white font-medium hover:underline">
                   About
                 </Link>
@@ -218,8 +221,8 @@ function Navbar({
                                     ? "Shop Owner"
                                     : role === "FARM_OWNER"
                                     ? "Farm Owner"
-                                    : role === "COLLECTOR"
-                                    ? "Collector"
+                                    : role === "EXPORTER"
+                                    ? "Exporter"
                                     : role === "SERVICE_PROVIDER"
                                     ? "Service Provider"
                                     : role === "INDUSTRIAL_STUFF_SELLER"

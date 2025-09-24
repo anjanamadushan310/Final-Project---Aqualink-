@@ -4,6 +4,7 @@ import com.example.aqualink.dto.UserVerificationDTO;
 import com.example.aqualink.entity.Role;
 import com.example.aqualink.entity.User;
 import com.example.aqualink.entity.UserRole;
+import com.example.aqualink.entity.VerificationStatus;
 import com.example.aqualink.repository.UserRepository;
 import com.example.aqualink.repository.UserRoleRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -37,25 +38,39 @@ public class AdminVerificationServiceImpl implements AdminVerificationService {
 
     @Override
     public List<UserVerificationDTO> getPendingUsers() {
-        List<User> users = userRepository.findByActiveFalseOrderByCreatedAtDesc();
-        return users.stream()
+        // Get users with PENDING status OR users with null status (existing users)
+        List<User> pendingUsers = userRepository.findByVerificationStatusOrderByCreatedAtDesc(VerificationStatus.PENDING);
+        
+        // Also get users with null verification status that are inactive (these are likely pending)
+        List<User> nullStatusUsers = userRepository.findByVerificationStatusIsNullAndActiveFalseOrderByCreatedAtDesc();
+        
+        // Combine both lists
+        pendingUsers.addAll(nullStatusUsers);
+        
+        return pendingUsers.stream()
                 .map(this::convertToDTO)
                 .collect(Collectors.toList());
     }
 
     @Override
     public List<UserVerificationDTO> getVerifiedUsers() {
-        List<User> users = userRepository.findByActiveTrueOrderByCreatedAtDesc();
-        return users.stream()
+        // Get users with APPROVED status OR active users with null status (existing verified users)
+        List<User> approvedUsers = userRepository.findByVerificationStatusOrderByCreatedAtDesc(VerificationStatus.APPROVED);
+        
+        // Also get users with null verification status that are active (these are likely approved)
+        List<User> nullStatusActiveUsers = userRepository.findByVerificationStatusIsNullAndActiveTrueOrderByCreatedAtDesc();
+        
+        // Combine both lists
+        approvedUsers.addAll(nullStatusActiveUsers);
+        
+        return approvedUsers.stream()
                 .map(this::convertToDTO)
                 .collect(Collectors.toList());
     }
 
     @Override
     public List<UserVerificationDTO> getRejectedUsers() {
-        // For now, we'll consider inactive users as rejected
-        // In the future, you might want to add a separate "rejected" status
-        List<User> users = userRepository.findByActiveFalseOrderByCreatedAtDesc();
+        List<User> users = userRepository.findByVerificationStatusOrderByCreatedAtDesc(VerificationStatus.REJECTED);
         return users.stream()
                 .map(this::convertToDTO)
                 .collect(Collectors.toList());
@@ -68,6 +83,7 @@ public class AdminVerificationServiceImpl implements AdminVerificationService {
             if (userOptional.isPresent()) {
                 User user = userOptional.get();
                 user.setActive(true);
+                user.setVerificationStatus(VerificationStatus.APPROVED);
                 userRepository.save(user);
                 
                 // Log approval action (you can add audit logging here)
@@ -89,6 +105,7 @@ public class AdminVerificationServiceImpl implements AdminVerificationService {
             if (userOptional.isPresent()) {
                 User user = userOptional.get();
                 user.setActive(false);
+                user.setVerificationStatus(VerificationStatus.REJECTED);
                 userRepository.save(user);
                 
                 // Log rejection action (you can add audit logging here)
@@ -113,13 +130,14 @@ public class AdminVerificationServiceImpl implements AdminVerificationService {
     }
 
     @Override
-    public Map<String, Long> getVerificationStats() {
-        Map<String, Long> stats = new HashMap<>();
+    public Map<String, Object> getVerificationStats() {
+        Map<String, Object> stats = new HashMap<>();
         
         long totalUsers = userRepository.count();
-        long pendingUsers = userRepository.findByActiveFalse().size();
-        long verifiedUsers = userRepository.findByActiveTrue().size();
-        long rejectedUsers = pendingUsers; // For now, pending = rejected
+        long pendingUsers = userRepository.countByVerificationStatus(VerificationStatus.PENDING) + 
+                           userRepository.countByVerificationStatusIsNull();
+        long verifiedUsers = userRepository.countByVerificationStatus(VerificationStatus.APPROVED);
+        long rejectedUsers = userRepository.countByVerificationStatus(VerificationStatus.REJECTED);
         
         stats.put("total", totalUsers);
         stats.put("pending", pendingUsers);
@@ -163,6 +181,10 @@ public class AdminVerificationServiceImpl implements AdminVerificationService {
             adminUser.setPhoneNumber("+94700000000");
             adminUser.setPassword(new org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder().encode(password));
             adminUser.setActive(true); // Admin users are active by default
+            adminUser.setEnabled(true); // Admin users are enabled by default
+            
+            // Set verification status to APPROVED for admin users
+            adminUser.setVerificationStatus(VerificationStatus.APPROVED);
             
             // Save user first
             User savedUser = userRepository.save(adminUser);
@@ -248,10 +270,36 @@ public class AdminVerificationServiceImpl implements AdminVerificationService {
      * Determine user status for display
      */
     private String determineUserStatus(User user) {
-        if (user.isActive()) {
-            return "ACTIVE";
+        if (user.getVerificationStatus() != null) {
+            return user.getVerificationStatus().toString();
         } else {
-            return "INACTIVE"; // You can extend this to differentiate between pending and rejected
+            // Fallback for existing users without verification status
+            if (user.isActive()) {
+                return "APPROVED";  // Active users without status are considered approved
+            } else {
+                return "PENDING";   // Inactive users without status are considered pending
+            }
         }
+    }
+    
+    /**
+     * Migrate existing users to have proper verification status
+     * This should be called once to update existing data
+     */
+    @Override
+    @Transactional
+    public void migrateExistingUsersVerificationStatus() {
+        List<User> usersWithNullStatus = userRepository.findByVerificationStatusIsNull();
+        
+        for (User user : usersWithNullStatus) {
+            if (user.isActive()) {
+                user.setVerificationStatus(VerificationStatus.APPROVED);
+            } else {
+                user.setVerificationStatus(VerificationStatus.PENDING);
+            }
+            userRepository.save(user);
+        }
+        
+        System.out.println("Migrated " + usersWithNullStatus.size() + " users to have verification status");
     }
 }
