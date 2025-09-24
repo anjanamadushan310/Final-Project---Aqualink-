@@ -44,7 +44,7 @@ public interface AdminVerificationService {
     /**
      * Get verification statistics
      */
-    Map<String, Long> getVerificationStats();
+    Map<String, Object> getVerificationStats();
     
     /**
      * Check if a user has admin role
@@ -55,4 +55,9 @@ public interface AdminVerificationService {
      * Create admin user for testing purposes
      */
     boolean createAdminUser(String email, String password);
+    
+    /**
+     * Migrate existing users to have proper verification status
+     */
+    void migrateExistingUsersVerificationStatus();
 }

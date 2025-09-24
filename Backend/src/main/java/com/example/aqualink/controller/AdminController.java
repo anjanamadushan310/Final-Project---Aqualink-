@@ -172,7 +172,7 @@ public class AdminController {
                         .body(createErrorResponse("Admin access required"));
             }
 
-            Map<String, Long> stats = adminVerificationService.getVerificationStats();
+            Map<String, Object> stats = adminVerificationService.getVerificationStats();
             return ResponseEntity.ok(stats);
 
         } catch (Exception e) {
@@ -216,6 +216,32 @@ public class AdminController {
             return adminVerificationService.isUserAdmin(userId);
         } catch (Exception e) {
             return false;
+        }
+    }
+    
+    /**
+     * Migrate existing users to have proper verification status
+     * This is a one-time operation for existing data
+     */
+    @PostMapping("/users/migrate-verification-status")
+    public ResponseEntity<?> migrateVerificationStatus(HttpServletRequest request) {
+        try {
+            // Verify admin authentication
+            if (!isAdminAuthenticated(request)) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                        .body(createErrorResponse("Admin access required"));
+            }
+
+            adminVerificationService.migrateExistingUsersVerificationStatus();
+            
+            Map<String, String> response = new HashMap<>();
+            response.put("message", "User verification status migration completed successfully");
+            return ResponseEntity.ok(response);
+            
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(createErrorResponse("Migration failed: " + e.getMessage()));
         }
     }
 

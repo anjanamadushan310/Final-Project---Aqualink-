@@ -37,14 +37,32 @@ class ApiService {
       
       // Handle 401 Unauthorized - token expired or invalid
       if (response.status === 401) {
-        // Clear auth data and redirect to login
-        localStorage.removeItem('token');
-        localStorage.removeItem('user');
+        // Try to get error message from response
+        const contentType = response.headers.get('content-type');
+        let errorMessage = 'Authentication failed. Please log in again.';
         
-        // Dispatch custom event to notify AuthContext
-        window.dispatchEvent(new CustomEvent('authTokenExpired'));
+        if (contentType && contentType.includes('application/json')) {
+          try {
+            const errorData = await response.json();
+            // Check for message in various possible fields
+            errorMessage = errorData.message || errorData.error || errorMessage;
+          } catch (parseError) {
+            console.log('Could not parse error response:', parseError);
+          }
+        }
         
-        throw new Error('Authentication failed. Please log in again.');
+        // Don't clear auth data immediately for 401s with specific error messages
+        // Let AuthContext handle it based on the error message
+        if (!errorMessage.includes('pending') && !errorMessage.includes('rejected') && !errorMessage.includes('deactivated')) {
+          // Clear auth data and redirect to login only for actual token issues
+          localStorage.removeItem('token');
+          localStorage.removeItem('user');
+          
+          // Dispatch custom event to notify AuthContext
+          window.dispatchEvent(new CustomEvent('authTokenExpired'));
+        }
+        
+        throw new Error(errorMessage);
       }
       
       // Handle non-JSON responses (like file downloads)
@@ -59,7 +77,21 @@ class ApiService {
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.message || `HTTP error! status: ${response.status}`);
+        // Enhanced error message extraction
+        let errorMessage = 'An error occurred';
+        
+        // Try to get message from various possible fields
+        if (data.message) {
+          errorMessage = data.message;
+        } else if (data.error) {
+          errorMessage = data.error;
+        } else if (typeof data === 'string') {
+          errorMessage = data;
+        } else {
+          errorMessage = `HTTP error! status: ${response.status}`;
+        }
+        
+        throw new Error(errorMessage);
       }
 
       return data;

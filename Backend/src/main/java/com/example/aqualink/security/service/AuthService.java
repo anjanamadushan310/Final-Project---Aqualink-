@@ -15,6 +15,7 @@ import org.springframework.web.multipart.MultipartFile;
 import com.example.aqualink.entity.Role;
 import com.example.aqualink.entity.User;
 import com.example.aqualink.entity.UserRole;
+import com.example.aqualink.entity.VerificationStatus;
 import com.example.aqualink.repository.UserRepository;
 import com.example.aqualink.repository.UserRoleRepository;
 import com.example.aqualink.security.dto.LoginRequest;
@@ -97,6 +98,7 @@ public class AuthService {
             user.setNicBackDocumentPath(nicBackPath);
             user.setSelfieDocumentPath(selfiePath);
             user.setActive(false); // Set inactive by default for admin verification
+            user.setVerificationStatus(VerificationStatus.PENDING); // Set status to pending
 
             // Save user first to get ID
             userRepository.save(user);
@@ -147,6 +149,7 @@ public class AuthService {
         if (userOpt.isPresent()) {
             User user = userOpt.get();
             user.setActive(false);
+            user.setVerificationStatus(VerificationStatus.REJECTED);
             userRepository.save(user);
             return true;
         }
@@ -158,6 +161,7 @@ public class AuthService {
         if (userOpt.isPresent()) {
             User user = userOpt.get();
             user.setActive(true);
+            user.setVerificationStatus(VerificationStatus.APPROVED);
             userRepository.save(user);
             return true;
         }
@@ -189,9 +193,24 @@ public class AuthService {
                         return new RuntimeException("Invalid email or password");
                     });
 
+            // Check verification status first
+            if (user.getVerificationStatus() == null) {
+                // Handle users with null verification status (existing users)
+                if (!user.isActive()) {
+                    System.out.println("ERROR: User account pending approval (legacy): " + loginRequest.getEmail());
+                    throw new RuntimeException("Your account is pending admin approval. Please wait for verification to complete.");
+                }
+            } else if (user.getVerificationStatus() == VerificationStatus.PENDING) {
+                System.out.println("ERROR: User account pending approval: " + loginRequest.getEmail());
+                throw new RuntimeException("Your account is pending admin approval. Please wait for verification to complete.");
+            } else if (user.getVerificationStatus() == VerificationStatus.REJECTED) {
+                System.out.println("ERROR: User account rejected: " + loginRequest.getEmail());
+                throw new RuntimeException("Your account has been rejected by the administrator. Please contact support for more information.");
+            }
+
             if (!user.isActive()) {
                 System.out.println("ERROR: User account is inactive: " + loginRequest.getEmail());
-                throw new RuntimeException("Account is inactive");
+                throw new RuntimeException("Your account has been deactivated. Please contact support.");
             }
 
             if (!passwordEncoder.matches(loginRequest.getPassword(), user.getPassword())) {

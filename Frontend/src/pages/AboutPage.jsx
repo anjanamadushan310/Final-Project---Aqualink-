@@ -8,7 +8,7 @@ const AboutPage = () => {
     {
       icon: <Users className="w-8 h-8 text-blue-600" />,
       title: "Multi-Role Platform",
-      description: "Connecting farm owners, shop owners, collectors, delivery persons, service providers, and industrial suppliers"
+      description: "Connecting farm owners, shop owners, exporters, delivery persons, service providers, and industrial suppliers"
     },
     {
       icon: <Shield className="w-8 h-8 text-green-600" />,
@@ -52,7 +52,7 @@ const AboutPage = () => {
             <h2 className="text-3xl font-bold text-gray-800 mb-4">Our Mission</h2>
             <p className="text-lg text-gray-600 max-w-4xl mx-auto leading-relaxed">
               AQUALINK aims to transform the ornamental fish industry by creating a digital platform that 
-              connects fish farm owners, buyers, collectors, delivery persons, service providers, and 
+              connects fish farm owners, buyers, exporters, delivery persons, service providers, and 
               industrial suppliers. We simplify transactions, provide data-driven insights to improve 
               efficiency, boost income, and support sustainable growth in Sri Lanka.
             </p>

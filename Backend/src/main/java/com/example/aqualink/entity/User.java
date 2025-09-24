@@ -68,6 +68,10 @@ public class User {
 
     @Column(nullable = false, columnDefinition = "BIT DEFAULT 0")
     private boolean active = false;
+    
+    @Column(name = "verification_status")
+    @Enumerated(EnumType.STRING)
+    private VerificationStatus verificationStatus = VerificationStatus.PENDING;
 
     @Column(name = "created_at")
     private LocalDateTime createdAt;

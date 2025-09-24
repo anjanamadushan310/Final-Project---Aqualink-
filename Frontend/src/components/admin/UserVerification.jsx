@@ -35,6 +35,9 @@ const UserVerification = () => {
 
       const response = await adminAPI.getVerificationUsers();
       
+      console.log('Raw API response:', response);
+      console.log('Users data:', response.data);
+      
       // Transform backend data to match frontend expectations
       const transformedUsers = response.data.map(user => ({
         ...user,
@@ -46,6 +49,9 @@ const UserVerification = () => {
         userRoles: user.userRoles || []
       }));
       
+      console.log('Transformed users:', transformedUsers);
+      console.log('User statuses:', transformedUsers.map(u => ({ id: u.id, name: u.name, status: u.status })));
+      
       setUsers(transformedUsers);
       setMessage('');
     } catch (error) {
@@ -56,51 +62,11 @@ const UserVerification = () => {
       } else if (error.response?.status === 403) {
         setMessage('You do not have permission to view this data.');
       } else {
-        setMessage('Failed to fetch users. Using demo data.');
+        setMessage('Failed to fetch users. Please try again later.');
       }
       
-      // For development/demo, use dummy data if API fails
-      setUsers([
-        {
-          id: 1,
-          name: 'John Doe',
-          email: 'john@example.com',
-          nicNumber: '123456789V',
-          phoneNumber: '+94771234567',
-          userRoles: ['SHOP_OWNER'],
-          status: 'INACTIVE',
-          createdAt: '2024-01-15T10:30:00',
-          nicFrontDocument: utils.getImageUrl('/uploads/0f0b409d-7adc-41c4-a72b-128581400c4d.jpeg'),
-          nicBackDocument: utils.getImageUrl('/uploads/1b00b5d7-8d16-45f0-bcd4-89abac5cfdfa.jpeg'),
-          selfieDocument: utils.getImageUrl('/uploads/1c6b28b0-1b35-4453-8064-9c255e95a4b7.png')
-        },
-        {
-          id: 2,
-          name: 'Jane Smith',
-          email: 'jane@example.com',
-          nicNumber: '987654321V',
-          phoneNumber: '+94779876543',
-          userRoles: ['FARM_OWNER'],
-          status: 'ACTIVE',
-          createdAt: '2024-01-10T14:20:00',
-          nicFrontDocument: utils.getImageUrl('/uploads/204bb665-6413-45b2-92b9-32d11dd414dc.jpeg'),
-          nicBackDocument: utils.getImageUrl('/uploads/24a761e7-0825-4186-bbac-e0e468581ced.png'),
-          selfieDocument: utils.getImageUrl('/uploads/2a78a516-d191-4c73-b908-f3f8e94beba2.jpeg')
-        },
-        {
-          id: 3,
-          name: 'Mike Johnson',
-          email: 'mike@example.com',
-          nicNumber: '456789123V',
-          phoneNumber: '+94775555555',
-          userRoles: ['SERVICE_PROVIDER'],
-          status: 'INACTIVE',
-          createdAt: '2024-01-08T09:15:00',
-          nicFrontDocument: utils.getImageUrl('/uploads/32392057-0bc7-4942-a29f-a7ebff000799.png'),
-          nicBackDocument: utils.getImageUrl('/uploads/368e01c2-c20f-49f3-934e-a5c461eb57d8.png'),
-          selfieDocument: utils.getImageUrl('/uploads/38d1e76d-adff-44bd-b112-12177b80dd6d.png')
-        }
-      ]);
+      // If API fails, set empty users array
+      setUsers([]);
     } finally {
       setLoading(false);
     }
@@ -108,17 +74,17 @@ const UserVerification = () => {
 
   const filteredUsers = users.filter(user => {
     if (filter === 'all') return true;
-    if (filter === 'pending') return user.status === 'INACTIVE';
-    if (filter === 'verified') return user.status === 'ACTIVE';
+    if (filter === 'pending') return user.status === 'PENDING';
+    if (filter === 'verified') return user.status === 'APPROVED';
     if (filter === 'rejected') return user.status === 'REJECTED';
     return true;
   });
 
   const getStatusBadge = (status) => {
     switch (status) {
-      case 'ACTIVE':
+      case 'APPROVED':
         return 'bg-green-100 text-green-800';
-      case 'INACTIVE':
+      case 'PENDING':
         return 'bg-yellow-100 text-yellow-800';
       case 'REJECTED':
         return 'bg-red-100 text-red-800';
@@ -129,9 +95,9 @@ const UserVerification = () => {
 
   const getStatusText = (status) => {
     switch (status) {
-      case 'ACTIVE':
+      case 'APPROVED':
         return 'Verified';
-      case 'INACTIVE':
+      case 'PENDING':
         return 'Pending';
       case 'REJECTED':
         return 'Rejected';
@@ -271,13 +237,13 @@ const UserVerification = () => {
             <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-200">
               <div className="text-sm font-medium text-gray-500">Pending</div>
               <div className="text-2xl font-bold text-yellow-600">
-                {users.filter(u => u.status === 'INACTIVE').length}
+                {users.filter(u => u.status === 'PENDING').length}
               </div>
             </div>
             <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-200">
               <div className="text-sm font-medium text-gray-500">Verified</div>
               <div className="text-2xl font-bold text-green-600">
-                {users.filter(u => u.status === 'ACTIVE').length}
+                {users.filter(u => u.status === 'APPROVED').length}
               </div>
             </div>
             <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-200">
@@ -348,7 +314,7 @@ const UserVerification = () => {
                           >
                             <EyeIcon className="w-4 h-4" />
                           </button>
-                          {user.status === 'INACTIVE' && (
+                          {user.status === 'PENDING' && (
                             <>
                               <button 
                                 onClick={() => handleUserAction(user.id, 'approve')}
@@ -502,7 +468,7 @@ const UserVerification = () => {
               </div>
 
               {/* Action Buttons */}
-              {selectedUser.status === 'INACTIVE' && (
+              {selectedUser.status === 'PENDING' && (
                 <div className="flex space-x-4">
                   <button
                     onClick={() => handleUserAction(selectedUser.id, 'approve')}

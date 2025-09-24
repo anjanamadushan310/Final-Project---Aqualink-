@@ -83,7 +83,7 @@ const Contact = () => {
     "Farm Owner (Breeder/Grower)",
     "Shop Owner",
     "Retail Buyer",
-    "Collector",
+    "Exporter",
     "Delivery Person",
     "Service Provider",
     "Industrial Stuff Seller",

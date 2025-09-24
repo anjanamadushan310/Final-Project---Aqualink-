@@ -173,7 +173,26 @@ function LoginForm({ onClose }) {
       
     } catch (error) {
       console.error("Login error:", error);
-      setErrMsg(error.message || "Login failed. Please try again.");
+      
+      // Enhanced error message handling
+      let displayMessage = "Login failed. Please try again.";
+      
+      if (error.message) {
+        displayMessage = error.message;
+      }
+      
+      // Make specific error messages more user-friendly
+      if (error.message?.includes('pending admin approval')) {
+        displayMessage = "⏳ Your account is awaiting admin approval. Please wait for verification to complete.";
+      } else if (error.message?.includes('rejected by the administrator')) {
+        displayMessage = "❌ Your account has been rejected. Please contact support for assistance.";
+      } else if (error.message?.includes('deactivated')) {
+        displayMessage = "🚫 Your account has been deactivated. Please contact support.";
+      } else if (error.message?.includes('Invalid email or password')) {
+        displayMessage = "🔐 Invalid email or password. Please check your credentials.";
+      }
+      
+      setErrMsg(displayMessage);
     } finally {
       setLoading(false);
     }

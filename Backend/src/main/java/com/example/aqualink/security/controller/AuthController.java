@@ -27,12 +27,23 @@ public class AuthController {
             return ResponseEntity.ok(response);
         } catch (RuntimeException e) {
             System.out.println("Login failed: " + e.getMessage());
+            
+            // Create error response with appropriate message
+            String errorMessage;
+            if (e.getMessage().contains("pending admin approval")) {
+                errorMessage = "Your account is pending admin approval. Please wait for verification to complete.";
+            } else if (e.getMessage().contains("rejected by the administrator")) {
+                errorMessage = "Your account has been rejected by the administrator. Please contact support for more information.";
+            } else if (e.getMessage().contains("deactivated")) {
+                errorMessage = "Your account has been deactivated. Please contact support.";
+            } else if (e.getMessage().contains("Invalid email or password")) {
+                errorMessage = "Invalid email or password. Please check your credentials and try again.";
+            } else {
+                errorMessage = "Login failed. " + e.getMessage();
+            }
+            
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    // Return empty response instead of null body
-
-                    .body(new LoginResponse("Login failed" + e.getMessage()));
-
-
+                    .body(new LoginResponse(errorMessage));
         }
     }
 }

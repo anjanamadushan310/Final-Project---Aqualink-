@@ -2,6 +2,7 @@ package com.example.aqualink.repository;
 
 import com.example.aqualink.entity.User;
 import com.example.aqualink.entity.UserProfile;
+import com.example.aqualink.entity.VerificationStatus;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
@@ -45,9 +46,19 @@ public interface UserRepository extends JpaRepository<User, Long> {
     List<User> findByActiveTrueOrderByCreatedAtDesc();
     
     List<User> findAllByOrderByCreatedAtDesc();
+    
+    // Find users by verification status
+    List<User> findByVerificationStatusOrderByCreatedAtDesc(VerificationStatus verificationStatus);
+    
+    // Find users with null verification status (for backward compatibility)
+    List<User> findByVerificationStatusIsNullAndActiveFalseOrderByCreatedAtDesc();
+    
+    List<User> findByVerificationStatusIsNullAndActiveTrueOrderByCreatedAtDesc();
+    
+    // Find all users with null verification status
+    List<User> findByVerificationStatusIsNull();
 
-
-
-
-
+    // Count methods for verification stats
+    long countByVerificationStatus(VerificationStatus verificationStatus);
+    long countByVerificationStatusIsNull();
 }
