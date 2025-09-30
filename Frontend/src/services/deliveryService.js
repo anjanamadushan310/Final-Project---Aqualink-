@@ -55,44 +55,175 @@ class DeliveryService {
 
   // Get available quote requests for delivery persons
   async getAvailableQuoteRequests() {
-    return apiService.get(API_ENDPOINTS.DELIVERY_QUOTES.AVAILABLE);
+    try {
+      const data = await apiService.get(API_ENDPOINTS.DELIVERY_QUOTES.AVAILABLE);
+      return {
+        success: true,
+        data: data,
+        message: 'Requests fetched successfully'
+      };
+    } catch (error) {
+      console.error('Error in getAvailableQuoteRequests:', error);
+      return {
+        success: false,
+        data: [],
+        message: error.message || 'Failed to fetch available quote requests'
+      };
+    }
   }
 
   // Create a delivery quote
   async createQuote(quoteData) {
-    return apiService.post(API_ENDPOINTS.DELIVERY_QUOTES.CREATE, quoteData);
+    try {
+      const data = await apiService.post(API_ENDPOINTS.DELIVERY_QUOTES.CREATE, quoteData);
+      return {
+        success: true,
+        data: data,
+        message: 'Quote created successfully'
+      };
+    } catch (error) {
+      console.error('Error in createQuote:', error);
+      return {
+        success: false,
+        data: null,
+        message: error.message || 'Failed to create quote'
+      };
+    }
   }
 
   // Get delivery person's quotes
   async getMyQuotes() {
-    return apiService.get(API_ENDPOINTS.DELIVERY_QUOTES.MY_QUOTES);
+    try {
+      const data = await apiService.get(API_ENDPOINTS.DELIVERY_QUOTES.MY_QUOTES);
+      return {
+        success: true,
+        data: data,
+        message: 'Quotes fetched successfully'
+      };
+    } catch (error) {
+      console.error('Error in getMyQuotes:', error);
+      return {
+        success: false,
+        data: [],
+        message: error.message || 'Failed to fetch quotes'
+      };
+    }
   }
 
   // ========== CUSTOMER/SHOP OWNER METHODS ==========
 
-  // Create a delivery quote request
+  // Create initial order for delivery quote request (called when page loads)
+  async createInitialOrder(requestData) {
+    try {
+      const data = await apiService.post(API_ENDPOINTS.DELIVERY_QUOTES.CREATE_INITIAL_ORDER, requestData);
+      return {
+        success: true,
+        data: data,
+        message: 'Order created successfully'
+      };
+    } catch (error) {
+      console.error('Error in createInitialOrder:', error);
+      return {
+        success: false,
+        data: null,
+        message: error.message || 'Failed to create initial order'
+      };
+    }
+  }
+
+  // Create a delivery quote request (update existing order with address)
   async createQuoteRequest(requestData) {
-    return apiService.post(API_ENDPOINTS.DELIVERY_QUOTES.REQUEST, requestData);
+    try {
+      const data = await apiService.post(API_ENDPOINTS.DELIVERY_QUOTES.REQUEST, requestData);
+      return {
+        success: true,
+        data: data,
+        message: 'Quote request created successfully'
+      };
+    } catch (error) {
+      console.error('Error in createQuoteRequest:', error);
+      return {
+        success: false,
+        data: null,
+        message: error.message || 'Failed to create quote request'
+      };
+    }
   }
 
   // Get quotes for a specific request
   async getQuotesForRequest(sessionId) {
-    return apiService.get(API_ENDPOINTS.DELIVERY_QUOTES.QUOTES_FOR_REQUEST(sessionId));
+    try {
+      const data = await apiService.get(API_ENDPOINTS.DELIVERY_QUOTES.QUOTES_FOR_REQUEST(sessionId));
+      return {
+        success: true,
+        data: data,
+        message: 'Quotes fetched successfully'
+      };
+    } catch (error) {
+      console.error('Error in getQuotesForRequest:', error);
+      return {
+        success: false,
+        data: [],
+        message: error.message || 'Failed to fetch quotes for request'
+      };
+    }
   }
 
   // Accept a delivery quote
   async acceptQuote(quoteId) {
-    return apiService.post(API_ENDPOINTS.DELIVERY_QUOTES.ACCEPT(quoteId));
+    try {
+      const data = await apiService.post(API_ENDPOINTS.DELIVERY_QUOTES.ACCEPT(quoteId));
+      return {
+        success: true,
+        data: data,
+        message: 'Quote accepted successfully'
+      };
+    } catch (error) {
+      console.error('Error in acceptQuote:', error);
+      return {
+        success: false,
+        data: null,
+        message: error.message || 'Failed to accept quote'
+      };
+    }
   }
 
   // Get customer's quote requests
   async getMyQuoteRequests() {
-    return apiService.get(API_ENDPOINTS.DELIVERY_QUOTES.MY_REQUESTS);
+    try {
+      const data = await apiService.get(API_ENDPOINTS.DELIVERY_QUOTES.MY_REQUESTS);
+      return {
+        success: true,
+        data: data,
+        message: 'Quote requests fetched successfully'
+      };
+    } catch (error) {
+      console.error('Error in getMyQuoteRequests:', error);
+      return {
+        success: false,
+        data: [],
+        message: error.message || 'Failed to fetch quote requests'
+      };
+    }
   }
 
   // Get specific quote request details
   async getQuoteRequest(sessionId) {
-    return apiService.get(API_ENDPOINTS.DELIVERY_QUOTES.REQUEST_DETAILS(sessionId));
+    try {
+      const data = await apiService.get(API_ENDPOINTS.DELIVERY_QUOTES.REQUEST_DETAILS(sessionId));
+      return {
+        success: true,
+        data: data,
+        message: 'Quote request details fetched successfully'
+      };
+    } catch (error) {
+      console.error('Error in getQuoteRequest:', error);
+      return {
+        success: false,
+        data: null,
+        message: error.message || 'Failed to fetch quote request details'
+      };
+    }
   }
 
   // ========== COVERAGE AREA MANAGEMENT METHODS ==========

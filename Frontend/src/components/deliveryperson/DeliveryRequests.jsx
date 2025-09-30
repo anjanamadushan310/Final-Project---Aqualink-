@@ -155,10 +155,10 @@ const DeliveryRequests = () => {
                         </svg>
                       </div>
                       <div>
-                        <h3 className="text-xl font-bold text-gray-900">Request #{request.sessionId || request.id}</h3>
+                        <h3 className="text-xl font-bold text-gray-900">Request #{request.sessionId || request.requestId}</h3>
                         <p className="text-gray-600">{request.customerName || 'N/A'}</p>
                         <p className="text-sm text-gray-500">
-                          Request Date: {formatDateTime(request.createdAt)}
+                          Request Date: {formatDateTime(request.createTime)}
                         </p>
                       </div>
                     </div>
@@ -212,26 +212,29 @@ const DeliveryRequests = () => {
                       <svg className="h-5 w-5 mr-2 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
                       </svg>
-                      Order Items ({request.orderItems?.length || 0})
+                      Order Summary ({request.totalItems || 0} items)
                     </h4>
-                    <div className="space-y-2">
-                      {request.orderItems?.map((item, index) => (
-                        <div key={index} className="flex justify-between items-center py-2 px-3 bg-white rounded border border-gray-200">
-                          <div className="flex-1">
-                            <span className="font-medium text-gray-900">{item.productName}</span>
-                            <span className="text-gray-600 ml-2">x {item.quantity}</span>
+                    <div className="space-y-3">
+                      <div className="bg-white rounded-lg p-4 border border-gray-200">
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-center">
+                          <div>
+                            <div className="text-2xl font-bold text-blue-600">{request.totalItems || 0}</div>
+                            <div className="text-sm text-gray-600">Total Items</div>
                           </div>
-                          <div className="text-right">
-                            <div className="font-semibold text-gray-900">{formatPrice(item.price * item.quantity)}</div>
-                            <div className="text-xs text-gray-500">({formatPrice(item.price)} each)</div>
+                          <div>
+                            <div className="text-2xl font-bold text-green-600">{formatPrice(request.totalAmount)}</div>
+                            <div className="text-sm text-gray-600">Order Value</div>
+                          </div>
+                          <div>
+                            <div className="text-lg font-semibold text-purple-600">{request.district}, {request.town}</div>
+                            <div className="text-sm text-gray-600">Delivery Location</div>
                           </div>
                         </div>
-                      )) || (
-                        <p className="text-gray-500 text-center py-4">No items found</p>
-                      )}
-                      <div className="flex justify-between items-center py-3 px-3 bg-blue-100 rounded font-bold text-lg border-2 border-blue-300">
-                        <span className="text-blue-900">Order Total:</span>
-                        <span className="text-blue-900">{formatPrice(request.totalAmount)}</span>
+                      </div>
+                      <div className="bg-blue-50 rounded-lg p-3 border-l-4 border-blue-400">
+                        <p className="text-sm text-gray-700">
+                          <span className="font-semibold">Details:</span> {request.orderDetails}
+                        </p>
                       </div>
                     </div>
                   </div>
@@ -267,6 +270,7 @@ const DeliveryRequests = () => {
 
 // CreateQuoteModal component
 const CreateQuoteModal = ({ isOpen, onClose, request }) => {
+  const { user } = useContext(AuthContext);
   const [quotePrice, setQuotePrice] = useState('');
   const [validUntil, setValidUntil] = useState('');
   const [deliveryDate, setDeliveryDate] = useState('');
@@ -334,14 +338,14 @@ const CreateQuoteModal = ({ isOpen, onClose, request }) => {
 
     try {
       const quoteData = {
-        quoteRequestId: request.id,
+        quoteRequestId: request.requestId,
         deliveryFee: parseFloat(quotePrice),
         estimatedDeliveryTime: '45-90 minutes',
         deliveryDate: deliveryDate,
         expiresAt: validUntil,
         notes: 'Professional delivery service',
         deliveryPersonName: user?.name || 'Delivery Partner',
-        deliveryPersonPhone: user?.phone || 'Phone not provided'
+        deliveryPersonPhone: user?.phoneNumber || 'Phone not provided'
       };
 
       const response = await deliveryService.createQuote(quoteData);
