@@ -1,10 +1,10 @@
 package com.example.aqualink.dto;
 
+import java.time.LocalDateTime;
+
+import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import lombok.AllArgsConstructor;
-
-import java.time.LocalDateTime;
 
 @Data
 @NoArgsConstructor
@@ -21,4 +21,8 @@ public class DeliveryRequestForFrontendDTO {
     private LocalDateTime deadline;
     private LocalDateTime createTime;
     private String orderDetails;
+    private Double totalAmount;
+    private Integer totalItems;
+    private String district;
+    private String town;
 }

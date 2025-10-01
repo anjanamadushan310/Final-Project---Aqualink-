@@ -29,6 +29,7 @@ import { AuthProvider } from "./context/AuthContext";
 import { CartProvider } from "./context/CartContext";
 import { useCart } from "./context/CartContext";
 import ErrorBoundary from "./components/ErrorBoundary";
+import { ToastContainer } from "react-toastify";
 
 // Main App Content Component (to use auth hooks inside provider)
 const AppContent = () => {
@@ -183,6 +184,7 @@ const App = () => {
       <AuthProvider>
         <CartProvider>
           <AppContent />
+          <ToastContainer position="top-right" autoClose={3000} />
         </CartProvider>
       </AuthProvider>
     </ErrorBoundary>

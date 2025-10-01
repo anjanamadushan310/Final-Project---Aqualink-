@@ -42,6 +42,7 @@ export const API_ENDPOINTS = {
 
   // Delivery Quote Endpoints
   DELIVERY_QUOTES: {
+    CREATE_INITIAL_ORDER: '/delivery-quotes/create-initial-order',
     REQUEST: '/delivery-quotes/request',
     AVAILABLE: '/delivery-quotes/available',
     CREATE: '/delivery-quotes/create',

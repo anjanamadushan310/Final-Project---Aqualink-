@@ -52,9 +52,11 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.POST, "/api/fish-ads").permitAll() // Allow POST for fish ads
                         .requestMatchers(HttpMethod.GET, "/api/fish-ads").permitAll()
                         .requestMatchers("/uploads/profile-images/**").permitAll()// Allow GET for fish ads
+                        .requestMatchers(HttpMethod.POST, "/api/delivery-quotes/create-initial-order").permitAll() // Temporarily allow this endpoint for testing
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                         // Delivery and shop endpoints require authentication
                         .requestMatchers("/api/delivery/**").authenticated()
+                        .requestMatchers("/api/delivery-quotes/**").authenticated()
                         .requestMatchers("/api/shop/**").authenticated()
                         // Cart endpoints require authentication
                         .requestMatchers("/api/cart/**").authenticated()

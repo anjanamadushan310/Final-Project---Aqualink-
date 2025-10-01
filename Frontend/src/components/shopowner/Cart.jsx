@@ -1,19 +1,12 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect } from 'react';
 import { useCart } from '../../context/CartContext';
 import { useAuth } from '../../context/AuthContext';
+import { useNavigate } from 'react-router-dom';
 
 const Cart = () => {
   const { cartItems, cartCount, totalAmount, loading, updateCartItem, removeFromCart, clearCart, refreshCart } = useCart();
   const { isAuthenticated, user } = useAuth();
-  
-  const [orderPreferences, setOrderPreferences] = useState({
-    quotesExpireAfter: 1
-  });
-
-  // State for individual seller preferences
-  const [sellerPreferences, setSellerPreferences] = useState({});
-
-  const [isRequestingSent, setIsRequestingSent] = useState(false);
+  const navigate = useNavigate();
 
   useEffect(() => {
     console.log('Cart component mounted, authentication status:', isAuthenticated());
@@ -115,88 +108,7 @@ const Cart = () => {
     }
   };
 
-  const handlePreferenceChange = (field, value) => {
-    setOrderPreferences(prev => ({
-      ...prev,
-      [field]: value
-    }));
-  };
 
-  // Handle seller-specific preference changes
-  const handleSellerPreferenceChange = (sellerId, field, value) => {
-    setSellerPreferences(prev => ({
-      ...prev,
-      [sellerId]: {
-        ...prev[sellerId],
-        [field]: value
-      }
-    }));
-  };
-
-  // Get preference for specific seller (with fallback to default)
-  const getSellerPreference = (sellerId, field) => {
-    return sellerPreferences[sellerId]?.[field] || orderPreferences[field];
-  };
-
-  const requestDeliveryQuotes = (sellerGroup = null) => {
-    console.log('requestDeliveryQuotes called with:', sellerGroup);
-    
-    // If sellerGroup is provided, request quotes for that specific seller
-    // If not provided, request quotes for all items (fallback)
-    const targetItems = sellerGroup ? sellerGroup.items : cartItems;
-    const targetAmount = sellerGroup ? sellerGroup.totalAmount : getTotalAmount();
-    const businessName = sellerGroup ? sellerGroup.businessName : 'Multiple Sellers';
-    
-    console.log('Target items:', targetItems);
-    console.log('Target amount:', targetAmount);
-    console.log('Business name:', businessName);
-    
-    if (!targetItems || targetItems.length === 0) {
-      console.log('No items to request quotes for!');
-      alert('No items to request quotes for!');
-      return;
-    }
-    
-    console.log('Setting isRequestingSent to true');
-    setIsRequestingSent(true);
-    
-    // Use seller-specific preferences if available, otherwise use default
-    const quotesExpireAfter = sellerGroup 
-      ? getSellerPreference(sellerGroup.sellerId, 'quotesExpireAfter')
-      : orderPreferences.quotesExpireAfter;
-    
-    const quoteExpiryDate = new Date();
-    quoteExpiryDate.setHours(quoteExpiryDate.getHours() + quotesExpireAfter);
-
-    const orderData = {
-      sessionId: 'SESSION_' + Date.now() + (sellerGroup ? '_' + sellerGroup.sellerId : ''),
-      sellerId: sellerGroup ? sellerGroup.sellerId : null,
-      businessName: businessName,
-      items: targetItems,
-      subtotal: targetAmount,
-      preferences: {
-        quotesExpireAfter: quotesExpireAfter,
-        quotesExpireOn: quoteExpiryDate.toISOString()
-      },
-      createdAt: new Date().toISOString(),
-      status: 'REQUESTING_QUOTES'
-    };
-
-    // Store individual quote request - always use standard key for consistency
-    console.log('Storing order data to localStorage:', orderData);
-    localStorage.setItem('aqualink_order_data', JSON.stringify(orderData));
-
-    console.log('Setting timeout for redirect...');
-    setTimeout(() => {
-      console.log('Timeout executed, setting isRequestingSent to false');
-      setIsRequestingSent(false);
-      alert(`Quote request data prepared for ${businessName}! Redirecting to delivery partner selection.`);
-      
-      console.log('Redirecting to /delivery-request');
-      // Redirect to delivery quote request page
-      window.location.href = '/delivery-request';
-    }, 2000);
-  };
 
   return (
     <div className="p-6 bg-gray-50 min-h-screen">
@@ -331,37 +243,40 @@ const Cart = () => {
                         ))}
                       </div>
                       
-                      {/* Individual Request Quote Button for each seller */}
+                      {/* Delivery Options */}
                       <div className="mt-4 pt-4 border-t border-gray-200">
                         {!sellerGroup.isOwnItem && (
-                          <div className="mb-4 bg-gray-50 p-4 rounded-lg">
-                            <h4 className="text-md font-semibold text-gray-700 mb-3">
-                              Quote Request Settings for {sellerGroup.businessName}
-                            </h4>
-                            <div className="space-y-3">
-                              <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">
-                                  How long should delivery partners have to respond?
-                                </label>
-                                <select
-                                  className="w-full p-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                  value={getSellerPreference(sellerGroup.sellerId, 'quotesExpireAfter')}
-                                  onChange={(e) => handleSellerPreferenceChange(sellerGroup.sellerId, 'quotesExpireAfter', parseInt(e.target.value))}
-                                >
-                                  <option value={1}>1 hour</option>
-                                  <option value={2}>2 hours</option>
-                                  <option value={6}>6 hours</option>
-                                  <option value={12}>12 hours</option>
-                                  <option value={24}>24 hours</option>
-                                  <option value={48}>48 hours</option>
-                                  <option value={72}>72 hours</option>
-                                </select>
-                              </div>
-                            </div>
+                          <div className="flex space-x-4">
+                            <button
+                              onClick={() => {
+                                alert('This feature is not available yet.');
+                              }}
+                              className="flex-1 bg-gray-600 hover:bg-gray-700 text-white font-bold py-3 px-6 rounded-lg"
+                            >
+                              🚚 Delivery with Courier Service
+                            </button>
+                            <button
+                              onClick={() => {
+                                const orderData = {
+                                  sessionId: 'SESSION_' + Date.now() + '_' + sellerGroup.sellerId,
+                                  sellerId: sellerGroup.sellerId,
+                                  businessName: sellerGroup.businessName,
+                                  items: sellerGroup.items,
+                                  subtotal: sellerGroup.totalAmount,
+                                  createdAt: new Date().toISOString(),
+                                  status: 'REQUESTING_QUOTES'
+                                };
+                                localStorage.setItem('aqualink_order_data', JSON.stringify(orderData));
+                                navigate('/delivery-request');
+                              }}
+                              className="flex-1 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-bold py-3 px-6 rounded-lg"
+                            >
+                              🌊 Delivery with Aqualink
+                            </button>
                           </div>
                         )}
                         
-                        {sellerGroup.isOwnItem ? (
+                        {sellerGroup.isOwnItem && (
                           <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 text-center">
                             <div className="text-gray-600 mb-2">
                               <span className="text-sm">💡 These are your own products</span>
@@ -371,26 +286,6 @@ const Cart = () => {
                               These items will need to be handled separately or purchased by other customers.
                             </p>
                           </div>
-                        ) : (
-                          <button 
-                            onClick={() => {
-                              console.log('Button clicked! Calling requestDeliveryQuotes with:', sellerGroup);
-                              requestDeliveryQuotes(sellerGroup);
-                            }}
-                            disabled={isRequestingSent}
-                            className="w-full bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white font-bold py-3 px-6 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
-                          >
-                            {isRequestingSent ? (
-                              <>
-                                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                                Preparing Request...
-                              </>
-                            ) : (
-                              <>
-                                📦 Request Delivery Quotes
-                              </>
-                            )}
-                          </button>
                         )}
                       </div>
                     </div>
