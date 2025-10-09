@@ -420,19 +420,30 @@ public class DeliveryQuoteService {
                     dto.setSessionId(UUID.randomUUID().toString()); // Generate session ID for tracking
                     dto.setStatus(order.getOrderStatus().toString());
                     dto.setCreatedAt(order.getOrderDateTime());
-                    dto.setSubtotal(order.getTotalAmount().doubleValue());
+                    // Set subtotal with null safety
+                    double subtotal = order.getTotalAmount() != null ? order.getTotalAmount().doubleValue() : 0.0;
+                    dto.setSubtotal(subtotal);
                     
-                    // Convert order items
-                    dto.setItems(order.getOrderItems().stream()
-                            .map(item -> {
-                                DeliveryQuoteRequestWithOrderDTO.CartItemDTO itemDto = 
-                                    new DeliveryQuoteRequestWithOrderDTO.CartItemDTO();
-                                itemDto.setQuantity(item.getQuantity());
-                                itemDto.setPrice(item.getPrice().doubleValue());
-                                itemDto.setProductName(item.getProduct().getName());
-                                return itemDto;
-                            })
-                            .collect(Collectors.toList()));
+                    // Convert order items with null safety and lazy loading handling
+                    List<DeliveryQuoteRequestWithOrderDTO.CartItemDTO> items = new ArrayList<>();
+                    try {
+                        if (order.getOrderItems() != null && !order.getOrderItems().isEmpty()) {
+                            items = order.getOrderItems().stream()
+                                    .map(item -> {
+                                        DeliveryQuoteRequestWithOrderDTO.CartItemDTO itemDto = 
+                                            new DeliveryQuoteRequestWithOrderDTO.CartItemDTO();
+                                        itemDto.setQuantity(item.getQuantity());
+                                        itemDto.setPrice(item.getPrice() != null ? item.getPrice().doubleValue() : 0.0);
+                                        itemDto.setProductName(item.getProduct() != null ? item.getProduct().getName() : "Unknown Product");
+                                        return itemDto;
+                                    })
+                                    .collect(Collectors.toList());
+                        }
+                    } catch (Exception e) {
+                        System.out.println("Warning: Could not load order items for order " + order.getId() + ": " + e.getMessage());
+                        items = new ArrayList<>();
+                    }
+                    dto.setItems(items);
                     
                     // Set preferences
                     DeliveryQuoteRequestWithOrderDTO.OrderPreferencesDTO preferences = 
@@ -552,17 +563,30 @@ public class DeliveryQuoteService {
         dto.setTown(order.getAddressTown());
         
         User customer = order.getBuyerUser();
-        dto.setCustomerName(customer.getName());
-        dto.setCustomerPhone(customer.getPhoneNumber());
+        dto.setCustomerName(customer != null ? customer.getName() : "Unknown Customer");
+        dto.setCustomerPhone(customer != null ? customer.getPhoneNumber() : "N/A");
         
-        // Set order totals
-        dto.setTotalAmount(order.getTotalAmount().doubleValue());
-        dto.setTotalItems(order.getOrderItems() != null ? order.getOrderItems().size() : 0);
+        // Set order totals with null checks and lazy loading handling
+        double totalAmount = order.getTotalAmount() != null ? order.getTotalAmount().doubleValue() : 0.0;
+        
+        int totalItems = 0;
+        try {
+            if (order.getOrderItems() != null && !order.getOrderItems().isEmpty()) {
+                totalItems = order.getOrderItems().size();
+            }
+        } catch (Exception e) {
+            // Handle lazy loading exception - orderItems might not be loaded
+            System.out.println("Warning: Could not load order items for order " + order.getId() + ": " + e.getMessage());
+            totalItems = 0;
+        }
+        
+        dto.setTotalAmount(totalAmount);
+        dto.setTotalItems(totalItems);
         
         dto.setOrderDetails(String.format("Order #%d - %d items, Total: Rs.%.2f", 
             order.getId(),
-            dto.getTotalItems(),
-            dto.getTotalAmount()));
+            totalItems,
+            totalAmount));
         
         return dto;
     }

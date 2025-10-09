@@ -342,6 +342,38 @@ public class TestDataInitializer implements CommandLineRunner {
         shopProfile2.setUpdatedAt(LocalDateTime.now());
         userProfileRepository.save(shopProfile2);
 
+        // Create test exporter
+        User exporter = new User();
+        exporter.setNicNumber("654321987V");
+        exporter.setName("Test Exporter");
+        exporter.setEmail("testexporter@gmail.com");
+        exporter.setPhoneNumber("+94756123456");
+        exporter.setPassword(passwordEncoder.encode("ASd236asd@"));
+        exporter.setActive(true);
+        exporter.setVerificationStatus(VerificationStatus.APPROVED);
+        exporter.setCreatedAt(LocalDateTime.now());
+        
+        User savedExporter = userRepository.save(exporter);
+
+        // Assign EXPORTER role
+        UserRole exporterUserRole = new UserRole();
+        exporterUserRole.setUser(savedExporter);
+        exporterUserRole.setRoleName(Role.EXPORTER);
+        userRoleRepository.save(exporterUserRole);
+
+        // Create profile for exporter
+        UserProfile exporterProfile = new UserProfile();
+        exporterProfile.setUser(savedExporter);
+        exporterProfile.setBusinessName("Global Fish Exports");
+        exporterProfile.setBusinessType("Seafood Export");
+        exporterProfile.setAddressPlace("Export Processing Center");
+        exporterProfile.setAddressStreet("Export Hub Lane 77");
+        exporterProfile.setAddressDistrict("Colombo");
+        exporterProfile.setAddressTown("Colombo 15");
+        exporterProfile.setCreatedAt(LocalDateTime.now());
+        exporterProfile.setUpdatedAt(LocalDateTime.now());
+        userProfileRepository.save(exporterProfile);
+
         log.info("Additional test users created successfully");
     }
 

@@ -1,17 +1,30 @@
 import React from 'react';
 import { formatDistance } from 'date-fns';
 import { PencilIcon, TrashIcon, EyeIcon, GlobeAltIcon, LockClosedIcon } from '@heroicons/react/24/outline';
+import { API_BASE_URL } from '../../../config';
 
 const BlogPostCard = ({ post, onEdit, onDelete, onPublishToggle }) => {
+  // Helper function to get full image URL
+  const getImageUrl = (imagePath) => {
+    if (!imagePath) return null;
+    if (imagePath.startsWith('http://') || imagePath.startsWith('https://')) {
+      return imagePath;
+    }
+    return `${API_BASE_URL}${imagePath.startsWith('/') ? '' : '/'}${imagePath}`;
+  };
   return (
     <div className="bg-white rounded-lg shadow-md overflow-hidden flex flex-col">
       {/* Featured image */}
-      {post.imageUrls && post.imageUrls.length > 0 && (
+      {post.featuredImagePath && (
         <div className="h-48 overflow-hidden">
           <img 
-            src={post.imageUrls[0]} 
+            src={getImageUrl(post.featuredImagePath)} 
             alt={post.title} 
             className="w-full h-full object-cover"
+            onError={(e) => {
+              console.error('Failed to load blog card image:', post.featuredImagePath);
+              e.target.style.display = 'none';
+            }}
           />
         </div>
       )}
@@ -40,13 +53,13 @@ const BlogPostCard = ({ post, onEdit, onDelete, onPublishToggle }) => {
         
         <div className="flex items-center text-sm text-gray-500 mt-2">
           <div className="flex items-center mr-4">
-            <span className="mr-1">👍</span> {post.likeCount || 0}
+            <span className="mr-1">👍</span> {post.likesCount || 0}
           </div>
           <div className="flex items-center mr-4">
-            <span className="mr-1">👎</span> {post.dislikeCount || 0}
+            <span className="mr-1">👎</span> {post.dislikesCount || 0}
           </div>
           <div className="flex items-center">
-            <span className="mr-1">💬</span> {post.commentCount || 0}
+            <span className="mr-1">💬</span> {post.commentsCount || 0}
           </div>
         </div>
       </div>

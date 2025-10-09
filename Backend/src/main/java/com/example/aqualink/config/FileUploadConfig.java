@@ -98,6 +98,14 @@ public class FileUploadConfig implements WebMvcConfigurer {
         }
         registry.addResourceHandler("/uploads/service_images/**")
                 .addResourceLocations("file:" + uploadDir + "service_images/");
+
+        // Handle blog images
+        File blogImagesDirectory = new File(uploadDir + "blog/");
+        if (!blogImagesDirectory.exists()) {
+            blogImagesDirectory.mkdirs();
+        }
+        registry.addResourceHandler("/uploads/blog/**")
+                .addResourceLocations("file:" + uploadDir + "blog/");
     }
 }
 

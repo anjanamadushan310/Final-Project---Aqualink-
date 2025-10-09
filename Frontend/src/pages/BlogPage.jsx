@@ -48,7 +48,7 @@ const BlogPage = () => {
       <div className="text-center mb-12">
         <h1 className="text-3xl md:text-4xl font-bold text-gray-800 mb-4">AquaLink Blog</h1>
         <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-          Explore the latest insights, updates, and stories from our seafood exporters around the world.
+          Explore the latest insights, updates, and stories from our fish exporters in Sri Lanka.
         </p>
       </div>
 
@@ -109,10 +109,10 @@ const BlogPage = () => {
                   
                   <div className="flex items-center text-xs text-gray-500 mt-3 pt-3 border-t border-gray-100">
                     <div className="flex items-center mr-3">
-                      <span className="mr-1">👍</span> {post.likeCount || 0}
+                      <span className="mr-1">👍</span> {post.likesCount || 0}
                     </div>
                     <div className="flex items-center mr-3">
-                      <span className="mr-1">💬</span> {post.commentCount || 0}
+                      <span className="mr-1">💬</span> {post.commentsCount || 0}
                     </div>
                   </div>
                 </div>

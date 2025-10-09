@@ -76,6 +76,16 @@
 - **Business**: AquaCare Services
 - **Location**: Colombo 05
 
+### Exporter
+- **Email**: testexporter@gmail.com
+- **Password**: ASd236asd@
+- **Role**: EXPORTER
+- **Name**: Test Exporter
+- **Phone**: +94756123456
+- **NIC**: 654321987V
+- **Business**: Global Fish Exports
+- **Location**: Colombo 15
+
 ## Test Fish Advertisements
 
 ### Fish Ad 1
@@ -125,6 +135,7 @@
 | testfarm@gmail.com | ASd236asd@ | FARM_OWNER | Kurunegala |
 | testindustrial@gmail.com | ASd236asd@ | INDUSTRIAL_STUFF_SELLER | Wattala |
 | testservice@gmail.com | ASd236asd@ | SERVICE_PROVIDER | Colombo 05 |
+| testexporter@gmail.com | ASd236asd@ | EXPORTER | Colombo 15 |
 
 ## Note
 

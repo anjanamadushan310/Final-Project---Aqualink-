@@ -1,23 +1,35 @@
 import axios from 'axios';
 import { API_BASE_URL } from '../config';
 
+// Utility function to get authentication headers
+const getAuthHeaders = () => {
+  const token = localStorage.getItem('token');
+  return token ? { Authorization: `Bearer ${token}` } : {};
+};
+
 const BlogService = {
   // Blog Posts
   getAllBlogPosts: async (page = 0, size = 10, published = null) => {
     const params = { page, size };
     if (published !== null) params.published = published;
-    const response = await axios.get(`${API_BASE_URL}/api/blogs`, { params });
+    const response = await axios.get(`${API_BASE_URL}/api/blogs`, { 
+      params,
+      headers: getAuthHeaders()
+    });
     return response.data;
   },
   
   getBlogPostById: async (id) => {
-    const response = await axios.get(`${API_BASE_URL}/api/blogs/${id}`);
+    const response = await axios.get(`${API_BASE_URL}/api/blogs/${id}`, {
+      headers: getAuthHeaders()
+    });
     return response.data;
   },
   
   getBlogPostsByUser: async (userId, page = 0, size = 10) => {
     const response = await axios.get(`${API_BASE_URL}/api/blogs/byUser/${userId}`, {
-      params: { page, size }
+      params: { page, size },
+      headers: getAuthHeaders()
     });
     return response.data;
   },
@@ -35,7 +47,10 @@ const BlogService = {
     }
     
     const response = await axios.post(`${API_BASE_URL}/api/blogs`, formData, {
-      headers: { 'Content-Type': 'multipart/form-data' }
+      headers: { 
+        'Content-Type': 'multipart/form-data',
+        ...getAuthHeaders()
+      }
     });
     return response.data;
   },
@@ -53,68 +68,92 @@ const BlogService = {
     }
     
     const response = await axios.put(`${API_BASE_URL}/api/blogs/${id}`, formData, {
-      headers: { 'Content-Type': 'multipart/form-data' }
+      headers: { 
+        'Content-Type': 'multipart/form-data',
+        ...getAuthHeaders()
+      }
     });
     return response.data;
   },
   
   deleteBlogPost: async (id) => {
-    await axios.delete(`${API_BASE_URL}/api/blogs/${id}`);
+    await axios.delete(`${API_BASE_URL}/api/blogs/${id}`, {
+      headers: getAuthHeaders()
+    });
   },
   
   publishBlogPost: async (id) => {
-    const response = await axios.put(`${API_BASE_URL}/api/blogs/${id}/publish`);
+    const response = await axios.put(`${API_BASE_URL}/api/blogs/${id}/publish`, {}, {
+      headers: getAuthHeaders()
+    });
     return response.data;
   },
   
   unpublishBlogPost: async (id) => {
-    const response = await axios.put(`${API_BASE_URL}/api/blogs/${id}/unpublish`);
+    const response = await axios.put(`${API_BASE_URL}/api/blogs/${id}/unpublish`, {}, {
+      headers: getAuthHeaders()
+    });
     return response.data;
   },
   
   // Comments
   getCommentsForBlog: async (blogId, page = 0, size = 10) => {
     const response = await axios.get(`${API_BASE_URL}/api/blogs/${blogId}/comments`, {
-      params: { page, size }
+      params: { page, size },
+      headers: getAuthHeaders()
     });
     return response.data;
   },
   
   addComment: async (blogId, commentData) => {
-    const response = await axios.post(`${API_BASE_URL}/api/blogs/${blogId}/comments`, commentData);
+    const response = await axios.post(`${API_BASE_URL}/api/blogs/${blogId}/comments`, commentData, {
+      headers: getAuthHeaders()
+    });
     return response.data;
   },
   
   updateComment: async (commentId, commentData) => {
-    const response = await axios.put(`${API_BASE_URL}/api/blogs/comments/${commentId}`, commentData);
+    const response = await axios.put(`${API_BASE_URL}/api/blogs/comments/${commentId}`, commentData, {
+      headers: getAuthHeaders()
+    });
     return response.data;
   },
   
   deleteComment: async (commentId) => {
-    await axios.delete(`${API_BASE_URL}/api/blogs/comments/${commentId}`);
+    await axios.delete(`${API_BASE_URL}/api/blogs/comments/${commentId}`, {
+      headers: getAuthHeaders()
+    });
   },
   
   approveComment: async (commentId) => {
-    const response = await axios.put(`${API_BASE_URL}/api/blogs/comments/${commentId}/approve`);
+    const response = await axios.put(`${API_BASE_URL}/api/blogs/comments/${commentId}/approve`, {}, {
+      headers: getAuthHeaders()
+    });
     return response.data;
   },
   
   // Reactions
   reactToBlogPost: async (blogId, reactionType) => {
     const response = await axios.post(`${API_BASE_URL}/api/blogs/${blogId}/react`, null, {
-      params: { reactionType }
+      params: { reactionType },
+      headers: getAuthHeaders()
     });
     return response.data;
   },
   
   removeReaction: async (blogId) => {
-    await axios.delete(`${API_BASE_URL}/api/blogs/${blogId}/reactions`);
+    await axios.delete(`${API_BASE_URL}/api/blogs/${blogId}/reactions`, {
+      headers: getAuthHeaders()
+    });
   },
   
   getReactionsForBlog: async (blogId, type = null, page = 0, size = 10) => {
     const params = { page, size };
     if (type) params.type = type;
-    const response = await axios.get(`${API_BASE_URL}/api/blogs/${blogId}/reactions`, { params });
+    const response = await axios.get(`${API_BASE_URL}/api/blogs/${blogId}/reactions`, { 
+      params,
+      headers: getAuthHeaders()
+    });
     return response.data;
   }
 };

@@ -4,11 +4,12 @@ import { CartContext } from "../../context/CartContext";
 import { useAuth } from "../../context/AuthContext";
 import axios from "axios";
 import { toast } from 'react-toastify';
-import { districtToTowns } from "../../components/user-profile/locationData";
+import { districtToTowns } from "../../components/user-profile/locationData.jsx";
 import deliveryService from "../../services/deliveryService";
+import { ENV } from "../../config/env.js";
 
 const EnhancedDeliveryRequest = () => {
-  const { cartItems, totalAmount, clearCart } = useContext(CartContext);
+  const { cartItems, totalAmount, clearCart, refreshCart } = useContext(CartContext);
   const { token } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
@@ -17,6 +18,7 @@ const EnhancedDeliveryRequest = () => {
   const [error, setError] = useState(null);
   const [availableTowns, setAvailableTowns] = useState([]);
   const [createdOrder, setCreatedOrder] = useState(null); // Store the initial order created on page load
+  const [addressLoaded, setAddressLoaded] = useState(false); // Track if address has been loaded from profile
   const [deliveryAddress, setDeliveryAddress] = useState({
     place: '',
     street: '',
@@ -25,12 +27,44 @@ const EnhancedDeliveryRequest = () => {
   });
 
   useEffect(() => {
-    // Load user's profile data
+    // Debug cart data
+    console.log('DeliveryQuoteRequest - Cart Data:', {
+      cartItems,
+      totalAmount,
+      cartItemsLength: cartItems?.length,
+      firstItem: cartItems?.length > 0 ? cartItems[0] : null
+    });
+
+    // Check if we have order data from Cart component via localStorage
+    const storedOrderData = localStorage.getItem('aqualink_order_data');
+    if (storedOrderData) {
+      try {
+        const orderData = JSON.parse(storedOrderData);
+        console.log('Found stored order data from Cart:', orderData);
+        
+        // If cart context is empty but we have stored data, use the stored data
+        if ((!cartItems || cartItems.length === 0) && orderData.items && orderData.items.length > 0) {
+          console.log('Using stored order data as cart is empty');
+          // Note: We can't directly set cartItems here as it's from context
+          // The stored data will be used in the createInitialOrder function
+        }
+      } catch (error) {
+        console.error('Error parsing stored order data:', error);
+      }
+    }
+
+    // Load user's profile data (only once on page load)
     const loadUserProfile = async () => {
+      // Only load address if it hasn't been loaded yet
+      if (addressLoaded) {
+        console.log('Address already loaded, skipping profile load');
+        return;
+      }
+
       try {
         console.log('Loading profile with token:', token ? 'Present' : 'Missing');
 
-        const response = await axios.get('http://localhost:8080/api/profile', {
+        const response = await axios.get(`${ENV.API_URL}/profile`, {
           headers: { 'Authorization': `Bearer ${token}` }
         });
         
@@ -56,7 +90,7 @@ const EnhancedDeliveryRequest = () => {
           town: town
         };
 
-        console.log('Setting delivery address state:', updatedAddress);
+        console.log('Setting delivery address state (first time only):', updatedAddress);
         
         // First update available towns for the district
         if (district) {
@@ -87,8 +121,8 @@ const EnhancedDeliveryRequest = () => {
         }
 
         // Now set the address with potentially cleared town
-        console.log('Final address state to set:', updatedAddress);
         setDeliveryAddress(updatedAddress);
+        setAddressLoaded(true); // Mark address as loaded so it won't reload
 
       } catch (error) {
         console.error('Error loading profile:', error);
@@ -97,30 +131,53 @@ const EnhancedDeliveryRequest = () => {
           console.error('Response status:', error.response.status);
         }
         toast.error('Failed to load your address information. Please enter it manually.');
+        setAddressLoaded(true); // Mark as loaded even on error to prevent retries
       }
     };
 
     // Create initial order when page loads
     const createInitialOrder = async () => {
+      let itemsToUse = cartItems;
+      let totalToUse = totalAmount;
+      let sellerIdToUse = sellerId;
+      let businessNameToUse = businessName;
+
+      // If cart context is empty, try to use stored order data from Cart component
       if (!cartItems || cartItems.length === 0) {
-        console.log('No cart items, skipping initial order creation');
+        const storedOrderData = localStorage.getItem('aqualink_order_data');
+        if (storedOrderData) {
+          try {
+            const orderData = JSON.parse(storedOrderData);
+            console.log('Using stored order data for initial order creation:', orderData);
+            itemsToUse = orderData.items;
+            totalToUse = orderData.subtotal;
+            sellerIdToUse = orderData.sellerId;
+            businessNameToUse = orderData.businessName;
+          } catch (error) {
+            console.error('Error parsing stored order data:', error);
+          }
+        }
+      }
+
+      if (!itemsToUse || itemsToUse.length === 0) {
+        console.log('No cart items or stored order data, skipping initial order creation');
         return;
       }
 
       try {
         const requestData = {
-          sellerId,
-          businessName,
-          items: cartItems.map(item => ({
-            cartItemId: item.id,
-            productName: item.name,
-            productType: item.type || 'FISH',
+          sellerId: sellerIdToUse,
+          businessName: businessNameToUse,
+          items: itemsToUse.map(item => ({
+            cartItemId: item.cartItemId,
+            productName: item.productName,
+            productType: item.productType || 'FISH',
             quantity: item.quantity,
             price: item.price,
             sellerId: item.sellerId,
             sellerName: item.sellerName
           })),
-          subtotal: totalAmount,
+          subtotal: totalToUse,
           preferences: {
             quotesExpireAfter: 24 // Default 24 hours
           }
@@ -144,12 +201,14 @@ const EnhancedDeliveryRequest = () => {
     };
 
     if (token) {
+      // Refresh cart data first to ensure we have latest data
+      refreshCart();
       loadUserProfile();
       createInitialOrder(); // Create initial order after loading profile
     } else {
       console.log('No token available, skipping profile load and order creation');
     }
-  }, [token, cartItems, totalAmount, sellerId, businessName]);
+  }, [token, cartItems, totalAmount, sellerId, businessName, refreshCart, addressLoaded]);
 
   // Handle district/town state synchronization
   useEffect(() => {
@@ -234,12 +293,42 @@ const EnhancedDeliveryRequest = () => {
         return;
       }
 
+      // Use the same logic as display to get correct items and total
+      let itemsToUse = cartItems;
+      let totalToUse = totalAmount;
+
+      // If cart context is empty, try to use stored order data
+      if (!cartItems || cartItems.length === 0) {
+        const storedOrderData = localStorage.getItem('aqualink_order_data');
+        if (storedOrderData) {
+          try {
+            const orderData = JSON.parse(storedOrderData);
+            itemsToUse = orderData.items;
+            totalToUse = orderData.subtotal;
+          } catch (error) {
+            console.error('Error parsing stored order data for submission:', error);
+          }
+        }
+      }
+
+      // Calculate actual total from items for accuracy
+      const calculatedTotal = itemsToUse && itemsToUse.length > 0 
+        ? itemsToUse.reduce((sum, item) => {
+            const itemPrice = parseFloat(item.price) || 0;
+            const itemQuantity = parseInt(item.quantity) || 0;
+            return sum + (itemPrice * itemQuantity);
+          }, 0)
+        : 0;
+
+      // Use calculated total if it's greater than 0, otherwise use totalToUse
+      const finalTotal = calculatedTotal > 0 ? calculatedTotal : (totalToUse || 0);
+
       const requestData = {
         orderId: createdOrder.orderId, // Include the order ID to update existing order
         sessionId: crypto.randomUUID(),
         sellerId: sellerId,
         businessName: businessName,
-        items: cartItems.map(item => ({
+        items: itemsToUse.map(item => ({
           cartItemId: item.cartItemId,
           productName: item.productName,
           productType: item.productType,
@@ -248,7 +337,7 @@ const EnhancedDeliveryRequest = () => {
           sellerId: item.sellerId,
           sellerName: item.sellerName
         })),
-        subtotal: totalAmount,
+        subtotal: finalTotal,
         preferences: preferences,
         deliveryAddress: {
           place: deliveryAddress.place.trim(),
@@ -358,31 +447,82 @@ const EnhancedDeliveryRequest = () => {
       {/* Order Summary */}
       <div className="bg-white rounded-lg shadow-md p-6 mb-6">
         <h3 className="text-xl font-semibold mb-4">Order Summary</h3>
-        <div className="space-y-4">
-          {cartItems.map((item) => (
-            <div key={item.cartItemId} className="flex justify-between items-center border-b pb-2">
-              <div>
-                <p className="font-medium">{item.productName}</p>
-                <p className="text-sm text-gray-600">
-                  Quantity: {item.quantity} | Type: {item.productType}
-                </p>
-              </div>
-              <div className="text-right">
-                <p className="font-medium">Rs.{item.price * item.quantity}</p>
-                <p className="text-sm text-gray-600">Rs.{item.price} each</p>
+        {(() => {
+          // Determine which items and total to display
+          let itemsToShow = cartItems;
+          let totalToShow = totalAmount;
+
+          // If cart context is empty, try to use stored order data
+          if (!cartItems || cartItems.length === 0) {
+            const storedOrderData = localStorage.getItem('aqualink_order_data');
+            if (storedOrderData) {
+              try {
+                const orderData = JSON.parse(storedOrderData);
+                itemsToShow = orderData.items;
+                totalToShow = orderData.subtotal;
+                console.log('Displaying stored order data in summary:', { itemsToShow, totalToShow });
+              } catch (error) {
+                console.error('Error parsing stored order data for display:', error);
+              }
+            }
+          }
+
+          return itemsToShow && itemsToShow.length > 0 ? (
+            <div className="space-y-4">
+              {itemsToShow.map((item, index) => {
+                console.log(`Item ${index}:`, item); // Debug each item
+                const itemTotal = (item.price && item.quantity) ? (item.price * item.quantity) : 0;
+                return (
+                  <div key={item.cartItemId || index} className="flex justify-between items-center border-b pb-2">
+                    <div>
+                      <p className="font-medium">{item.productName || 'Unknown Product'}</p>
+                      <p className="text-sm text-gray-600">
+                        Quantity: {item.quantity || 0} | Type: {item.productType || 'Unknown'}
+                      </p>
+                    </div>
+                    <div className="text-right">
+                      <p className="font-medium">Rs.{itemTotal.toFixed(2)}</p>
+                      <p className="text-sm text-gray-600">Rs.{item.price || 0} each</p>
+                    </div>
+                  </div>
+                );
+              })}
+              <div className="flex justify-between items-center pt-2">
+                <p className="font-semibold">Total:</p>
+                <p className="font-semibold">Rs.{(() => {
+                  // Always calculate total from actual items to ensure accuracy
+                  const calculatedTotal = itemsToShow.reduce((sum, item) => {
+                    const itemPrice = parseFloat(item.price) || 0;
+                    const itemQuantity = parseInt(item.quantity) || 0;
+                    return sum + (itemPrice * itemQuantity);
+                  }, 0);
+                  
+                  // Use calculated total if it's greater than 0, otherwise use totalToShow
+                  return calculatedTotal > 0 ? calculatedTotal.toFixed(2) : (totalToShow ? totalToShow.toFixed(2) : '0.00');
+                })()}</p>
               </div>
             </div>
-          ))}
-          <div className="flex justify-between items-center pt-2">
-            <p className="font-semibold">Total:</p>
-            <p className="font-semibold">Rs.{totalAmount}</p>
-          </div>
-        </div>
+          ) : (
+            <div className="text-center py-8 text-gray-500">
+              <p>No items found</p>
+              <p className="text-sm">Cart Items: {JSON.stringify(cartItems)}</p>
+              <p className="text-sm">Total Amount: {totalAmount}</p>
+              <p className="text-sm">Stored Data: {localStorage.getItem('aqualink_order_data') ? 'Found' : 'Not found'}</p>
+            </div>
+          );
+        })()}
       </div>
 
       {/* Delivery Address */}
       <div className="bg-white rounded-lg shadow-md p-6 mb-6">
-        <h3 className="text-xl font-semibold mb-4">Delivery Address</h3>
+        <div className="flex justify-between items-center mb-4">
+          <h3 className="text-xl font-semibold">Delivery Address</h3>
+          {addressLoaded && (
+            <div className="text-sm text-blue-600 bg-blue-50 px-3 py-1 rounded-full">
+              ✏️ Loaded from profile - Edit as needed
+            </div>
+          )}
+        </div>
         <div className="grid grid-cols-1 gap-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">

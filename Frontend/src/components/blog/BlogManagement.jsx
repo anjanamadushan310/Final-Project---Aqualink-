@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { formatDistanceToNow } from 'date-fns';
 import { 
@@ -10,6 +10,7 @@ import {
   PlusCircleIcon
 } from '@heroicons/react/24/outline';
 import BlogService from '../../services/BlogService';
+import { API_BASE_URL } from '../../config';
 
 const BlogManagement = () => {
   const [blogPosts, setBlogPosts] = useState([]);
@@ -19,16 +20,39 @@ const BlogManagement = () => {
   const [page, setPage] = useState(0);
   const [hasMore, setHasMore] = useState(true);
   const [selectedFilter, setSelectedFilter] = useState('all'); // 'all', 'published', 'draft'
+  
+  // Helper function to get full image URL
+  const getImageUrl = (imagePath) => {
+    if (!imagePath) return null;
+    if (imagePath.startsWith('http://') || imagePath.startsWith('https://')) {
+      return imagePath;
+    }
+    return `${API_BASE_URL}${imagePath.startsWith('/') ? '' : '/'}${imagePath}`;
+  };
+
+  // Handle image loading errors
+  const handleImageError = (e, imagePath) => {
+    console.error('Failed to load image:', imagePath);
+    e.target.style.display = 'none';
+  };
 
   useEffect(() => {
     const user = JSON.parse(localStorage.getItem('user'));
     setCurrentUser(user);
   }, []);
 
-  const fetchBlogPosts = async (resetPage = false) => {
+  const fetchBlogPosts = useCallback(async (resetPage = false) => {
     try {
       setLoading(true);
       setError(null);
+      
+      // Check if user is authenticated
+      const token = localStorage.getItem('token');
+      if (!token) {
+        setError('Please log in to view blog posts.');
+        setLoading(false);
+        return;
+      }
       
       const newPage = resetPage ? 0 : page;
       let published = null;
@@ -56,11 +80,11 @@ const BlogManagement = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [currentUser, selectedFilter, page]);
 
   useEffect(() => {
     fetchBlogPosts(true);
-  }, [currentUser, selectedFilter]);
+  }, [fetchBlogPosts]);
 
   const handleLoadMore = () => {
     setPage(prev => prev + 1);
@@ -225,11 +249,12 @@ const BlogManagement = () => {
                         <div className="flex items-center">
                           {/* Thumbnail */}
                           <div className="h-10 w-10 flex-shrink-0 mr-3">
-                            {post.imageUrls && post.imageUrls.length > 0 ? (
+                            {post.featuredImagePath ? (
                               <img
                                 className="h-10 w-10 rounded-md object-cover"
-                                src={post.imageUrls[0]}
+                                src={getImageUrl(post.featuredImagePath)}
                                 alt=""
+                                onError={(e) => handleImageError(e, post.featuredImagePath)}
                               />
                             ) : (
                               <div className="h-10 w-10 rounded-md bg-gray-100 flex items-center justify-center">
@@ -263,10 +288,10 @@ const BlogManagement = () => {
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="flex items-center text-sm text-gray-500 space-x-4">
                           <div className="flex items-center">
-                            <span className="mr-1">👍</span> {post.likeCount || 0}
+                            <span className="mr-1">👍</span> {post.likesCount || 0}
                           </div>
                           <div className="flex items-center">
-                            <span className="mr-1">💬</span> {post.commentCount || 0}
+                            <span className="mr-1">💬</span> {post.commentsCount || 0}
                           </div>
                         </div>
                       </td>

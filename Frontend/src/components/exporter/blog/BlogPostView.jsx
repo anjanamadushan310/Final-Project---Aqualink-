@@ -4,6 +4,7 @@ import BlogService from '../../../services/BlogService';
 import { UserCircleIcon, ChatBubbleLeftIcon, ThumbUpIcon, ThumbDownIcon } from '@heroicons/react/24/outline';
 import { ThumbUpIcon as ThumbUpSolid, ThumbDownIcon as ThumbDownSolid } from '@heroicons/react/24/solid';
 import CommentSection from './CommentSection';
+import { API_BASE_URL } from '../../../config';
 
 const BlogPostView = () => {
   const { postId } = useParams();
@@ -12,6 +13,15 @@ const BlogPostView = () => {
   const [error, setError] = useState(null);
   const [userReaction, setUserReaction] = useState(null); // 'LIKE', 'DISLIKE', null
   const [showComments, setShowComments] = useState(false);
+
+  // Helper function to get full image URL
+  const getImageUrl = (imagePath) => {
+    if (!imagePath) return null;
+    if (imagePath.startsWith('http://') || imagePath.startsWith('https://')) {
+      return imagePath;
+    }
+    return `${API_BASE_URL}${imagePath.startsWith('/') ? '' : '/'}${imagePath}`;
+  };
 
   useEffect(() => {
     const fetchBlogPost = async () => {
@@ -55,30 +65,24 @@ const BlogPostView = () => {
         
         // Update counts
         if (reactionType === 'LIKE') {
-          setPost({...post, likeCount: post.likeCount - 1});
+          setPost({...post, likesCount: Math.max(0, post.likesCount - 1)});
         } else {
-          setPost({...post, dislikeCount: post.dislikeCount - 1});
+          setPost({...post, dislikesCount: Math.max(0, post.dislikesCount - 1)});
         }
+      } else if (userReaction && userReaction !== reactionType) {
+        // User already has a different reaction - don't allow switching
+        console.log('User can only react once per post');
+        return;
       } else {
-        // If user had a different reaction before, remove it first
-        if (userReaction) {
-          // Update counts for old reaction
-          if (userReaction === 'LIKE') {
-            setPost({...post, likeCount: post.likeCount - 1});
-          } else {
-            setPost({...post, dislikeCount: post.dislikeCount - 1});
-          }
-        }
-        
-        // Add the new reaction
+        // Add new reaction (user has no existing reaction)
         await BlogService.reactToBlogPost(postId, reactionType);
         setUserReaction(reactionType);
         
         // Update counts for new reaction
         if (reactionType === 'LIKE') {
-          setPost({...post, likeCount: post.likeCount + 1});
+          setPost({...post, likesCount: (post.likesCount || 0) + 1});
         } else {
-          setPost({...post, dislikeCount: post.dislikeCount + 1});
+          setPost({...post, dislikesCount: (post.dislikesCount || 0) + 1});
         }
       }
     } catch (err) {
@@ -140,12 +144,16 @@ const BlogPostView = () => {
       </div>
       
       {/* Featured image */}
-      {post.imageUrls && post.imageUrls.length > 0 && (
+      {post.featuredImagePath && (
         <div className="mb-8">
           <img
-            src={post.imageUrls[0]}
+            src={getImageUrl(post.featuredImagePath)}
             alt={post.title}
             className="w-full rounded-lg shadow-md"
+            onError={(e) => {
+              console.error('Failed to load featured image:', post.featuredImagePath);
+              e.target.style.display = 'none';
+            }}
           />
         </div>
       )}
@@ -155,19 +163,7 @@ const BlogPostView = () => {
         <div dangerouslySetInnerHTML={{ __html: post.content }} />
       </div>
       
-      {/* Additional images */}
-      {post.imageUrls && post.imageUrls.length > 1 && (
-        <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-8">
-          {post.imageUrls.slice(1).map((url, index) => (
-            <img
-              key={index}
-              src={url}
-              alt={`${post.title} image ${index + 2}`}
-              className="w-full h-48 object-cover rounded-lg shadow-sm"
-            />
-          ))}
-        </div>
-      )}
+
       
       {/* Reactions and comments */}
       <div className="border-t border-gray-200 pt-6 flex flex-col sm:flex-row sm:justify-between">
@@ -184,7 +180,7 @@ const BlogPostView = () => {
               <ThumbUpIcon className="h-6 w-6 text-gray-500 group-hover:text-blue-600" />
             )}
             <span className={userReaction === 'LIKE' ? 'font-semibold text-blue-600' : 'text-gray-700'}>
-              {post.likeCount || 0}
+              {post.likesCount || 0}
             </span>
           </button>
           
@@ -199,7 +195,7 @@ const BlogPostView = () => {
               <ThumbDownIcon className="h-6 w-6 text-gray-500 group-hover:text-red-600" />
             )}
             <span className={userReaction === 'DISLIKE' ? 'font-semibold text-red-600' : 'text-gray-700'}>
-              {post.dislikeCount || 0}
+              {post.dislikesCount || 0}
             </span>
           </button>
         </div>
@@ -210,7 +206,7 @@ const BlogPostView = () => {
           onClick={() => setShowComments(!showComments)}
         >
           <ChatBubbleLeftIcon className="h-6 w-6" />
-          <span>{post.commentCount || 0} Comments</span>
+          <span>{post.commentsCount || 0} Comments</span>
         </button>
       </div>
       

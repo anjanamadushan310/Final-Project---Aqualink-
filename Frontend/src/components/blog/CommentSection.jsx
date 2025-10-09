@@ -3,7 +3,7 @@ import { formatDistanceToNow } from 'date-fns';
 import { UserCircleIcon } from '@heroicons/react/24/outline';
 import BlogService from '../../services/BlogService';
 
-const CommentSection = ({ blogPostId, isExporter = false }) => {
+const CommentSection = ({ blogPostId, isExporter = false, onCommentUpdate }) => {
   const [comments, setComments] = useState([]);
   const [newComment, setNewComment] = useState('');
   const [loading, setLoading] = useState(false);
@@ -26,11 +26,17 @@ const CommentSection = ({ blogPostId, isExporter = false }) => {
         setLoading(true);
         setError(null);
         const data = await BlogService.getCommentsForBlog(blogPostId, page, 10);
-        setComments(prev => page === 0 ? data : [...prev, ...data]);
+        setComments(prev => {
+          const newComments = page === 0 ? data : [...prev, ...data];
+          // Update parent component with comment count on initial load
+          if (page === 0 && onCommentUpdate) {
+            onCommentUpdate(newComments.length);
+          }
+          return newComments;
+        });
         setHasMore(data.length === 10); // Assuming backend returns max 10 items per page
-      } catch (err) {
+      } catch (_err) {
         setError('Failed to load comments. Please try again later.');
-        console.error('Error fetching comments:', err);
       } finally {
         setLoading(false);
       }
@@ -39,7 +45,7 @@ const CommentSection = ({ blogPostId, isExporter = false }) => {
     if (blogPostId) {
       fetchComments();
     }
-  }, [blogPostId, page]);
+  }, [blogPostId, page, onCommentUpdate]);
 
   const handleSubmitComment = async (e) => {
     e.preventDefault();
@@ -61,33 +67,20 @@ const CommentSection = ({ blogPostId, isExporter = false }) => {
       
       const createdComment = await BlogService.addComment(blogPostId, commentData);
       
-      setComments(prev => [createdComment, ...prev]);
+      setComments(prev => {
+        const newComments = [createdComment, ...prev];
+        // Update parent component with new comment count
+        if (onCommentUpdate) {
+          onCommentUpdate(newComments.length);
+        }
+        return newComments;
+      });
       setNewComment('');
     } catch (err) {
-      setError('Failed to post comment. Please try again.');
-      console.error('Error posting comment:', err);
+      const errorMessage = err.response?.data?.message || err.message || 'Failed to post comment. Please try again.';
+      setError(errorMessage);
     } finally {
       setSubmitting(false);
-    }
-  };
-
-  const handleApproveComment = async (commentId) => {
-    if (!isExporter) return;
-    
-    try {
-      await BlogService.approveComment(commentId);
-      
-      // Update local state to reflect approval
-      setComments(prev => 
-        prev.map(comment => 
-          comment.id === commentId 
-            ? { ...comment, approved: true } 
-            : comment
-        )
-      );
-    } catch (err) {
-      setError('Failed to approve comment.');
-      console.error('Error approving comment:', err);
     }
   };
 
@@ -96,10 +89,16 @@ const CommentSection = ({ blogPostId, isExporter = false }) => {
       await BlogService.deleteComment(commentId);
       
       // Remove comment from local state
-      setComments(prev => prev.filter(comment => comment.id !== commentId));
-    } catch (err) {
+      setComments(prev => {
+        const newComments = prev.filter(comment => comment.id !== commentId);
+        // Update parent component with new comment count
+        if (onCommentUpdate) {
+          onCommentUpdate(newComments.length);
+        }
+        return newComments;
+      });
+    } catch (_err) {
       setError('Failed to delete comment.');
-      console.error('Error deleting comment:', err);
     }
   };
 
@@ -108,7 +107,7 @@ const CommentSection = ({ blogPostId, isExporter = false }) => {
   };
 
   return (
-    <div className="mt-8">
+    <div>
       <h3 className="text-xl font-semibold mb-6">Comments</h3>
       
       {/* Comment form */}
@@ -134,6 +133,12 @@ const CommentSection = ({ blogPostId, isExporter = false }) => {
               >
                 login
               </button> to comment
+            </p>
+          )}
+          
+          {currentUser && (
+            <p className="text-xs text-gray-400">
+              Commenting as: {currentUser.username || currentUser.email || 'Unknown User'}
             </p>
           )}
           
@@ -170,12 +175,10 @@ const CommentSection = ({ blogPostId, isExporter = false }) => {
           ) : (
             <div className="space-y-6">
               {comments.map((comment) => (
-                // Only show approved comments unless user is the exporter
-                (comment.approved || isExporter) && (
-                  <div 
-                    key={comment.id} 
-                    className={`bg-white p-4 rounded-lg border ${!comment.approved ? 'border-yellow-200 bg-yellow-50' : 'border-gray-100'}`}
-                  >
+                <div 
+                  key={comment.id} 
+                  className="bg-white p-4 rounded-lg border border-gray-100"
+                >
                     <div className="flex justify-between items-start">
                       <div className="flex items-center">
                         {comment.author?.profileImageUrl ? (
@@ -189,35 +192,30 @@ const CommentSection = ({ blogPostId, isExporter = false }) => {
                         )}
                         <div>
                           <h4 className="font-medium text-gray-900">
-                            {comment.author?.name || 'Anonymous User'}
+                            {comment.author?.businessName || 
+                             comment.author?.name || 
+                             comment.author?.firstName || 
+                             comment.author?.fullName ||
+                             comment.user?.name ||
+                             comment.user?.businessName ||
+                             'User'}
                           </h4>
                           <p className="text-xs text-gray-500">
                             {formatDistanceToNow(new Date(comment.createdAt), { addSuffix: true })}
-                            {!comment.approved && ' • Pending Approval'}
                           </p>
                         </div>
                       </div>
                       
-                      {/* Comment actions for exporter or comment author */}
-                      {(isExporter || (currentUser && comment.author?.id === currentUser.id)) && (
+                      {/* Comment actions for comment author or exporter */}
+                      {(isExporter || (currentUser && comment.author && String(comment.author.id) === String(currentUser.id))) && (
                         <div className="flex space-x-2">
-                          {isExporter && !comment.approved && (
-                            <button
-                              onClick={() => handleApproveComment(comment.id)}
-                              className="text-xs text-green-600 hover:text-green-800"
-                            >
-                              Approve
-                            </button>
-                          )}
-                          
-                          {(isExporter || (currentUser && comment.author?.id === currentUser.id)) && (
-                            <button
-                              onClick={() => handleDeleteComment(comment.id)}
-                              className="text-xs text-red-600 hover:text-red-800"
-                            >
-                              Delete
-                            </button>
-                          )}
+                          {/* Only show delete button for comment author or exporter */}
+                          <button
+                            onClick={() => handleDeleteComment(comment.id)}
+                            className="text-xs text-red-600 hover:text-red-800"
+                          >
+                            Delete
+                          </button>
                         </div>
                       )}
                     </div>
@@ -226,8 +224,7 @@ const CommentSection = ({ blogPostId, isExporter = false }) => {
                       {comment.content}
                     </div>
                   </div>
-                )
-              ))}
+                ))}
               
               {/* Load more button */}
               {hasMore && (
