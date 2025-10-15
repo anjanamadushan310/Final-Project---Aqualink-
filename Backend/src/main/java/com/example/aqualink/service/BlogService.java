@@ -1,30 +1,36 @@
 package com.example.aqualink.service;
 
-import com.example.aqualink.entity.*;
-import com.example.aqualink.dto.BlogPostDto;
-import com.example.aqualink.dto.BlogCommentDto;
-import com.example.aqualink.dto.BlogReactionDto;
-import com.example.aqualink.dto.UserSummaryDto;
-import com.example.aqualink.exception.ResourceNotFoundException;
-import com.example.aqualink.repository.BlogCommentRepository;
-import com.example.aqualink.repository.BlogPostRepository;
-import com.example.aqualink.repository.BlogReactionRepository;
-import com.example.aqualink.repository.UserRepository;
+import java.io.IOException;
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Optional;
+import java.util.stream.Collectors;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import java.io.IOException;
-import java.time.LocalDateTime;
-import java.util.List;
-import java.util.Optional;
-import java.util.stream.Collectors;
 import org.springframework.web.multipart.MultipartFile;
+
+import com.example.aqualink.dto.BlogCommentDto;
+import com.example.aqualink.dto.BlogPostDto;
+import com.example.aqualink.dto.BlogReactionDto;
+import com.example.aqualink.dto.UserSummaryDto;
+import com.example.aqualink.entity.BlogComment;
+import com.example.aqualink.entity.BlogPost;
+import com.example.aqualink.entity.BlogReaction;
+import com.example.aqualink.entity.ReactionType;
+import com.example.aqualink.entity.Role;
+import com.example.aqualink.entity.User;
+import com.example.aqualink.exception.ResourceNotFoundException;
+import com.example.aqualink.repository.BlogCommentRepository;
+import com.example.aqualink.repository.BlogPostRepository;
+import com.example.aqualink.repository.BlogReactionRepository;
+import com.example.aqualink.repository.UserRepository;
 
 @Service
 public class BlogService {
@@ -256,7 +262,20 @@ public class BlogService {
         dto.setTitle(blogPost.getTitle());
         dto.setContent(blogPost.getContent());
         dto.setSummary(blogPost.getSummary());
-        dto.setFeaturedImagePath(blogPost.getFeaturedImagePath());
+        
+        // Convert the stored path to a full URL path
+        String featuredImagePath = blogPost.getFeaturedImagePath();
+        if (featuredImagePath != null && !featuredImagePath.isEmpty()) {
+            // If the path doesn't start with /uploads/, prepend it
+            if (!featuredImagePath.startsWith("/uploads/")) {
+                dto.setFeaturedImagePath("/uploads/" + featuredImagePath);
+            } else {
+                dto.setFeaturedImagePath(featuredImagePath);
+            }
+        } else {
+            dto.setFeaturedImagePath(null);
+        }
+        
         dto.setPublished(blogPost.isPublished());
         dto.setCreatedAt(blogPost.getCreatedAt());
         dto.setUpdatedAt(blogPost.getUpdatedAt());

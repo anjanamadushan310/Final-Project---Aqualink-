@@ -3,11 +3,21 @@ import { Link } from 'react-router-dom';
 import BlogService from '../services/BlogService';
 import { formatDistanceToNow } from 'date-fns';
 import { UserCircleIcon } from '@heroicons/react/24/outline';
+import { API_BASE_URL } from '../config';
 
 const BlogPage = () => {
   const [blogPosts, setBlogPosts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+
+  // Helper function to get full image URL
+  const getImageUrl = (imagePath) => {
+    if (!imagePath) return null;
+    if (imagePath.startsWith('http://') || imagePath.startsWith('https://')) {
+      return imagePath;
+    }
+    return `${API_BASE_URL}${imagePath.startsWith('/') ? '' : '/'}${imagePath}`;
+  };
 
   useEffect(() => {
     const fetchBlogPosts = async () => {
@@ -63,12 +73,17 @@ const BlogPage = () => {
             <Link to={`/blog/${post.id}`} key={post.id} className="group">
               <div className="bg-white rounded-lg shadow-md overflow-hidden h-full hover:shadow-lg transition-shadow duration-300">
                 {/* Featured image */}
-                {post.imageUrls && post.imageUrls.length > 0 ? (
+                {post.featuredImagePath ? (
                   <div className="h-48 overflow-hidden">
                     <img 
-                      src={post.imageUrls[0]} 
+                      src={getImageUrl(post.featuredImagePath)} 
                       alt={post.title} 
                       className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                      onError={(e) => {
+                        console.error('Failed to load blog image:', post.featuredImagePath);
+                        e.target.style.display = 'none';
+                        e.target.parentElement.innerHTML = '<div class="h-48 bg-gradient-to-r from-blue-50 to-blue-100 flex items-center justify-center"><span class="text-blue-300 text-lg font-semibold">AquaLink Blog</span></div>';
+                      }}
                     />
                   </div>
                 ) : (
@@ -92,9 +107,13 @@ const BlogPage = () => {
                     <div className="flex items-center">
                       {post.author?.profileImageUrl ? (
                         <img 
-                          src={post.author.profileImageUrl} 
+                          src={getImageUrl(post.author.profileImageUrl)} 
                           alt={post.author.name} 
                           className="w-8 h-8 rounded-full object-cover mr-2"
+                          onError={(e) => {
+                            e.target.style.display = 'none';
+                            e.target.nextSibling.style.display = 'block';
+                          }}
                         />
                       ) : (
                         <UserCircleIcon className="w-8 h-8 text-gray-400 mr-2" />
