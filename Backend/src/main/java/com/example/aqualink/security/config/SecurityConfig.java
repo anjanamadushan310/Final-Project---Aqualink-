@@ -44,14 +44,19 @@ public class SecurityConfig {
         http.csrf().disable()
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .authorizeHttpRequests(authz -> authz
-                        // Allow all uploads paths - this is crucial for banner images
+                        // Allow all uploads paths - this is crucial for banner images, blog images, etc.
                         .requestMatchers("/uploads/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/uploads/**").permitAll()
+                        .requestMatchers("/uploads/blog/**").permitAll()
+                        .requestMatchers("/uploads/banners/**").permitAll()
+                        .requestMatchers("/uploads/fish_images/**").permitAll()
+                        .requestMatchers("/uploads/industrial_images/**").permitAll()
+                        .requestMatchers("/uploads/profile-images/**").permitAll()
+                        .requestMatchers("/uploads/service_images/**").permitAll()
                         // Allow API endpoints
                         .requestMatchers("/api/auth/**","/api/users/**", "/api/banners/**", "/api/v1/fish/**","/api/fish/**","/api/profile/**","/api/industrial-ads/**","/api/industrial/**","/api/v1/industrial/**","/api/services/**","/api/service-provider/services/**","/api/blogs/**").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/fish-ads").permitAll() // Allow POST for fish ads
                         .requestMatchers(HttpMethod.GET, "/api/fish-ads").permitAll()
-                        .requestMatchers("/uploads/profile-images/**").permitAll()// Allow GET for fish ads
                         .requestMatchers(HttpMethod.POST, "/api/delivery-quotes/create-initial-order").permitAll() // Temporarily allow this endpoint for testing
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                         // Delivery and shop endpoints require authentication
