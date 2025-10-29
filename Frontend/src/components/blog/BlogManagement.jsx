@@ -65,8 +65,9 @@ const BlogManagement = () => {
       
       // If user is logged in, fetch their blog posts
       let data = [];
-      if (currentUser?.id) {
-        data = await BlogService.getBlogPostsByUser(currentUser.id, newPage, 10);
+      const userId = currentUser?.userId || currentUser?.id;
+      if (userId) {
+        data = await BlogService.getBlogPostsByUser(userId, newPage, 10);
       } else {
         data = await BlogService.getAllBlogPosts(newPage, 10, published);
       }

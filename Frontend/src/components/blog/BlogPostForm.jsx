@@ -119,6 +119,31 @@ const BlogPostForm = ({ editMode = false }) => {
       setSubmitting(true);
       setError(null);
       
+      // Check authentication and role
+      const token = localStorage.getItem('token');
+      const user = JSON.parse(localStorage.getItem('user') || '{}');
+      
+      console.log('User data:', user);
+      console.log('Token exists:', !!token);
+      
+      if (!token) {
+        setError('You must be logged in to create a blog post.');
+        setSubmitting(false);
+        return;
+      }
+      
+      // Check for both ROLE_EXPORTER and EXPORTER (backend might use either format)
+      const hasExporterRole = user.roles && (
+        user.roles.includes('ROLE_EXPORTER') || 
+        user.roles.includes('EXPORTER')
+      );
+      
+      if (!hasExporterRole) {
+        setError('You must have the EXPORTER role to create blog posts. Your roles: ' + (user.roles ? user.roles.join(', ') : 'none'));
+        setSubmitting(false);
+        return;
+      }
+      
       const blogPostData = {
         title: formData.title,
         content: formData.content,
@@ -140,7 +165,30 @@ const BlogPostForm = ({ editMode = false }) => {
       // Navigate back to blog management
       navigate('/dashboard/Exporter/blog');
     } catch (err) {
-      setError('Failed to save blog post. Please check your form and try again.');
+      let errorMessage = 'Failed to save blog post. ';
+      
+      if (err.response) {
+        // The request was made and the server responded with a status code
+        // that falls out of the range of 2xx
+        console.error('Error response:', err.response);
+        if (err.response.status === 403) {
+          errorMessage += 'Access denied. You do not have permission to create blog posts. Please ensure you have the EXPORTER role.';
+        } else if (err.response.status === 401) {
+          errorMessage += 'Authentication failed. Please log in again.';
+        } else {
+          errorMessage += err.response.data?.message || 'Server error occurred.';
+        }
+      } else if (err.request) {
+        // The request was made but no response was received
+        console.error('Error request:', err.request);
+        errorMessage += 'No response from server. Please check your connection.';
+      } else {
+        // Something happened in setting up the request that triggered an Error
+        console.error('Error message:', err.message);
+        errorMessage += err.message;
+      }
+      
+      setError(errorMessage);
       console.error('Error saving blog post:', err);
     } finally {
       setSubmitting(false);

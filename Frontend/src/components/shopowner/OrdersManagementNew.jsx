@@ -28,21 +28,14 @@ const OrdersManagement = () => {
       setLoading(true);
       setError(null);
       
-      console.log('Fetching orders from backend...');
-      // Fetch orders from backend
-      const response = await apiService.get('/orders/my-orders');
+      // Fetch orders from backend - adjust endpoint based on your backend
+      const response = await apiService.get('/api/orders/my-orders');
       console.log('Orders fetched:', response);
       
-      // Ensure we have an array
-      const ordersArray = Array.isArray(response) ? response : [];
-      setOrders(ordersArray);
-      
-      if (ordersArray.length === 0) {
-        console.log('No orders found for this user');
-      }
+      setOrders(response || []);
     } catch (err) {
       console.error('Error fetching orders:', err);
-      setError(err.message || 'Failed to load orders. Please try again later.');
+      setError(err.message || 'Failed to load orders');
     } finally {
       setLoading(false);
     }
@@ -57,7 +50,7 @@ const OrdersManagement = () => {
     try {
       setUpdating(true);
       
-      const response = await apiService.put(`/orders/${orderId}/status`, { 
+      const response = await apiService.put(`/api/orders/${orderId}/status`, { 
         status: newStatus 
       });
       

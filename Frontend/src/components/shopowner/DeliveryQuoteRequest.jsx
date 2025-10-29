@@ -1,4 +1,4 @@
-import React, { useState, useContext, useEffect } from "react";
+import React, { useState, useContext, useEffect, useRef } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { CartContext } from "../../context/CartContext";
 import { useAuth } from "../../context/AuthContext";
@@ -17,8 +17,8 @@ const EnhancedDeliveryRequest = () => {
   const [sending, setSending] = useState(false);
   const [error, setError] = useState(null);
   const [availableTowns, setAvailableTowns] = useState([]);
-  const [createdOrder, setCreatedOrder] = useState(null); // Store the initial order created on page load
   const [addressLoaded, setAddressLoaded] = useState(false); // Track if address has been loaded from profile
+  const initialLoadRef = useRef(false); // Track if initial load has happened
   const [deliveryAddress, setDeliveryAddress] = useState({
     place: '',
     street: '',
@@ -27,6 +27,15 @@ const EnhancedDeliveryRequest = () => {
   });
 
   useEffect(() => {
+    // Prevent infinite loop - only run once on mount
+    if (initialLoadRef.current) {
+      console.log('Initial load already completed, skipping useEffect');
+      return;
+    }
+
+    console.log('Running initial load useEffect');
+    initialLoadRef.current = true;
+
     // Debug cart data
     console.log('DeliveryQuoteRequest - Cart Data:', {
       cartItems,
@@ -46,7 +55,7 @@ const EnhancedDeliveryRequest = () => {
         if ((!cartItems || cartItems.length === 0) && orderData.items && orderData.items.length > 0) {
           console.log('Using stored order data as cart is empty');
           // Note: We can't directly set cartItems here as it's from context
-          // The stored data will be used in the createInitialOrder function
+          // The stored data will be used when submitting the quote request
         }
       } catch (error) {
         console.error('Error parsing stored order data:', error);
@@ -135,80 +144,15 @@ const EnhancedDeliveryRequest = () => {
       }
     };
 
-    // Create initial order when page loads
-    const createInitialOrder = async () => {
-      let itemsToUse = cartItems;
-      let totalToUse = totalAmount;
-      let sellerIdToUse = sellerId;
-      let businessNameToUse = businessName;
-
-      // If cart context is empty, try to use stored order data from Cart component
-      if (!cartItems || cartItems.length === 0) {
-        const storedOrderData = localStorage.getItem('aqualink_order_data');
-        if (storedOrderData) {
-          try {
-            const orderData = JSON.parse(storedOrderData);
-            console.log('Using stored order data for initial order creation:', orderData);
-            itemsToUse = orderData.items;
-            totalToUse = orderData.subtotal;
-            sellerIdToUse = orderData.sellerId;
-            businessNameToUse = orderData.businessName;
-          } catch (error) {
-            console.error('Error parsing stored order data:', error);
-          }
-        }
-      }
-
-      if (!itemsToUse || itemsToUse.length === 0) {
-        console.log('No cart items or stored order data, skipping initial order creation');
-        return;
-      }
-
-      try {
-        const requestData = {
-          sellerId: sellerIdToUse,
-          businessName: businessNameToUse,
-          items: itemsToUse.map(item => ({
-            cartItemId: item.cartItemId,
-            productName: item.productName,
-            productType: item.productType || 'FISH',
-            quantity: item.quantity,
-            price: item.price,
-            sellerId: item.sellerId,
-            sellerName: item.sellerName
-          })),
-          subtotal: totalToUse,
-          preferences: {
-            quotesExpireAfter: 24 // Default 24 hours
-          }
-        };
-
-        console.log('Creating initial order with data:', requestData);
-
-        const response = await deliveryService.createInitialOrder(requestData);
-        
-        if (response.success && response.data) {
-          console.log('Initial order created successfully:', response.data);
-          setCreatedOrder(response.data);
-        } else {
-          console.error('Failed to create initial order:', response.message);
-        }
-
-      } catch (error) {
-        console.error('Error creating initial order:', error);
-        // Don't show error to user for background order creation
-      }
-    };
-
     if (token) {
       // Refresh cart data first to ensure we have latest data
       refreshCart();
       loadUserProfile();
-      createInitialOrder(); // Create initial order after loading profile
     } else {
-      console.log('No token available, skipping profile load and order creation');
+      console.log('No token available, skipping profile load');
     }
-  }, [token, cartItems, totalAmount, sellerId, businessName, refreshCart, addressLoaded]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [token]); // Only run on mount and when token changes - intentionally excluding other deps to prevent infinite loop
 
   // Handle district/town state synchronization
   useEffect(() => {
@@ -286,13 +230,6 @@ const EnhancedDeliveryRequest = () => {
     setError(null);
 
     try {
-      // Check if we have a created order from page load
-      if (!createdOrder || !createdOrder.orderId) {
-        toast.error('Order not initialized. Please refresh the page and try again.');
-        setSending(false);
-        return;
-      }
-
       // Use the same logic as display to get correct items and total
       let itemsToUse = cartItems;
       let totalToUse = totalAmount;
@@ -324,7 +261,6 @@ const EnhancedDeliveryRequest = () => {
       const finalTotal = calculatedTotal > 0 ? calculatedTotal : (totalToUse || 0);
 
       const requestData = {
-        orderId: createdOrder.orderId, // Include the order ID to update existing order
         sessionId: crypto.randomUUID(),
         sellerId: sellerId,
         businessName: businessName,
@@ -338,7 +274,10 @@ const EnhancedDeliveryRequest = () => {
           sellerName: item.sellerName
         })),
         subtotal: finalTotal,
-        preferences: preferences,
+        preferences: {
+          quotesExpireAfter: preferences.quotesExpireAfter,
+          quotesExpireOn: new Date(preferences.quotesExpireOn).toISOString()
+        },
         deliveryAddress: {
           place: deliveryAddress.place.trim(),
           street: deliveryAddress.street.trim(),
@@ -348,7 +287,6 @@ const EnhancedDeliveryRequest = () => {
       };
 
       console.log('Submitting quote request with data:', requestData);
-      console.log('Created order data:', createdOrder);
       console.log('Delivery address being sent:', requestData.deliveryAddress);
 
       // Validate delivery address
@@ -370,7 +308,6 @@ const EnhancedDeliveryRequest = () => {
       }
 
       console.log('About to send request to backend with address data:', {
-        orderId: requestData.orderId,
         deliveryAddress: requestData.deliveryAddress,
         fullRequestData: requestData
       });
@@ -386,7 +323,7 @@ const EnhancedDeliveryRequest = () => {
         // Prepare order data for quote acceptance page
         const orderData = {
           sessionId: response.data.sessionId || requestData.sessionId,
-          orderId: response.data.orderId || createdOrder.orderId,
+          orderId: response.data.orderId,
           sellerId: sellerId,
           businessName: businessName,
           items: requestData.items,
