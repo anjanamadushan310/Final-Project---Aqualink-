@@ -30,7 +30,8 @@ const Cart = () => {
   const getTotalAmount = () => {
     return totalAmount || 0;
   };
-
+  
+  //
   // Group cart items by seller
   const groupItemsBySeller = (items) => {
     if (!items || items.length === 0) return {};
