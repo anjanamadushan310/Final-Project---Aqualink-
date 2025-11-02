@@ -182,7 +182,7 @@ const DeliveryRequests = () => {
                     </h4>
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                       {/* Customer Details */}
-                      <div className="bg-white rounded-lg p-4 border border-gray-200">
+                      <div key="customer-info" className="bg-white rounded-lg p-4 border border-gray-200">
                         <div className="flex items-center mb-2">
                           <div className="w-4 h-4 bg-blue-500 rounded-full mr-3"></div>
                           <span className="font-semibold text-gray-900">CUSTOMER INFO</span>
@@ -194,7 +194,7 @@ const DeliveryRequests = () => {
                       </div>
 
                       {/* Delivery Address */}
-                      <div className="bg-white rounded-lg p-4 border border-gray-200">
+                      <div key="delivery-address" className="bg-white rounded-lg p-4 border border-gray-200">
                         <div className="flex items-center mb-2">
                           <div className="w-4 h-4 bg-red-500 rounded-full mr-3"></div>
                           <span className="font-semibold text-gray-900">DELIVER TO</span>
@@ -217,15 +217,15 @@ const DeliveryRequests = () => {
                     <div className="space-y-3">
                       <div className="bg-white rounded-lg p-4 border border-gray-200">
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-center">
-                          <div>
+                          <div key="total-items">
                             <div className="text-2xl font-bold text-blue-600">{request.totalItems || 0}</div>
                             <div className="text-sm text-gray-600">Total Items</div>
                           </div>
-                          <div>
+                          <div key="order-value">
                             <div className="text-2xl font-bold text-green-600">{formatPrice(request.totalAmount)}</div>
                             <div className="text-sm text-gray-600">Order Value</div>
                           </div>
-                          <div>
+                          <div key="delivery-location">
                             <div className="text-lg font-semibold text-purple-600">{request.district}, {request.town}</div>
                             <div className="text-sm text-gray-600">Delivery Location</div>
                           </div>
@@ -337,8 +337,12 @@ const CreateQuoteModal = ({ isOpen, onClose, request }) => {
     setIsSubmitting(true);
 
     try {
+      console.log('Full request object:', request);
+      console.log('request.id:', request.id);
+      console.log('request.orderId:', request.orderId);
+      
       const quoteData = {
-        quoteRequestId: request.requestId,
+        requestId: request.orderId || request.id, // Use orderId first, fallback to id
         deliveryFee: parseFloat(quotePrice),
         estimatedDeliveryTime: '45-90 minutes',
         deliveryDate: deliveryDate,
@@ -347,6 +351,8 @@ const CreateQuoteModal = ({ isOpen, onClose, request }) => {
         deliveryPersonName: user?.name || 'Delivery Partner',
         deliveryPersonPhone: user?.phoneNumber || 'Phone not provided'
       };
+      
+      console.log('Sending quoteData:', quoteData);
 
       const response = await deliveryService.createQuote(quoteData);
       

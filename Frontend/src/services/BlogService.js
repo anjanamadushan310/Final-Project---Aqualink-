@@ -46,10 +46,14 @@ const BlogService = {
       });
     }
     
+    const authHeaders = getAuthHeaders();
+    console.log('Creating blog post with headers:', authHeaders);
+    console.log('Blog post data:', blogPostData);
+    
     const response = await axios.post(`${API_BASE_URL}/api/blogs`, formData, {
       headers: { 
         'Content-Type': 'multipart/form-data',
-        ...getAuthHeaders()
+        ...authHeaders
       }
     });
     return response.data;

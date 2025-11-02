@@ -23,6 +23,7 @@ import QuoteAcceptance from "./components/shopowner/QuoteAcceptance";
 import DeliveryQuoteRequest from "./components/shopowner/DeliveryQuoteRequest";
 import OrderConfirmation from "./components/shopowner/OrderConfirmation";
 import Cart from "./components/shopowner/Cart";
+import OrdersManagement from "./components/shopowner/OrdersManagement";
 import BlogPage from "./pages/BlogPage";
 import BlogPostPage from "./pages/BlogPostPage";
 import { AuthProvider } from "./context/AuthContext";
@@ -171,7 +172,9 @@ const AppRouter = ({ showLogin, setShowLogin, showProfileMenu, setShowProfileMen
          
           <Route path="/delivery-request" element={<DeliveryQuoteRequest />} />
           <Route path="/quote-acceptance" element={<QuoteAcceptance />} />
+          <Route path="/shop-owner/quote-acceptance" element={<QuoteAcceptance />} />
           <Route path="/order-confirmation/:orderId" element={<OrderConfirmation />} />
+          <Route path="/orders" element={<OrdersManagement />} />
         </Routes>
       </main>
     </div>

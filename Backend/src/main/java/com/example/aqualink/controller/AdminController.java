@@ -213,7 +213,8 @@ public class AdminController {
                 return false;
             }
 
-            return adminVerificationService.isUserAdmin(userId);
+            return adminVerificationService.
+                    isUserAdmin(userId);
         } catch (Exception e) {
             return false;
         }

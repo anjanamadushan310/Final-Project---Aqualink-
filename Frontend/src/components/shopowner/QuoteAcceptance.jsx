@@ -41,28 +41,32 @@ const QuoteAcceptance = () => {
         setLoading(true);
       }
 
-      // Get order data from localStorage (this contains the sessionId)
+      // Get order data from localStorage (this contains the orderId)
       const savedOrder = JSON.parse(localStorage.getItem('aqualink_order_data') || 'null');
+      
+      console.log('=== Quote Acceptance Debug ===');
+      console.log('Saved order from localStorage:', savedOrder);
       
       if (!savedOrder) {
         console.log('No order data found in localStorage');
-        setError('No order session found. Please start from cart.');
+        setError('No order session found. Please start from cart and submit a delivery request.');
         setLoading(false);
         return;
       }
       
-      if (!savedOrder.sessionId) {
-        console.log('No session ID found in order data');
-        setError('Invalid order session. Please create a new quote request.');
+      if (!savedOrder.orderId) {
+        console.log('No order ID found in order data:', savedOrder);
+        setError('Invalid order data. Missing orderId. Please create a new quote request from cart.');
         setLoading(false);
         return;
       }
 
       setOrderData(savedOrder);
 
-      // Fetch quotes from backend using the sessionId
-      console.log('Fetching quotes for session:', savedOrder.sessionId);
-      const response = await deliveryService.getQuotesForRequest(savedOrder.sessionId);
+      // Fetch quotes from backend using the orderId
+      console.log('Fetching quotes for order ID:', savedOrder.orderId);
+      const response = await deliveryService.getQuotesForOrder(savedOrder.orderId);
+      console.log('Quotes response:', response);
       
       if (response.success && response.data) {
         // Transform backend quote data to match frontend format
@@ -258,11 +262,20 @@ const QuoteAcceptance = () => {
 
   if (error) {
     return (
-      <div className="flex items-center justify-center h-64 bg-gray-50">
-        <div className="text-center bg-white p-8 rounded-lg shadow-md">
+      <div className="flex items-center justify-center min-h-screen bg-gray-50">
+        <div className="text-center bg-white p-8 rounded-lg shadow-md max-w-md">
           <div className="text-red-500 text-6xl mb-4">⚠️</div>
           <h2 className="text-xl font-bold text-gray-900 mb-2">Error Loading Quotes</h2>
           <p className="text-red-600 mb-4">{error}</p>
+          <div className="text-left bg-gray-50 p-4 rounded-lg mb-4">
+            <h3 className="font-semibold mb-2">To use this page:</h3>
+            <ol className="text-sm text-gray-700 space-y-1 list-decimal list-inside">
+              <li>Add items to your cart</li>
+              <li>Go to cart and click "Request Delivery Quote"</li>
+              <li>Fill in delivery details and submit</li>
+              <li>You'll be redirected here to view quotes</li>
+            </ol>
+          </div>
           <div className="space-x-4">
             <button 
               onClick={() => window.location.reload()} 
@@ -274,7 +287,7 @@ const QuoteAcceptance = () => {
               onClick={() => window.location.href = '/cart'}
               className="bg-gray-600 text-white px-6 py-2 rounded-lg hover:bg-gray-700"
             >
-              Back to Cart
+              Go to Cart
             </button>
           </div>
         </div>

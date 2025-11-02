@@ -24,7 +24,6 @@ import com.example.aqualink.entity.DeliveryPersonCoverage;
 import com.example.aqualink.entity.DeliveryQuote;
 import com.example.aqualink.entity.DeliveryQuoteRequest;
 import com.example.aqualink.entity.Order;
-import com.example.aqualink.entity.OrderItem;
 import com.example.aqualink.entity.User;
 import com.example.aqualink.entity.UserProfile;
 import com.example.aqualink.repository.DeliveryPersonAvailabilityRepository;
@@ -49,52 +48,6 @@ public class DeliveryQuoteService {
     private final DeliveryPersonCoverageRepository coverageRepository;
     private final DeliveryPersonAvailabilityRepository deliveryPersonAvailabilityRepository;
     private final UserProfileRepository userProfileRepository;
-
-    /**
-     * Create initial order for delivery quote request (called when page loads)
-     */
-    public DeliveryQuoteRequestDTO createInitialOrderForQuoteRequest(DeliveryQuoteRequestWithOrderDTO requestDTO, String customerEmail) {
-        User customer = userRepository.findByEmail(customerEmail)
-                .orElseThrow(() -> new RuntimeException("Customer not found"));
-
-        // Create initial order with basic information
-        Order order = new Order();
-        order.setBuyerUser(customer);
-        order.setOrderStatus(Order.OrderStatus.DELIVERY_PENDING);
-        order.setTotalAmount(BigDecimal.valueOf(requestDTO.getSubtotal()));
-        order.setOrderDateTime(LocalDateTime.now());
-
-        // Add order items
-        if (requestDTO.getItems() != null) {
-            List<OrderItem> orderItems = requestDTO.getItems().stream()
-                .map(item -> {
-                    OrderItem orderItem = new OrderItem();
-                    orderItem.setQuantity(item.getQuantity());
-                    orderItem.setPrice(BigDecimal.valueOf(item.getPrice()));
-                    // Set product - you'll need to fetch it or create a new one
-                    orderItem.setOrder(order);
-                    return orderItem;
-                })
-                .collect(Collectors.toList());
-            order.setOrderItems(orderItems);
-        }
-
-        // Note: Address will be set later when submit button is clicked
-        Order savedOrder = orderRepository.save(order);
-
-        // Create quote request
-        DeliveryQuoteRequest request = new DeliveryQuoteRequest();
-        request.setOrderId(savedOrder.getId());
-        request.setLastRespondingDateTime(
-            requestDTO.getPreferences() != null && requestDTO.getPreferences().getQuotesExpireOn() != null 
-            ? requestDTO.getPreferences().getQuotesExpireOn() 
-            : LocalDateTime.now().plusHours(24)
-        );
-        
-        DeliveryQuoteRequest savedRequest = deliveryQuoteRequestRepository.save(request);
-        
-        return convertToDeliveryQuoteRequestDTO(savedRequest, customer);
-    }
 
     /**
      * Update existing order with delivery address (called when submit button is clicked)
@@ -154,21 +107,51 @@ public class DeliveryQuoteService {
     }
 
     /**
-     * Create a delivery quote request and update order with address (called when submit button is clicked)
+     * Create a delivery quote request and order (called when submit button is clicked)
      */
     public DeliveryQuoteRequestDTO createQuoteRequestAndOrder(DeliveryQuoteRequestWithOrderDTO requestDTO, String customerEmail) {
-        System.out.println("createQuoteRequestAndOrder called with orderId: " + requestDTO.getOrderId());
+        System.out.println("createQuoteRequestAndOrder called");
         System.out.println("Customer email: " + customerEmail);
         
-        // Check if an orderId is provided (for updating existing order)
-        if (requestDTO.getOrderId() != null) {
-            System.out.println("Updating existing order with ID: " + requestDTO.getOrderId());
-            return updateOrderAddressAndFinalizeRequest(requestDTO.getOrderId(), requestDTO, customerEmail);
-        } else {
-            System.out.println("Creating new order (no orderId provided)");
-            // Create new order (fallback for backward compatibility)
-            return createInitialOrderForQuoteRequest(requestDTO, customerEmail);
+        User customer = userRepository.findByEmail(customerEmail)
+                .orElseThrow(() -> new RuntimeException("Customer not found"));
+
+        // Create new order
+        Order order = new Order();
+        order.setBuyerUser(customer);
+        order.setOrderStatus(Order.OrderStatus.DELIVERY_PENDING);
+        order.setTotalAmount(BigDecimal.valueOf(requestDTO.getSubtotal()));
+        order.setOrderDateTime(LocalDateTime.now());
+        
+        // Set delivery address
+        if (requestDTO.getDeliveryAddress() != null) {
+            order.setAddressPlace(requestDTO.getDeliveryAddress().getPlace());
+            order.setAddressStreet(requestDTO.getDeliveryAddress().getStreet());
+            order.setAddressDistrict(requestDTO.getDeliveryAddress().getDistrict());
+            order.setAddressTown(requestDTO.getDeliveryAddress().getTown());
         }
+        
+        // Save order to database
+        Order savedOrder = orderRepository.save(order);
+        System.out.println("Order created with ID: " + savedOrder.getId());
+        
+        // Create delivery quote request
+        DeliveryQuoteRequest quoteRequest = new DeliveryQuoteRequest();
+        quoteRequest.setOrderId(savedOrder.getId());
+        quoteRequest.setCreateTime(LocalDateTime.now());
+        
+        // Set expiry time from preferences
+        if (requestDTO.getPreferences() != null && requestDTO.getPreferences().getQuotesExpireOn() != null) {
+            quoteRequest.setLastRespondingDateTime(requestDTO.getPreferences().getQuotesExpireOn());
+        } else {
+            // Default to 24 hours
+            quoteRequest.setLastRespondingDateTime(LocalDateTime.now().plusHours(24));
+        }
+        
+        DeliveryQuoteRequest savedRequest = deliveryQuoteRequestRepository.save(quoteRequest);
+        System.out.println("Delivery quote request created with ID: " + savedRequest.getId());
+        
+        return convertToDeliveryQuoteRequestDTO(savedRequest, customer);
     }
 
     /**
@@ -183,9 +166,84 @@ public class DeliveryQuoteService {
     }
 
     /**
-     * Get available quote requests for a specific delivery person based on their coverage area
+     * Get available delivery requests for a specific delivery person (using Orders table)
      */
     public List<DeliveryRequestForFrontendDTO> getAvailableQuoteRequestsForDeliveryPerson(String deliveryPersonEmail) {
+        System.out.println("Fetching orders for delivery person: " + deliveryPersonEmail);
+
+        // Get all orders with DELIVERY_PENDING status (waiting for delivery quotes)
+        List<Order> pendingOrders = orderRepository.findByOrderStatus(Order.OrderStatus.DELIVERY_PENDING);
+        
+        System.out.println("Found " + pendingOrders.size() + " orders with DELIVERY_PENDING status");
+
+        // Convert orders to DeliveryRequestForFrontendDTO
+        return pendingOrders.stream()
+                .map(this::convertOrderToDeliveryRequestDTO)
+                .collect(Collectors.toList());
+    }
+    
+    /**
+     * Convert Order to DeliveryRequestForFrontendDTO
+     */
+    private DeliveryRequestForFrontendDTO convertOrderToDeliveryRequestDTO(Order order) {
+        DeliveryRequestForFrontendDTO dto = new DeliveryRequestForFrontendDTO();
+        
+        // Find associated quote request
+        List<DeliveryQuoteRequest> requests = deliveryQuoteRequestRepository.findByOrderId(order.getId());
+        DeliveryQuoteRequest quoteRequest = requests.isEmpty() ? null : requests.get(0);
+        
+        dto.setRequestId(order.getId());
+        dto.setOrderId(order.getId());
+        dto.setCreateTime(order.getOrderDateTime());
+        dto.setSessionId(quoteRequest != null ? "ORDER-" + order.getId() + "-REQ-" + quoteRequest.getId() : "ORDER-" + order.getId());
+        
+        // Set deadline from quote request if exists
+        if (quoteRequest != null) {
+            dto.setDeadline(quoteRequest.getLastRespondingDateTime());
+        }
+        
+        // Set delivery address from order
+        String deliveryAddress = String.format("%s, %s, %s, %s",
+                order.getAddressPlace() != null ? order.getAddressPlace() : "",
+                order.getAddressStreet() != null ? order.getAddressStreet() : "",
+                order.getAddressDistrict() != null ? order.getAddressDistrict() : "",
+                order.getAddressTown() != null ? order.getAddressTown() : "")
+                .replaceAll(", ,", ",").replaceAll("^,|,$", "");
+        
+        dto.setDeliveryAddress(deliveryAddress);
+        dto.setDistrict(order.getAddressDistrict());
+        dto.setTown(order.getAddressTown());
+        dto.setPickupAddress("Shop/Seller Location"); // TODO: Get from seller profile
+        
+        // Set customer info
+        User customer = order.getBuyerUser();
+        dto.setCustomerName(customer != null ? customer.getName() : "Unknown Customer");
+        dto.setCustomerPhone(customer != null ? customer.getPhoneNumber() : "N/A");
+        
+        // Set order details
+        double totalAmount = order.getTotalAmount() != null ? order.getTotalAmount().doubleValue() : 0.0;
+        int totalItems = 0;
+        
+        try {
+            if (order.getOrderItems() != null && !order.getOrderItems().isEmpty()) {
+                totalItems = order.getOrderItems().size();
+            }
+        } catch (Exception e) {
+            System.out.println("Warning: Could not load order items: " + e.getMessage());
+        }
+        
+        dto.setTotalAmount(totalAmount);
+        dto.setTotalItems(totalItems);
+        dto.setOrderDetails(String.format("Order #%d - %d items, Total: Rs.%.2f", 
+            order.getId(), totalItems, totalAmount));
+        
+        return dto;
+    }
+    
+    /**
+     * Old method - keeping for reference but using orders directly now
+     */
+    private List<DeliveryRequestForFrontendDTO> getAvailableQuoteRequestsForDeliveryPersonOld(String deliveryPersonEmail) {
         User deliveryPerson = userRepository.findByEmail(deliveryPersonEmail)
                 .orElseThrow(() -> new RuntimeException("Delivery person not found"));
 
@@ -313,36 +371,101 @@ public class DeliveryQuoteService {
     }
 
     /**
-     * Create a quote from delivery person
+     * Create a quote from delivery person (using Order ID directly)
      */
     public DeliveryQuoteDTO createQuoteFromFrontend(CreateQuoteForFrontendDTO createDTO, String deliveryPersonEmail) {
+        System.out.println("Creating quote for request/order ID: " + createDTO.getRequestId());
+        
         User deliveryPerson = userRepository.findByEmail(deliveryPersonEmail)
                 .orElseThrow(() -> new RuntimeException("Delivery person not found"));
 
-        DeliveryQuoteRequest request = deliveryQuoteRequestRepository.findById(createDTO.getRequestId())
-                .orElseThrow(() -> new RuntimeException("Quote request not found"));
+        // Get the order (requestId is actually the orderId from frontend)
+        Order order = orderRepository.findById(createDTO.getRequestId())
+                .orElseThrow(() -> new RuntimeException("Order not found"));
+
+        // Find or create the delivery quote request for this order
+        List<DeliveryQuoteRequest> requests = deliveryQuoteRequestRepository.findByOrderId(order.getId());
+        DeliveryQuoteRequest request;
+        
+        if (requests.isEmpty()) {
+            // Create new quote request if doesn't exist
+            request = new DeliveryQuoteRequest();
+            request.setOrderId(order.getId());
+            request.setCreateTime(LocalDateTime.now());
+            request.setLastRespondingDateTime(LocalDateTime.now().plusHours(24));
+            request = deliveryQuoteRequestRepository.save(request);
+            System.out.println("Created new delivery quote request with ID: " + request.getId());
+        } else {
+            request = requests.get(0);
+            System.out.println("Using existing delivery quote request with ID: " + request.getId());
+        }
 
         // Check if delivery person already submitted a quote for this request
         if (deliveryQuoteRepository.existsByQuoteRequestAndDeliveryPerson(request, deliveryPerson)) {
             throw new RuntimeException("You have already submitted a quote for this request");
         }
 
+        // Create the delivery quote
         DeliveryQuote quote = new DeliveryQuote();
         quote.setQuoteRequest(request);
         quote.setDeliveryPerson(deliveryPerson);
         quote.setDeliveryFee(createDTO.getDeliveryFee());
         quote.setDeliveryDate(createDTO.getDeliveryDate());
-        quote.setNotes(createDTO.getNotes());
+        quote.setNotes(createDTO.getNotes() != null ? createDTO.getNotes() : "Delivery quote from " + deliveryPerson.getName());
         quote.setStatus(DeliveryQuote.QuoteStatus.PENDING);
-        quote.setValidUntil(LocalDateTime.now().plusHours(createDTO.getValidityHours()));
+        
+        // Set validity: use expiresAt if provided, otherwise use validityHours, default to 48 hours
+        if (createDTO.getExpiresAt() != null) {
+            quote.setValidUntil(createDTO.getExpiresAt());
+        } else {
+            int validityHours = createDTO.getValidityHours() > 0 ? createDTO.getValidityHours() : 48;
+            quote.setValidUntil(LocalDateTime.now().plusHours(validityHours));
+        }
 
         DeliveryQuote savedQuote = deliveryQuoteRepository.save(quote);
+        System.out.println("Quote created with ID: " + savedQuote.getId() + " for order: " + order.getId());
         
         return convertToDeliveryQuoteDTO(savedQuote);
     }
 
     /**
-     * Get quotes for a specific request
+     * Get quotes for a specific order by orderId
+     */
+    public List<DeliveryQuoteDTO> getQuotesForOrder(Long orderId, String customerEmail) {
+        System.out.println("Fetching quotes for order ID: " + orderId);
+        
+        // Verify the order belongs to the customer
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new RuntimeException("Order not found"));
+        
+        User customer = userRepository.findByEmail(customerEmail)
+                .orElseThrow(() -> new RuntimeException("Customer not found"));
+        
+        if (!order.getBuyerUser().getId().equals(customer.getId())) {
+            throw new RuntimeException("Order does not belong to this customer");
+        }
+        
+        // Get the delivery quote request for this order
+        List<DeliveryQuoteRequest> requests = deliveryQuoteRequestRepository.findByOrderId(orderId);
+        
+        if (requests.isEmpty()) {
+            System.out.println("No delivery quote request found for order: " + orderId);
+            return new ArrayList<>();
+        }
+        
+        DeliveryQuoteRequest request = requests.get(0);
+        
+        // Get all quotes for this request
+        List<DeliveryQuote> quotes = deliveryQuoteRepository.findByQuoteRequest(request);
+        System.out.println("Found " + quotes.size() + " quotes for order: " + orderId);
+        
+        return quotes.stream()
+                .map(this::convertToDeliveryQuoteDTO)
+                .collect(Collectors.toList());
+    }
+    
+    /**
+     * Get quotes for a specific request (legacy method)
      */
     public List<DeliveryQuoteDTO> getQuotesForRequest(String sessionId, String customerEmail) {
         // For now, get all quotes since sessionId mapping is not fully implemented

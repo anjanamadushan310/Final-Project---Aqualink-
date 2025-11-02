@@ -150,7 +150,7 @@ class DeliveryService {
     }
   }
 
-  // Get quotes for a specific request
+  // Get quotes for a specific request (legacy - by sessionId)
   async getQuotesForRequest(sessionId) {
     try {
       const data = await apiService.get(API_ENDPOINTS.DELIVERY_QUOTES.QUOTES_FOR_REQUEST(sessionId));
@@ -165,6 +165,25 @@ class DeliveryService {
         success: false,
         data: [],
         message: error.message || 'Failed to fetch quotes for request'
+      };
+    }
+  }
+
+  // Get quotes for a specific order (by orderId)
+  async getQuotesForOrder(orderId) {
+    try {
+      const data = await apiService.get(API_ENDPOINTS.DELIVERY_QUOTES.QUOTES_FOR_ORDER(orderId));
+      return {
+        success: true,
+        data: data,
+        message: 'Quotes fetched successfully'
+      };
+    } catch (error) {
+      console.error('Error in getQuotesForOrder:', error);
+      return {
+        success: false,
+        data: [],
+        message: error.message || 'Failed to fetch quotes for order'
       };
     }
   }

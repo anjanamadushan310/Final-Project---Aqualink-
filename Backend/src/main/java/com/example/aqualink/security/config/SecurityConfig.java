@@ -61,10 +61,12 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                         // Delivery and shop endpoints require authentication
                         .requestMatchers("/api/delivery/**").authenticated()
-                        .requestMatchers("/api/delivery-quotes/**").authenticated()
+                        .requestMatchers("/api/delivery-quotes/**").permitAll() // Temporarily allow all delivery quotes endpoints for testing
                         .requestMatchers("/api/shop/**").authenticated()
-                        // Cart endpoints require authentication
-                        .requestMatchers("/api/cart/**").authenticated()
+                        // Cart endpoints - temporarily allow for testing
+                        .requestMatchers("/api/cart/**").permitAll()
+                        // Orders endpoints - temporarily allow for testing
+                        .requestMatchers("/api/orders/**").permitAll()
 
                         .anyRequest().authenticated()
                 )

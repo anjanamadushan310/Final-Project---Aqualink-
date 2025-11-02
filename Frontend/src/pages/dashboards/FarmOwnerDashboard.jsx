@@ -2,22 +2,22 @@ import React, { useState } from 'react';
 import Sidebar from '../../components/farmowner/Sidebar';
 import FishStockManagement from '../../components/farmowner/FishStockManagement';
 import FishAdsForm from '../../components/farmowner/FishAdsForm';
-import FarmOwnerOrderManagement from '../../components/farmowner/FarmOwnerOrderManagement';
+import SellerOrdersManagement from '../../components/farmowner/SellerOrdersManagement';
 import DashboardFooter from '../../components/common/DashboardFooter';
 
 
 
 const FarmOwnerDashboard= () => {
-  const [activeComponent, setActiveComponent] = useState('dashboard');
+  const [activeComponent, setActiveComponent] = useState('sales-orders');
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   const renderComponent = () => {
     switch (activeComponent) {
       
-      case 'fish-order': return <FarmOwnerOrderManagement/>;
+      case 'sales-orders': return <SellerOrdersManagement/>;
       case 'fish-stock-management': return <FishStockManagement />;
       case 'fish-ads-form': return <FishAdsForm />;
-      default: return <FarmOwnerOrderManagement />;
+      default: return <SellerOrdersManagement />;
     }
   };
 
