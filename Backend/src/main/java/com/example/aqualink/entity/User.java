@@ -69,6 +69,9 @@ public class User {
     @Column(nullable = false, columnDefinition = "BIT DEFAULT 0")
     private boolean active = false;
     
+    @Column(nullable = false, columnDefinition = "BIT DEFAULT 1")
+    private boolean enabled = true;
+    
     @Column(name = "verification_status")
     @Enumerated(EnumType.STRING)
     private VerificationStatus verificationStatus = VerificationStatus.PENDING;
@@ -126,14 +129,8 @@ public class User {
                 ", email='" + email + '\'' +
                 ", phoneNumber='" + phoneNumber + '\'' +
                 ", active=" + active +
+                ", enabled=" + enabled +
                 ", createdAt=" + createdAt +
                 '}';
     }
-
-
-    private String firstName;
-    private String lastName;
-    private boolean enabled = true;
-
-
 }

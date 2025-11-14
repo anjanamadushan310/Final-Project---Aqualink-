@@ -46,8 +46,6 @@ public class DataInitializer {
             User admin = new User();
             admin.setEmail(adminEmail);
             admin.setPassword(passwordEncoder.encode("admin@12345"));
-            admin.setFirstName("Super");
-            admin.setLastName("Admin");
             admin.setName("System Administrator");
             admin.setPhoneNumber("+94123456789");
             admin.setNicNumber("000000000V");

@@ -3,6 +3,7 @@ import React, { useEffect, useRef } from 'react';
 import { Fish, User, Settings, LogOut, Briefcase, Home } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
+import ProfileMenu from './ProfileMenu';
 
 function Navbar({
   dashboardName,
@@ -13,32 +14,10 @@ function Navbar({
   const { user, logout } = useAuth();
   const profileMenuRef = useRef(null);
 
-  // Handle click outside to close profile menu
-  useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (profileMenuRef.current && !profileMenuRef.current.contains(event.target)) {
-        setShowProfileMenu(false);
-      }
-    };
-
-    const handleEscapeKey = (event) => {
-      if (event.key === 'Escape') {
-        setShowProfileMenu(false);
-      }
-    };
-
-    // Add event listeners when menu is open
-    if (showProfileMenu) {
-      document.addEventListener('mousedown', handleClickOutside);
-      document.addEventListener('keydown', handleEscapeKey);
-    }
-
-    // Cleanup event listeners
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-      document.removeEventListener('keydown', handleEscapeKey);
-    };
-  }, [showProfileMenu, setShowProfileMenu]);
+  // Note: outside-click and escape handling for the profile menu is handled
+  // inside the portal-based <ProfileMenu /> component so we don't add
+  // a conflicting listener here (clicks inside the portal would be seen
+  // as outside otherwise).
 
   // Handle dashboard selection with navigation
   const handleDashboardSelect = (role) => {
@@ -157,107 +136,16 @@ function Navbar({
                   )}
                 </button>
 
-                {/* Profile Menu */}
-                {showProfileMenu && (
-                  <div className="absolute right-0 mt-2 w-72 bg-white rounded-xl shadow-2xl border border-gray-100 py-3 z-20 backdrop-blur-sm">
-                    {/* User Info Header */}
-                    <div className="px-4 py-3 border-b border-gray-100">
-                      <div className="flex items-center space-x-3">
-                        {user.logoUrl ? (
-                          <img 
-                            src={user.logoUrl} 
-                            alt="Profile" 
-                            className="w-12 h-12 rounded-full object-cover ring-2 ring-blue-100"
-                          />
-                        ) : (
-                          <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-cyan-400 rounded-full flex items-center justify-center">
-                            <User className="w-6 h-6 text-white" />
-                          </div>
-                        )}
-                        <div className="flex-1">
-                          <p className="text-sm font-semibold text-gray-900">{user.email}</p>
-                          <p className="text-xs text-gray-500">
-                            {user.businessName || "Welcome to AquaLink"}
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Menu Items */}
-                    <div className="py-2">
-                      {/* User Profile Option */}
-                      <button
-                        className="flex items-center w-full px-4 py-3 text-left hover:bg-gradient-to-r hover:from-blue-50 hover:to-cyan-50 text-gray-700 transition-all duration-200 group"
-                        onClick={handleUserProfileSelect}
-                      >
-                        <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center mr-3 group-hover:bg-blue-200 transition-colors">
-                          <User className="w-4 h-4 text-blue-600" />
-                        </div>
-                        <div>
-                          <p className="text-sm font-medium">My Profile</p>
-                          <p className="text-xs text-gray-500">Manage your account settings</p>
-                        </div>
-                      </button>
-
-                      {/* Dashboard Section */}
-                      {user.roles && user.roles.length > 0 && (
-                        <>
-                          <div className="px-4 py-2">
-                            <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Dashboards</p>
-                          </div>
-                          
-                          {user.roles.map((role) => (
-                            <button
-                              key={role}
-                              className="flex items-center w-full px-4 py-3 text-left hover:bg-gradient-to-r hover:from-blue-50 hover:to-cyan-50 text-gray-700 transition-all duration-200 group"
-                              onClick={() => handleDashboardSelect(role)}
-                            >
-                              <div className="w-8 h-8 bg-cyan-100 rounded-lg flex items-center justify-center mr-3 group-hover:bg-cyan-200 transition-colors">
-                                <Briefcase className="w-4 h-4 text-cyan-600" />
-                              </div>
-                              <div>
-                                <p className="text-sm font-medium">
-                                  {role === "SHOP_OWNER"
-                                    ? "Shop Owner"
-                                    : role === "FARM_OWNER"
-                                    ? "Farm Owner"
-                                    : role === "EXPORTER"
-                                    ? "Exporter"
-                                    : role === "SERVICE_PROVIDER"
-                                    ? "Service Provider"
-                                    : role === "INDUSTRIAL_STUFF_SELLER"
-                                    ? "Industrial Seller"
-                                    : role === "DELIVERY_PERSON"
-                                    ? "Delivery Person"
-                                    : role === "ADMIN"
-                                    ? "Administrator"
-                                    : role}
-                                </p>
-                                <p className="text-xs text-gray-500">Access your dashboard</p>
-                              </div>
-                            </button>
-                          ))}
-                        </>
-                      )}
-                    </div>
-
-                    {/* Logout Section */}
-                    <div className="border-t border-gray-100 pt-2">
-                      <button
-                        className="flex items-center w-full px-4 py-3 text-left hover:bg-red-50 text-red-600 transition-all duration-200 group"
-                        onClick={logout}
-                      >
-                        <div className="w-8 h-8 bg-red-100 rounded-lg flex items-center justify-center mr-3 group-hover:bg-red-200 transition-colors">
-                          <LogOut className="w-4 h-4 text-red-600" />
-                        </div>
-                        <div>
-                          <p className="text-sm font-medium">Sign Out</p>
-                          <p className="text-xs text-gray-500">Logout from your account</p>
-                        </div>
-                      </button>
-                    </div>
-                  </div>
-                )}
+                {/* Portal-based Profile Menu to avoid clipping when long */}
+                <ProfileMenu
+                  open={showProfileMenu}
+                  anchorRef={profileMenuRef}
+                  user={user}
+                  onClose={() => setShowProfileMenu(false)}
+                  onProfileClick={handleUserProfileSelect}
+                  onDashboardSelect={handleDashboardSelect}
+                  onLogout={logout}
+                />
               </div>
             )}
           </div>
