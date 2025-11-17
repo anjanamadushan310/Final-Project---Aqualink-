@@ -5,6 +5,7 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.example.aqualink.dto.FishAdsResponseDTO;
 import com.example.aqualink.dto.FishPurchaseDTO;
@@ -42,6 +43,31 @@ public class FishAdsViewService {
                 .filter(fish -> fish.getActiveStatus() == ActiveStatus.VERIFIED && fish.getStock() > 0)
                 .map(this::convertToDTO)
                 .collect(Collectors.toList());
+    }
+
+    public List<FishAdsResponseDTO> getApprovedFishByUserId(Long userId) {
+        List<Fish> fishList = fishRepository.findByUserIdWithProfile(userId);
+        return fishList.stream()
+                .filter(fish -> fish.getActiveStatus() == ActiveStatus.VERIFIED)
+                .map(this::convertToDTO)
+                .collect(Collectors.toList());
+    }
+
+    @Transactional
+    public boolean updateFishStock(Long fishId, Long userId, Integer newStock) {
+        Optional<Fish> fishOpt = fishRepository.findById(fishId);
+        
+        if (fishOpt.isPresent()) {
+            Fish fish = fishOpt.get();
+            
+            // Verify the fish belongs to the user
+            if (fish.getUser() != null && fish.getUser().getId().equals(userId)) {
+                fish.setStock(newStock);
+                fishRepository.save(fish);
+                return true;
+            }
+        }
+        return false;
     }
 
     public boolean processPurchase(FishPurchaseDTO purchaseDTO) {

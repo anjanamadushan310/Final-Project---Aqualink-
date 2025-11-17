@@ -15,7 +15,7 @@ import {
 const Sidebar = ({ activeComponent, setActiveComponent, sidebarOpen, setSidebarOpen }) => {
   const menuItems = [
     { id: 'user-verification', label: 'User Verification', icon: UserPlusIcon },
-    { id: 'product-management', label: 'Product Management', icon: CubeIcon },
+    { id: 'product-management', label: 'Fish Ads Management', icon: CubeIcon },
     { id: 'Stuff-management', label: 'Stuff Management', icon: CubeIcon },
     { id: 'Service-management', label: 'Service Management', icon: CubeIcon },
     { id: 'user-management', label: 'User Management', icon: UsersIcon },
