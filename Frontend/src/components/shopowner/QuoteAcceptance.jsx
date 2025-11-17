@@ -46,17 +46,26 @@ const QuoteAcceptance = () => {
       
       console.log('=== Quote Acceptance Debug ===');
       console.log('Saved order from localStorage:', savedOrder);
+      console.log('orderId type:', typeof savedOrder?.orderId);
+      console.log('orderId value:', savedOrder?.orderId);
       
       if (!savedOrder) {
         console.log('No order data found in localStorage');
-        setError('No order session found. Please start from cart and submit a delivery request.');
+        setError('NO_ORDER_SESSION');
         setLoading(false);
         return;
       }
       
       if (!savedOrder.orderId) {
         console.log('No order ID found in order data:', savedOrder);
-        setError('Invalid order data. Missing orderId. Please create a new quote request from cart.');
+        console.log('Available keys in savedOrder:', Object.keys(savedOrder));
+        // If there's a sessionId but no orderId, it means the user came from cart but didn't submit the delivery request form
+        if (savedOrder.sessionId) {
+          setError('INCOMPLETE_REQUEST');
+          setLoading(false);
+          return;
+        }
+        setError('INVALID_ORDER_DATA');
         setLoading(false);
         return;
       }
@@ -65,8 +74,12 @@ const QuoteAcceptance = () => {
 
       // Fetch quotes from backend using the orderId
       console.log('Fetching quotes for order ID:', savedOrder.orderId);
+      console.log('API endpoint will be:', `/api/delivery-quotes/order/${savedOrder.orderId}/quotes`);
       const response = await deliveryService.getQuotesForOrder(savedOrder.orderId);
       console.log('Quotes response:', response);
+      console.log('Response success:', response?.success);
+      console.log('Response data:', response?.data);
+      console.log('Number of quotes:', response?.data?.length);
       
       if (response.success && response.data) {
         // Transform backend quote data to match frontend format
@@ -102,7 +115,7 @@ const QuoteAcceptance = () => {
 
     } catch (error) {
       console.error('Error loading quotes:', error);
-      setError('Failed to load quotes. Please try again.');
+      setError('LOAD_ERROR');
       setLoading(false);
     }
   };
@@ -261,34 +274,97 @@ const QuoteAcceptance = () => {
   }
 
   if (error) {
+    const errorMessages = {
+      'NO_ORDER_SESSION': {
+        title: 'No Order Session Found',
+        message: 'You need to start from your cart to request delivery quotes.',
+        icon: '🛒',
+        steps: [
+          'Add items to your cart',
+          'Go to cart and click "🌊 Delivery with Aqualink"',
+          'Fill in delivery details and click "Send Quote Request"',
+          'You\'ll be redirected here to view and accept quotes'
+        ],
+        primaryAction: { text: 'Go to Cart', link: '/cart' },
+        secondaryAction: null
+      },
+      'INCOMPLETE_REQUEST': {
+        title: 'Incomplete Delivery Request',
+        message: 'You started a delivery request but didn\'t complete it. Please fill in your delivery details and submit the request.',
+        icon: '📝',
+        steps: [
+          'Fill in your delivery address',
+          'Select delivery preferences',
+          'Click "Send Quote Request" button',
+          'Wait for delivery partners to respond with quotes'
+        ],
+        primaryAction: { text: 'Complete Request', link: '/delivery-request' },
+        secondaryAction: { text: 'Start Over', link: '/cart' }
+      },
+      'INVALID_ORDER_DATA': {
+        title: 'Invalid Order Data',
+        message: 'The order data is corrupted or incomplete. Please create a new quote request.',
+        icon: '⚠️',
+        steps: [
+          'Go back to your cart',
+          'Click "🌊 Delivery with Aqualink"',
+          'Complete the delivery request form',
+          'Submit to receive quotes'
+        ],
+        primaryAction: { text: 'Go to Cart', link: '/cart' },
+        secondaryAction: { text: 'Clear Data & Retry', onClick: () => {
+          localStorage.removeItem('aqualink_order_data');
+          window.location.reload();
+        }}
+      },
+      'LOAD_ERROR': {
+        title: 'Error Loading Quotes',
+        message: 'Failed to load delivery quotes. Please check your connection and try again.',
+        icon: '🔌',
+        steps: [
+          'Check your internet connection',
+          'Make sure the backend server is running',
+          'Try refreshing the page',
+          'If problem persists, start a new quote request'
+        ],
+        primaryAction: { text: 'Try Again', onClick: () => window.location.reload() },
+        secondaryAction: { text: 'Go to Cart', link: '/cart' }
+      }
+    };
+
+    const errorConfig = errorMessages[error] || errorMessages['LOAD_ERROR'];
+
     return (
       <div className="flex items-center justify-center min-h-screen bg-gray-50">
         <div className="text-center bg-white p-8 rounded-lg shadow-md max-w-md">
-          <div className="text-red-500 text-6xl mb-4">⚠️</div>
-          <h2 className="text-xl font-bold text-gray-900 mb-2">Error Loading Quotes</h2>
-          <p className="text-red-600 mb-4">{error}</p>
+          <div className="text-6xl mb-4">{errorConfig.icon}</div>
+          <h2 className="text-xl font-bold text-gray-900 mb-2">{errorConfig.title}</h2>
+          <p className="text-red-600 mb-4">{errorConfig.message}</p>
           <div className="text-left bg-gray-50 p-4 rounded-lg mb-4">
-            <h3 className="font-semibold mb-2">To use this page:</h3>
+            <h3 className="font-semibold mb-2">How to proceed:</h3>
             <ol className="text-sm text-gray-700 space-y-1 list-decimal list-inside">
-              <li>Add items to your cart</li>
-              <li>Go to cart and click "Request Delivery Quote"</li>
-              <li>Fill in delivery details and submit</li>
-              <li>You'll be redirected here to view quotes</li>
+              {errorConfig.steps.map((step, index) => (
+                <li key={index}>{step}</li>
+              ))}
             </ol>
           </div>
           <div className="space-x-4">
-            <button 
-              onClick={() => window.location.reload()} 
-              className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700"
-            >
-              Try Again
-            </button>
-            <button 
-              onClick={() => window.location.href = '/cart'}
-              className="bg-gray-600 text-white px-6 py-2 rounded-lg hover:bg-gray-700"
-            >
-              Go to Cart
-            </button>
+            {errorConfig.primaryAction && (
+              <button 
+                onClick={errorConfig.primaryAction.onClick || (() => window.location.href = errorConfig.primaryAction.link)} 
+                className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700"
+              >
+                {errorConfig.primaryAction.text}
+              </button>
+            )}
+            {errorConfig.secondaryAction && (
+              <button 
+                onClick={errorConfig.secondaryAction.onClick || (() => window.location.href = errorConfig.secondaryAction.link)}
+                className="bg-gray-600 text-white px-6 py-2 rounded-lg hover:bg-gray-700"
+              >
+                {errorConfig.secondaryAction.text}
+              </button>
+            )}
           </div>
         </div>
       </div>

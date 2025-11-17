@@ -2,8 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { 
   CheckCircleIcon, 
   XCircleIcon, 
-  EyeIcon,
-  PencilSquareIcon,
   TrashIcon
 } from '@heroicons/react/24/outline';
 import axios from 'axios';
@@ -78,7 +76,7 @@ const ProductManagement = () => {
       setProducts(mappedProducts);
     } catch (error) {
       console.error('Error loading products:', error);
-      setError('Failed to load products');
+      setError('Failed to load fish ads');
     } finally {
       setLoading(false);
     }
@@ -108,23 +106,23 @@ const ProductManagement = () => {
       await loadStats();
       
       // Show success message (you can use a toast library here)
-      alert(`Product status updated to ${newStatus}`);
+      alert(`Fish ad status updated to ${newStatus}`);
     } catch (error) {
       console.error('Error updating status:', error);
-      alert('Failed to update product status');
+      alert('Failed to update fish ad status');
     }
   };
 
   const handleDelete = async (productId) => {
-    if (window.confirm('Are you sure you want to delete this product?')) {
+    if (window.confirm('Are you sure you want to delete this fish ad?')) {
       try {
         await fishApi.deleteFish(productId);
         await loadProducts();
         await loadStats();
-        alert('Product deleted successfully');
+        alert('Fish ad deleted successfully');
       } catch (error) {
         console.error('Error deleting product:', error);
-        alert('Failed to delete product');
+        alert('Failed to delete fish ad');
       }
     }
   };
@@ -169,7 +167,8 @@ const ProductManagement = () => {
       {/* Header */}
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Product Management</h1>
+          <h1 className="text-2xl font-bold text-gray-900">Fish Ads Management</h1>
+          <p className="text-gray-600 mt-1">Review and manage fish advertisements from farm owners</p>
         </div>
         <button 
           onClick={() => { loadProducts(); loadStats(); }}
@@ -182,7 +181,7 @@ const ProductManagement = () => {
       {/* Stats */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         {[
-          { label: 'Total Products', value: stats.total || 0, color: 'bg-blue-500' },
+          { label: 'Total Fish Ads', value: stats.total || 0, color: 'bg-blue-500' },
           { label: 'Pending Review', value: stats.pending || 0, color: 'bg-yellow-500' },
           { label: 'Verified', value: stats.verified || 0, color: 'bg-green-500' },
           { label: 'Rejected', value: stats.rejected || 0, color: 'bg-red-500' }
@@ -254,18 +253,6 @@ const ProductManagement = () => {
               <div className="flex items-center justify-between">
                 <span className="text-lg font-bold text-teal-600">{product.price}</span>
                 <div className="flex space-x-1">
-                  <button 
-                    className="p-1 text-blue-600 hover:bg-blue-100 rounded"
-                    title="View Details"
-                  >
-                    <EyeIcon className="w-4 h-4" />
-                  </button>
-                  <button 
-                    className="p-1 text-gray-600 hover:bg-gray-100 rounded"
-                    title="Edit"
-                  >
-                    <PencilSquareIcon className="w-4 h-4" />
-                  </button>
                   {product.status === 'pending' && (
                     <>
                       <button 
@@ -300,7 +287,7 @@ const ProductManagement = () => {
 
       {filteredProducts.length === 0 && !loading && (
         <div className="text-center py-8">
-          <p className="text-gray-500">No products found for the selected filter.</p>
+          <p className="text-gray-500">No fish ads found for the selected filter.</p>
         </div>
       )}
     </div>

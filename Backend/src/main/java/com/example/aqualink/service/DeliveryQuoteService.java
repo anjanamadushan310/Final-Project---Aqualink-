@@ -110,7 +110,7 @@ public class DeliveryQuoteService {
      * Create a delivery quote request and order (called when submit button is clicked)
      */
     public DeliveryQuoteRequestDTO createQuoteRequestAndOrder(DeliveryQuoteRequestWithOrderDTO requestDTO, String customerEmail) {
-        System.out.println("createQuoteRequestAndOrder called");
+        System.out.println("=== createQuoteRequestAndOrder START ===");
         System.out.println("Customer email: " + customerEmail);
         
         User customer = userRepository.findByEmail(customerEmail)
@@ -129,11 +129,13 @@ public class DeliveryQuoteService {
             order.setAddressStreet(requestDTO.getDeliveryAddress().getStreet());
             order.setAddressDistrict(requestDTO.getDeliveryAddress().getDistrict());
             order.setAddressTown(requestDTO.getDeliveryAddress().getTown());
+            System.out.println("Delivery address set: " + requestDTO.getDeliveryAddress().getPlace() 
+                + ", " + requestDTO.getDeliveryAddress().getDistrict());
         }
         
         // Save order to database
         Order savedOrder = orderRepository.save(order);
-        System.out.println("Order created with ID: " + savedOrder.getId());
+        System.out.println("✓ Order saved to database with ID: " + savedOrder.getId());
         
         // Create delivery quote request
         DeliveryQuoteRequest quoteRequest = new DeliveryQuoteRequest();
@@ -149,9 +151,14 @@ public class DeliveryQuoteService {
         }
         
         DeliveryQuoteRequest savedRequest = deliveryQuoteRequestRepository.save(quoteRequest);
-        System.out.println("Delivery quote request created with ID: " + savedRequest.getId());
+        System.out.println("✓ DeliveryQuoteRequest saved to database with ID: " + savedRequest.getId());
+        System.out.println("✓ DeliveryQuoteRequest.orderId: " + savedRequest.getOrderId());
         
-        return convertToDeliveryQuoteRequestDTO(savedRequest, customer);
+        DeliveryQuoteRequestDTO dto = convertToDeliveryQuoteRequestDTO(savedRequest, customer);
+        System.out.println("✓ DTO created - orderId: " + dto.getOrderId() + ", sessionId: " + dto.getSessionId());
+        System.out.println("=== createQuoteRequestAndOrder END ===");
+        
+        return dto;
     }
 
     /**

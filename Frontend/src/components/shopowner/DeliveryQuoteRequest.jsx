@@ -314,7 +314,14 @@ const EnhancedDeliveryRequest = () => {
 
       const response = await deliveryService.createQuoteRequest(requestData);
       
-      console.log('Backend response received:', response);
+      console.log('=== Backend Response Debug ===');
+      console.log('Full response object:', response);
+      console.log('response.success:', response?.success);
+      console.log('response.data:', response?.data);
+      console.log('response.data.orderId:', response?.data?.orderId);
+      console.log('response.data.sessionId:', response?.data?.sessionId);
+      console.log('Type of orderId:', typeof response?.data?.orderId);
+      console.log('================================');
 
       if (response.success && response.data) {
         toast.success('Delivery quote request sent successfully! Delivery persons will be notified.');
@@ -334,8 +341,20 @@ const EnhancedDeliveryRequest = () => {
           createdAt: new Date().toISOString()
         };
 
+        console.log('=== Order Data to Store ===');
+        console.log('orderData object:', orderData);
+        console.log('orderData.orderId:', orderData.orderId);
+        console.log('===========================');
+
         // Store order data in localStorage for QuoteAcceptance component
         localStorage.setItem('aqualink_order_data', JSON.stringify(orderData));
+        
+        // Verify storage
+        const stored = localStorage.getItem('aqualink_order_data');
+        console.log('=== Verification of Storage ===');
+        console.log('Stored in localStorage:', stored);
+        console.log('Parsed back:', JSON.parse(stored));
+        console.log('================================');
         
         // Navigate to quote acceptance page
         navigate('/shop-owner/quote-acceptance');
