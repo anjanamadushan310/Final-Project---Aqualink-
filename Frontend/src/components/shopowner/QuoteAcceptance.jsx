@@ -1,73 +1,130 @@
+/**
+ * QuoteAcceptance Component - Shop Owner Quote Review and Acceptance
+ *
+ * This component handles the complete delivery quote acceptance workflow:
+ * 1. Load order data from localStorage (session-based storage)
+ * 2. If localStorage is empty (page refresh), fallback to backend API
+ * 3. Fetch available delivery quotes for the order
+ * 4. Display quotes with sorting and filtering options
+ * 5. Handle quote selection and order placement
+ *
+ * CRITICAL FALLBACK MECHANISM:
+ * - localStorage gets cleared on page refresh
+ * - Users access this page via sidebar navigation
+ * - Backend provides getMyQuoteRequests() to restore order context
+ * - Frontend reconstructs order data from backend response
+ *
+ * State Management:
+ * - orderData: Current order information (items, address, preferences)
+ * - quotes: List of delivery quotes from different providers
+ * - selectedQuote: Currently selected quote ID
+ * - loading/error: UI state management
+ */
+
 import React, { useState, useEffect, useContext } from 'react';
 import { AuthContext } from '../../context/AuthContext';
 import deliveryService from '../../services/deliveryService';
 
 const QuoteAcceptance = () => {
-  const { user } = useContext(AuthContext);
-  const [quotes, setQuotes] = useState([]);
-  const [orderData, setOrderData] = useState(null);
-  const [selectedQuote, setSelectedQuote] = useState(null);
+  // ===== CONTEXT & STATE =====
+  const { user } = useContext(AuthContext); // Current authenticated user
+
+  // Order and quote data
+  const [quotes, setQuotes] = useState([]); // List of delivery quotes
+  const [orderData, setOrderData] = useState(null); // Current order information
+  const [selectedQuote, setSelectedQuote] = useState(null); // Selected quote ID
+
+  // UI state management
   const [paymentMethod, setPaymentMethod] = useState('Cash on Delivery');
   const [loading, setLoading] = useState(true);
   const [isProcessing, setIsProcessing] = useState(false);
-  const [sortBy, setSortBy] = useState('price');
-  const [error, setError] = useState(null);
+  const [sortBy, setSortBy] = useState('price'); // Sort quotes by price or rating
+  const [error, setError] = useState(null); // Error state for user feedback
+
+  // Auto-refresh functionality
   const [autoRefresh, setAutoRefresh] = useState(true);
   const [refreshInterval, setRefreshInterval] = useState(null);
 
   useEffect(() => {
-    loadOrderAndQuotes();
-    
-    // Set up auto-refresh if enabled
+    // ===== COMPONENT INITIALIZATION =====
+    loadOrderAndQuotes(); // Load order data and quotes on component mount
+
+    // ===== AUTO-REFRESH SETUP =====
+    // Set up automatic quote refresh every 30 seconds if enabled
     if (autoRefresh) {
       const interval = setInterval(() => {
         console.log('Auto-refreshing quotes...');
-        loadOrderAndQuotes();
-      }, 30000); // Refresh every 30 seconds
-      
-      setRefreshInterval(interval);
-      
+        loadOrderAndQuotes(); // Refresh quotes periodically
+      }, 30000); // 30 second intervals
+
+      setRefreshInterval(interval); // Store interval ID for cleanup
+
+      // Cleanup function to clear interval when component unmounts or autoRefresh changes
       return () => {
         if (interval) {
           clearInterval(interval);
         }
       };
     }
-  }, [autoRefresh]);
+  }, [autoRefresh]); // Re-run effect when autoRefresh setting changes
 
+  /**
+   * Load order data and quotes - CRITICAL METHOD with fallback mechanism
+   *
+   * This method implements a robust data loading strategy:
+   * 1. First, try to load from localStorage (fast, immediate)
+   * 2. If localStorage is empty (page refresh), fallback to backend API
+   * 3. Reconstruct order data from backend response
+   * 4. Store reconstructed data in localStorage for future use
+   * 5. Load delivery quotes using the order ID
+   *
+   * WHY THIS FALLBACK EXISTS:
+   * - localStorage is session-based and clears on page refresh
+   * - Users navigate to this page via sidebar at any time
+   * - Must restore order context from backend when localStorage is lost
+   */
   const loadOrderAndQuotes = async (showLoadingSpinner = false) => {
     try {
+      // Show loading spinner if explicitly requested (for manual refresh)
       if (showLoadingSpinner) {
         setLoading(true);
       }
 
-      // Get order data from localStorage (this contains the orderId)
+      // ===== STEP 1: CHECK LOCALSTORAGE =====
+      // Try to get order data from browser's localStorage (session-based storage)
       let savedOrder = JSON.parse(localStorage.getItem('aqualink_order_data') || 'null');
-      
+
+      // Debug logging for troubleshooting
       console.log('=== Quote Acceptance Debug ===');
       console.log('Saved order from localStorage:', savedOrder);
       console.log('orderId type:', typeof savedOrder?.orderId);
       console.log('orderId value:', savedOrder?.orderId);
-      
-      // If localStorage is empty, try to fetch the user's most recent delivery request from backend
+
+      // ===== STEP 2: FALLBACK TO BACKEND IF LOCALSTORAGE EMPTY =====
+      // If localStorage is empty (null, undefined, or missing orderId)
       if (!savedOrder || !savedOrder.orderId) {
         console.log('localStorage empty - attempting to fetch most recent order from backend...');
+
         try {
+          // Call backend API to get user's recent quote requests
           const recentOrdersResponse = await deliveryService.getMyQuoteRequests();
           console.log('My quote requests response:', recentOrdersResponse);
-          
+
+          // Check if backend returned data successfully
           if (recentOrdersResponse.success && recentOrdersResponse.data && recentOrdersResponse.data.length > 0) {
-            // Get the most recent order (first in the list)
+            // Get the most recent order (first in the list, assuming sorted by creation time)
             const mostRecentRequest = recentOrdersResponse.data[0];
             console.log('Most recent request:', mostRecentRequest);
-            
-            // Reconstruct order data from the backend response
+
+            // ===== STEP 3: RECONSTRUCT ORDER DATA =====
+            // Build complete order object from backend response
+            // This mirrors the structure expected by the rest of the component
             savedOrder = {
-              orderId: mostRecentRequest.orderId,
+              orderId: mostRecentRequest.orderId, // CRITICAL: Must be present in backend response!
               sessionId: mostRecentRequest.sessionId,
               sellerId: mostRecentRequest.sellerId,
               businessName: mostRecentRequest.businessName || 'Seller',
-              items: mostRecentRequest.items || [],
+              items: mostRecentRequest.items || [], // Order items from backend
               subtotal: mostRecentRequest.subtotal || 0,
               deliveryAddress: {
                 place: mostRecentRequest.deliveryAddress?.place || '',
@@ -76,32 +133,38 @@ const QuoteAcceptance = () => {
                 town: mostRecentRequest.deliveryAddress?.town || ''
               },
               preferences: mostRecentRequest.preferences || {},
-              status: 'PENDING',
+              status: 'PENDING', // Default status for quote acceptance
               createdAt: mostRecentRequest.createTime || new Date().toISOString()
             };
-            
+
             console.log('Reconstructed order data from backend:', savedOrder);
-            
-            // Store it in localStorage for future use
+
+            // ===== STEP 4: STORE IN LOCALSTORAGE =====
+            // Save reconstructed data for future use (prevents repeated API calls)
             localStorage.setItem('aqualink_order_data', JSON.stringify(savedOrder));
           } else {
+            // No quote requests found - user hasn't submitted any delivery requests yet
             console.log('No recent quote requests found in backend');
             setError('NO_ORDER_SESSION');
             setLoading(false);
             return;
           }
         } catch (fetchError) {
+          // Backend call failed - could be network issues or authentication problems
           console.error('Error fetching recent orders:', fetchError);
           setError('NO_ORDER_SESSION');
           setLoading(false);
           return;
         }
       }
-      
+
+      // ===== STEP 5: VALIDATE ORDER DATA =====
+      // Ensure we have a valid orderId before proceeding
       if (!savedOrder.orderId) {
         console.log('No order ID found in order data:', savedOrder);
         console.log('Available keys in savedOrder:', Object.keys(savedOrder));
-        // If there's a sessionId but no orderId, it means the user came from cart but didn't submit the delivery request form
+        // If there's a sessionId but no orderId, it means the user came from cart
+        // but didn't submit the delivery request form properly
         if (savedOrder.sessionId) {
           setError('INCOMPLETE_REQUEST');
           setLoading(false);
@@ -112,9 +175,11 @@ const QuoteAcceptance = () => {
         return;
       }
 
+      // ===== STEP 6: LOAD DELIVERY QUOTES =====
+      // Now that we have valid order data, load the delivery quotes
       setOrderData(savedOrder);
 
-      // Fetch quotes from backend using the orderId
+      // Debug logging for quote fetching
       console.log('========================================');
       console.log('FETCHING QUOTES FROM BACKEND');
       console.log('Order ID:', savedOrder.orderId);
@@ -122,7 +187,8 @@ const QuoteAcceptance = () => {
       console.log('Order data:', JSON.stringify(savedOrder, null, 2));
       console.log('API endpoint:', `/api/delivery-quotes/order/${savedOrder.orderId}/quotes`);
       console.log('========================================');
-      
+
+      // Call backend to get quotes for this specific order
       const response = await deliveryService.getQuotesForOrder(savedOrder.orderId);
       console.log('========================================');
       console.log('BACKEND RESPONSE:');
@@ -131,7 +197,8 @@ const QuoteAcceptance = () => {
       console.log('Data:', response?.data);
       console.log('Number of quotes:', response?.data?.length);
       console.log('========================================');
-      
+
+      // ===== STEP 7: PROCESS QUOTE RESPONSE =====
       if (response.success && response.data) {
         // Transform backend quote data to match frontend format
         const transformedQuotes = response.data.map(quote => ({
@@ -144,7 +211,7 @@ const QuoteAcceptance = () => {
           rating: quote.rating || 4.5,
           completedDeliveries: quote.completedDeliveries || 100,
           specialOffers: quote.specialOffers || 'Professional delivery service',
-          quoteValidUntil: quote.expiresAt,
+          quoteValidUntil: quote.expiresAt, // When quote expires
           notes: quote.notes || 'Professional delivery service provider',
           coverageArea: quote.coverageArea || 'Service area',
           deliveryDate: quote.deliveryDate || getDefaultDeliveryDate(),
@@ -153,11 +220,11 @@ const QuoteAcceptance = () => {
 
         console.log('Transformed quotes:', transformedQuotes);
         setQuotes(transformedQuotes);
-        
-        // Clear any previous errors
+
+        // Clear any previous errors on successful load
         setError(null);
       } else {
-        // If no quotes yet, show empty state
+        // No quotes available yet - this is normal if delivery persons haven't responded
         console.log('No quotes available yet');
         setQuotes([]);
       }
@@ -165,6 +232,7 @@ const QuoteAcceptance = () => {
       setLoading(false);
 
     } catch (error) {
+      // Handle any unexpected errors during the loading process
       console.error('Error loading quotes:', error);
       setError('LOAD_ERROR');
       setLoading(false);

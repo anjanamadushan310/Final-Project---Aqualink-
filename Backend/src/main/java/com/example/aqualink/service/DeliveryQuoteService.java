@@ -37,18 +37,35 @@ import com.example.aqualink.repository.UserRepository;
 
 import lombok.RequiredArgsConstructor;
 
+/**
+ * DeliveryQuoteService - Core service for managing delivery quote operations
+ *
+ * This service orchestrates the entire delivery quote workflow:
+ * 1. Creating delivery quote requests when shop owners submit delivery requests
+ * 2. Managing delivery person quote submissions
+ * 3. Handling quote acceptance and order finalization
+ * 4. Providing data to frontend components for quote display and management
+ *
+ * Key entities involved:
+ * - Order: The original purchase order
+ * - DeliveryQuoteRequest: Links order to delivery quote process
+ * - DeliveryQuote: Individual quotes from delivery persons
+ * - User: Shop owners, delivery persons, and customers
+ */
 @Service
-@RequiredArgsConstructor
-@Transactional
+@RequiredArgsConstructor  // Lombok annotation for constructor injection
+@Transactional  // All methods in this service are transactional
 public class DeliveryQuoteService {
 
-    private final DeliveryQuoteRepository deliveryQuoteRepository;
-    private final DeliveryQuoteRequestRepository deliveryQuoteRequestRepository;
-    private final UserRepository userRepository;
-    private final OrderRepository orderRepository;
-    private final DeliveryPersonCoverageRepository coverageRepository;
-    private final DeliveryPersonAvailabilityRepository deliveryPersonAvailabilityRepository;
-    private final UserProfileRepository userProfileRepository;
+    // ===== DEPENDENCY INJECTION =====
+    // Repositories for database operations
+    private final DeliveryQuoteRepository deliveryQuoteRepository;  // CRUD for DeliveryQuote entities
+    private final DeliveryQuoteRequestRepository deliveryQuoteRequestRepository;  // CRUD for DeliveryQuoteRequest entities
+    private final UserRepository userRepository;  // User management and lookups
+    private final OrderRepository orderRepository;  // Order management and lookups
+    private final DeliveryPersonCoverageRepository coverageRepository;  // Delivery person coverage areas
+    private final DeliveryPersonAvailabilityRepository deliveryPersonAvailabilityRepository;  // Delivery person availability
+    private final UserProfileRepository userProfileRepository;  // User profile information
 
     /**
      * Update existing order with delivery address (called when submit button is clicked)
@@ -551,7 +568,26 @@ public class DeliveryQuoteService {
     }
 
     /**
-     * Get customer's quote requests with orders
+     * Get customer's quote requests with full order details
+     *
+     * CRITICAL METHOD: This method is essential for the frontend QuoteAcceptance component's fallback mechanism.
+     * When localStorage is empty (due to page refresh), the frontend calls this method to reconstruct
+     * the order data needed to display quotes.
+     *
+     * WORKFLOW:
+     * 1. Frontend QuoteAcceptance loads and checks localStorage for 'aqualink_order_data'
+     * 2. If localStorage is null/empty, it calls getMyQuoteRequests() API
+     * 3. This method returns the most recent delivery quote request with full order details
+     * 4. Frontend reconstructs order data and stores it in localStorage
+     * 5. Normal quote loading continues
+     *
+     * WHY THIS METHOD EXISTS:
+     * - localStorage is session-based and gets cleared on page refresh
+     * - Users need to access quote-acceptance page at any time via sidebar
+     * - This provides a backend fallback to restore order context
+     *
+     * @param customerEmail Email of the logged-in shop owner
+     * @return List of DeliveryQuoteRequestWithOrderDTO with complete order information
      */
     public List<DeliveryQuoteRequestWithOrderDTO> getCustomerQuoteRequestsWithOrders(String customerEmail) {
         System.out.println("========================================");
