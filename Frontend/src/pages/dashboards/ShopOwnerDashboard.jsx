@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
 import OrdersManagement from './../../components/shopowner/OrdersManagement';
 import Sidebar from '../../components/shopowner/Sidebar';
 import QuoteAcceptance from './../../components/shopowner/QuoteAcceptance';
@@ -10,8 +11,16 @@ import DashboardFooter from '../../components/common/DashboardFooter';
 
 
 const ShopOwnerDashboard= () => {
+  const location = useLocation();
   const [activeComponent, setActiveComponent] = useState('dashboard');
   const [sidebarOpen, setSidebarOpen] = useState(false);
+
+  // Handle navigation from other components with state
+  useEffect(() => {
+    if (location.state?.activeComponent) {
+      setActiveComponent(location.state.activeComponent);
+    }
+  }, [location.state]);
 
   const renderComponent = () => {
     switch (activeComponent) {

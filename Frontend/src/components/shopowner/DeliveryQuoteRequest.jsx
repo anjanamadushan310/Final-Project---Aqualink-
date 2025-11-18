@@ -356,8 +356,8 @@ const EnhancedDeliveryRequest = () => {
         console.log('Parsed back:', JSON.parse(stored));
         console.log('================================');
         
-        // Navigate to quote acceptance page
-        navigate('/shop-owner/quote-acceptance');
+        // Navigate to quote acceptance page within the dashboard
+        navigate('/dashboard/shop-owner', { state: { activeComponent: 'quote-acceptance' } });
       } else {
         throw new Error(response.message || 'Failed to submit quote request');
       }
@@ -567,9 +567,9 @@ const EnhancedDeliveryRequest = () => {
               onChange={(e) => handleQuoteExpiryChange(parseInt(e.target.value))}
               className="w-full border rounded-md py-2 px-3"
             >
+              <option value={12}>12 hours</option>
               <option value={24}>24 hours</option>
-              <option value={48}>48 hours</option>
-              <option value={72}>72 hours</option>
+              <option value={36}>36 hours</option>
             </select>
           </div>
         </div>

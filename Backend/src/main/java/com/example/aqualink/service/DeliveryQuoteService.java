@@ -24,6 +24,7 @@ import com.example.aqualink.entity.DeliveryPersonCoverage;
 import com.example.aqualink.entity.DeliveryQuote;
 import com.example.aqualink.entity.DeliveryQuoteRequest;
 import com.example.aqualink.entity.Order;
+import com.example.aqualink.entity.OrderItem;
 import com.example.aqualink.entity.User;
 import com.example.aqualink.entity.UserProfile;
 import com.example.aqualink.repository.DeliveryPersonAvailabilityRepository;
@@ -36,18 +37,35 @@ import com.example.aqualink.repository.UserRepository;
 
 import lombok.RequiredArgsConstructor;
 
+/**
+ * DeliveryQuoteService - Core service for managing delivery quote operations
+ *
+ * This service orchestrates the entire delivery quote workflow:
+ * 1. Creating delivery quote requests when shop owners submit delivery requests
+ * 2. Managing delivery person quote submissions
+ * 3. Handling quote acceptance and order finalization
+ * 4. Providing data to frontend components for quote display and management
+ *
+ * Key entities involved:
+ * - Order: The original purchase order
+ * - DeliveryQuoteRequest: Links order to delivery quote process
+ * - DeliveryQuote: Individual quotes from delivery persons
+ * - User: Shop owners, delivery persons, and customers
+ */
 @Service
-@RequiredArgsConstructor
-@Transactional
+@RequiredArgsConstructor  // Lombok annotation for constructor injection
+@Transactional  // All methods in this service are transactional
 public class DeliveryQuoteService {
 
-    private final DeliveryQuoteRepository deliveryQuoteRepository;
-    private final DeliveryQuoteRequestRepository deliveryQuoteRequestRepository;
-    private final UserRepository userRepository;
-    private final OrderRepository orderRepository;
-    private final DeliveryPersonCoverageRepository coverageRepository;
-    private final DeliveryPersonAvailabilityRepository deliveryPersonAvailabilityRepository;
-    private final UserProfileRepository userProfileRepository;
+    // ===== DEPENDENCY INJECTION =====
+    // Repositories for database operations
+    private final DeliveryQuoteRepository deliveryQuoteRepository;  // CRUD for DeliveryQuote entities
+    private final DeliveryQuoteRequestRepository deliveryQuoteRequestRepository;  // CRUD for DeliveryQuoteRequest entities
+    private final UserRepository userRepository;  // User management and lookups
+    private final OrderRepository orderRepository;  // Order management and lookups
+    private final DeliveryPersonCoverageRepository coverageRepository;  // Delivery person coverage areas
+    private final DeliveryPersonAvailabilityRepository deliveryPersonAvailabilityRepository;  // Delivery person availability
+    private final UserProfileRepository userProfileRepository;  // User profile information
 
     /**
      * Update existing order with delivery address (called when submit button is clicked)
@@ -439,32 +457,57 @@ public class DeliveryQuoteService {
      * Get quotes for a specific order by orderId
      */
     public List<DeliveryQuoteDTO> getQuotesForOrder(Long orderId, String customerEmail) {
-        System.out.println("Fetching quotes for order ID: " + orderId);
+        System.out.println("========================================");
+        System.out.println("✓ getQuotesForOrder called");
+        System.out.println("✓ Order ID: " + orderId);
+        System.out.println("✓ Customer Email: " + customerEmail);
         
         // Verify the order belongs to the customer
         Order order = orderRepository.findById(orderId)
-                .orElseThrow(() -> new RuntimeException("Order not found"));
+                .orElseThrow(() -> new RuntimeException("Order not found with ID: " + orderId));
+        System.out.println("✓ Order found: " + order.getId());
         
         User customer = userRepository.findByEmail(customerEmail)
-                .orElseThrow(() -> new RuntimeException("Customer not found"));
+                .orElseThrow(() -> new RuntimeException("Customer not found with email: " + customerEmail));
+        System.out.println("✓ Customer found: " + customer.getEmail());
+        
+        System.out.println("✓ Order buyer ID: " + order.getBuyerUser().getId());
+        System.out.println("✓ Current user ID: " + customer.getId());
         
         if (!order.getBuyerUser().getId().equals(customer.getId())) {
-            throw new RuntimeException("Order does not belong to this customer");
+            throw new RuntimeException("Order does not belong to this customer. Order buyer: " + order.getBuyerUser().getEmail());
         }
+        System.out.println("✓ Order ownership verified");
         
         // Get the delivery quote request for this order
         List<DeliveryQuoteRequest> requests = deliveryQuoteRequestRepository.findByOrderId(orderId);
+        System.out.println("✓ Found " + requests.size() + " delivery quote request(s) for order ID: " + orderId);
         
         if (requests.isEmpty()) {
-            System.out.println("No delivery quote request found for order: " + orderId);
+            System.out.println("⚠️ No delivery quote request found for order: " + orderId);
+            System.out.println("⚠️ This means the order exists but no quote request is linked to it");
             return new ArrayList<>();
         }
         
         DeliveryQuoteRequest request = requests.get(0);
+        System.out.println("✓ Using delivery quote request ID: " + request.getId());
         
         // Get all quotes for this request
         List<DeliveryQuote> quotes = deliveryQuoteRepository.findByQuoteRequest(request);
-        System.out.println("Found " + quotes.size() + " quotes for order: " + orderId);
+        System.out.println("✓ Found " + quotes.size() + " delivery quote(s) for request ID: " + request.getId());
+        
+        if (quotes.isEmpty()) {
+            System.out.println("⚠️ No delivery quotes submitted yet for this request");
+        } else {
+            for (DeliveryQuote quote : quotes) {
+                System.out.println("  - Quote ID: " + quote.getId() + 
+                                 ", Fee: " + quote.getDeliveryFee() + 
+                                 ", Status: " + quote.getStatus() +
+                                 ", Delivery Person: " + quote.getDeliveryPerson().getEmail());
+            }
+        }
+        
+        System.out.println("========================================");
         
         return quotes.stream()
                 .map(this::convertToDeliveryQuoteDTO)
@@ -525,31 +568,93 @@ public class DeliveryQuoteService {
     }
 
     /**
-     * Get customer's quote requests with orders
+     * Get customer's quote requests with full order details
+     *
+     * CRITICAL METHOD: This method is essential for the frontend QuoteAcceptance component's fallback mechanism.
+     * When localStorage is empty (due to page refresh), the frontend calls this method to reconstruct
+     * the order data needed to display quotes.
+     *
+     * WORKFLOW:
+     * 1. Frontend QuoteAcceptance loads and checks localStorage for 'aqualink_order_data'
+     * 2. If localStorage is null/empty, it calls getMyQuoteRequests() API
+     * 3. This method returns the most recent delivery quote request with full order details
+     * 4. Frontend reconstructs order data and stores it in localStorage
+     * 5. Normal quote loading continues
+     *
+     * WHY THIS METHOD EXISTS:
+     * - localStorage is session-based and gets cleared on page refresh
+     * - Users need to access quote-acceptance page at any time via sidebar
+     * - This provides a backend fallback to restore order context
+     *
+     * @param customerEmail Email of the logged-in shop owner
+     * @return List of DeliveryQuoteRequestWithOrderDTO with complete order information
      */
     public List<DeliveryQuoteRequestWithOrderDTO> getCustomerQuoteRequestsWithOrders(String customerEmail) {
+        System.out.println("========================================");
+        System.out.println("✓ getCustomerQuoteRequestsWithOrders called");
+        System.out.println("✓ Customer Email: " + customerEmail);
+        
         User customer = userRepository.findByEmail(customerEmail)
                 .orElseThrow(() -> new RuntimeException("Customer not found"));
+        System.out.println("✓ Customer found: " + customer.getEmail());
 
         // Find requests where the order belongs to this customer
-        List<DeliveryQuoteRequest> requests = deliveryQuoteRequestRepository.findAll()
-                .stream()
+        List<DeliveryQuoteRequest> allRequests = deliveryQuoteRequestRepository.findAll();
+        System.out.println("✓ Total delivery quote requests in database: " + allRequests.size());
+        
+        List<DeliveryQuoteRequest> requests = allRequests.stream()
                 .filter(request -> {
-                    Order order = orderRepository.findById(request.getOrderId())
-                            .orElseThrow(() -> new RuntimeException("Order not found"));
-                    return order.getBuyerUser().getId().equals(customer.getId());
+                    try {
+                        Order order = orderRepository.findById(request.getOrderId()).orElse(null);
+                        if (order == null) {
+                            System.out.println("⚠️ Order not found for request ID: " + request.getId() + " (orderId: " + request.getOrderId() + ")");
+                            return false;
+                        }
+                        boolean matches = order.getBuyerUser().getId().equals(customer.getId());
+                        System.out.println((matches ? "✓" : "✗") + " Request ID: " + request.getId() + 
+                                         ", Order ID: " + request.getOrderId() + 
+                                         ", Buyer: " + order.getBuyerUser().getEmail() + 
+                                         (matches ? " (MATCH)" : " (NOT MATCH)"));
+                        return matches;
+                    } catch (Exception e) {
+                        System.out.println("⚠️ Error checking request ID: " + request.getId() + " - " + e.getMessage());
+                        return false;
+                    }
                 })
                 .collect(Collectors.toList());
         
-        return requests.stream()
+        System.out.println("✓ Found " + requests.size() + " matching requests for customer: " + customerEmail);
+        
+        List<DeliveryQuoteRequestWithOrderDTO> result = requests.stream()
                 .map(request -> {
                     Order order = orderRepository.findById(request.getOrderId())
                             .orElseThrow(() -> new RuntimeException("Order not found"));
                     
+                    System.out.println("  → Processing request ID: " + request.getId() + " for order ID: " + order.getId());
+                    
                     DeliveryQuoteRequestWithOrderDTO dto = new DeliveryQuoteRequestWithOrderDTO();
+                    
+                    // CRITICAL: Set orderId
+                    dto.setOrderId(order.getId());
+                    
                     dto.setSessionId(UUID.randomUUID().toString()); // Generate session ID for tracking
                     dto.setStatus(order.getOrderStatus().toString());
-                    dto.setCreatedAt(order.getOrderDateTime());
+                    dto.setCreatedAt(request.getCreateTime()); // Use request creation time, not order time
+                    
+                    // Set seller information (from first order item's product seller)
+                    try {
+                        if (order.getOrderItems() != null && !order.getOrderItems().isEmpty()) {
+                            OrderItem firstItem = order.getOrderItems().get(0);
+                            if (firstItem.getProduct() != null && firstItem.getProduct().getUser() != null) {
+                                User seller = firstItem.getProduct().getUser();
+                                dto.setSellerId(seller.getId().toString());
+                                dto.setBusinessName(seller.getName()); // User has 'name' field, not firstName/lastName
+                            }
+                        }
+                    } catch (Exception e) {
+                        System.out.println("Warning: Could not load seller info: " + e.getMessage());
+                    }
+                    
                     // Set subtotal with null safety
                     double subtotal = order.getTotalAmount() != null ? order.getTotalAmount().doubleValue() : 0.0;
                     dto.setSubtotal(subtotal);
@@ -575,6 +680,15 @@ public class DeliveryQuoteService {
                     }
                     dto.setItems(items);
                     
+                    // Set delivery address from order address fields
+                    DeliveryQuoteRequestWithOrderDTO.DeliveryAddressDTO addressDto = 
+                        new DeliveryQuoteRequestWithOrderDTO.DeliveryAddressDTO();
+                    addressDto.setPlace(order.getAddressPlace() != null ? order.getAddressPlace() : "");
+                    addressDto.setStreet(order.getAddressStreet() != null ? order.getAddressStreet() : "");
+                    addressDto.setDistrict(order.getAddressDistrict() != null ? order.getAddressDistrict() : "");
+                    addressDto.setTown(order.getAddressTown() != null ? order.getAddressTown() : "");
+                    dto.setDeliveryAddress(addressDto);
+                    
                     // Set preferences
                     DeliveryQuoteRequestWithOrderDTO.OrderPreferencesDTO preferences = 
                         new DeliveryQuoteRequestWithOrderDTO.OrderPreferencesDTO();
@@ -582,9 +696,18 @@ public class DeliveryQuoteService {
                     preferences.setQuotesExpireOn(request.getLastRespondingDateTime());
                     dto.setPreferences(preferences);
                     
+                    System.out.println("  ✓ DTO created - orderId: " + dto.getOrderId() + 
+                                     ", items: " + dto.getItems().size() + 
+                                     ", subtotal: " + dto.getSubtotal());
+                    
                     return dto;
                 })
                 .collect(Collectors.toList());
+        
+        System.out.println("✓ Returning " + result.size() + " quote request(s)");
+        System.out.println("========================================");
+        
+        return result;
     }
 
     /**
