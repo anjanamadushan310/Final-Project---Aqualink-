@@ -42,18 +42,60 @@ const QuoteAcceptance = () => {
       }
 
       // Get order data from localStorage (this contains the orderId)
-      const savedOrder = JSON.parse(localStorage.getItem('aqualink_order_data') || 'null');
+      let savedOrder = JSON.parse(localStorage.getItem('aqualink_order_data') || 'null');
       
       console.log('=== Quote Acceptance Debug ===');
       console.log('Saved order from localStorage:', savedOrder);
       console.log('orderId type:', typeof savedOrder?.orderId);
       console.log('orderId value:', savedOrder?.orderId);
       
-      if (!savedOrder) {
-        console.log('No order data found in localStorage');
-        setError('NO_ORDER_SESSION');
-        setLoading(false);
-        return;
+      // If localStorage is empty, try to fetch the user's most recent delivery request from backend
+      if (!savedOrder || !savedOrder.orderId) {
+        console.log('localStorage empty - attempting to fetch most recent order from backend...');
+        try {
+          const recentOrdersResponse = await deliveryService.getMyQuoteRequests();
+          console.log('My quote requests response:', recentOrdersResponse);
+          
+          if (recentOrdersResponse.success && recentOrdersResponse.data && recentOrdersResponse.data.length > 0) {
+            // Get the most recent order (first in the list)
+            const mostRecentRequest = recentOrdersResponse.data[0];
+            console.log('Most recent request:', mostRecentRequest);
+            
+            // Reconstruct order data from the backend response
+            savedOrder = {
+              orderId: mostRecentRequest.orderId,
+              sessionId: mostRecentRequest.sessionId,
+              sellerId: mostRecentRequest.sellerId,
+              businessName: mostRecentRequest.businessName || 'Seller',
+              items: mostRecentRequest.items || [],
+              subtotal: mostRecentRequest.subtotal || 0,
+              deliveryAddress: {
+                place: mostRecentRequest.deliveryAddress?.place || '',
+                street: mostRecentRequest.deliveryAddress?.street || '',
+                district: mostRecentRequest.deliveryAddress?.district || '',
+                town: mostRecentRequest.deliveryAddress?.town || ''
+              },
+              preferences: mostRecentRequest.preferences || {},
+              status: 'PENDING',
+              createdAt: mostRecentRequest.createTime || new Date().toISOString()
+            };
+            
+            console.log('Reconstructed order data from backend:', savedOrder);
+            
+            // Store it in localStorage for future use
+            localStorage.setItem('aqualink_order_data', JSON.stringify(savedOrder));
+          } else {
+            console.log('No recent quote requests found in backend');
+            setError('NO_ORDER_SESSION');
+            setLoading(false);
+            return;
+          }
+        } catch (fetchError) {
+          console.error('Error fetching recent orders:', fetchError);
+          setError('NO_ORDER_SESSION');
+          setLoading(false);
+          return;
+        }
       }
       
       if (!savedOrder.orderId) {
@@ -73,13 +115,22 @@ const QuoteAcceptance = () => {
       setOrderData(savedOrder);
 
       // Fetch quotes from backend using the orderId
-      console.log('Fetching quotes for order ID:', savedOrder.orderId);
-      console.log('API endpoint will be:', `/api/delivery-quotes/order/${savedOrder.orderId}/quotes`);
+      console.log('========================================');
+      console.log('FETCHING QUOTES FROM BACKEND');
+      console.log('Order ID:', savedOrder.orderId);
+      console.log('Order ID type:', typeof savedOrder.orderId);
+      console.log('Order data:', JSON.stringify(savedOrder, null, 2));
+      console.log('API endpoint:', `/api/delivery-quotes/order/${savedOrder.orderId}/quotes`);
+      console.log('========================================');
+      
       const response = await deliveryService.getQuotesForOrder(savedOrder.orderId);
-      console.log('Quotes response:', response);
-      console.log('Response success:', response?.success);
-      console.log('Response data:', response?.data);
+      console.log('========================================');
+      console.log('BACKEND RESPONSE:');
+      console.log('Response:', response);
+      console.log('Success:', response?.success);
+      console.log('Data:', response?.data);
       console.log('Number of quotes:', response?.data?.length);
+      console.log('========================================');
       
       if (response.success && response.data) {
         // Transform backend quote data to match frontend format

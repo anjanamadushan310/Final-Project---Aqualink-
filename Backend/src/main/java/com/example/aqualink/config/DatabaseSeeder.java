@@ -188,6 +188,13 @@ public class DatabaseSeeder {
                 profile.setAddressStreet(addressStreet);
                 profile.setAddressDistrict(addressDistrict);
                 profile.setAddressTown(addressTown);
+                
+                // Set logo path - you can replace with actual renamed logo
+                String logoFileName = businessName.toLowerCase().replace(" ", "_") + "_logo.jpg";
+                profile.setLogoPath("/uploads/logos/" + logoFileName);
+                profile.setLogoName(logoFileName);
+                profile.setLogoType("image/jpeg");
+                
                 userProfileRepository.save(profile);
             }
         });
@@ -240,6 +247,13 @@ public class DatabaseSeeder {
         fish.setMinimumQuantity(minQty);
         fish.setActiveStatus(ActiveStatus.VERIFIED);
         fish.setCreateDateAndTime(LocalDateTime.now());
+        
+        // Set image paths - you can replace these with actual renamed images
+        fish.setImagePaths(Arrays.asList(
+            "/uploads/fish_images/" + name.toLowerCase().replace(" ", "_") + "_1.jpg",
+            "/uploads/fish_images/" + name.toLowerCase().replace(" ", "_") + "_2.jpg"
+        ));
+        
         fishRepository.save(fish);
     }
 
@@ -305,6 +319,13 @@ public class DatabaseSeeder {
         equipment.setPrice(price);
         equipment.setActiveStatus(ActiveStatus.VERIFIED);
         equipment.setCreateDateAndTime(LocalDateTime.now());
+        
+        // Set image paths - you can replace these with actual renamed images
+        equipment.setImagePaths(Arrays.asList(
+            "/uploads/industrial_images/" + name.toLowerCase().replace(" ", "_") + "_1.jpg",
+            "/uploads/industrial_images/" + name.toLowerCase().replace(" ", "_") + "_2.jpg"
+        ));
+        
         industrialStuffRepository.save(equipment);
     }
 
@@ -360,6 +381,13 @@ public class DatabaseSeeder {
         service.setPrice(new java.math.BigDecimal(price));
         service.setApprovalStatus(Service.ApprovalStatus.APPROVED);
         service.setCreatedAt(LocalDateTime.now());
+        
+        // Set image paths - you can replace these with actual renamed images
+        service.setImagePaths(Arrays.asList(
+            "/uploads/service_images/" + name.toLowerCase().replace(" ", "_") + "_1.jpg",
+            "/uploads/service_images/" + name.toLowerCase().replace(" ", "_") + "_2.jpg"
+        ));
+        
         serviceRepository.save(service);
     }
 
@@ -372,25 +400,128 @@ public class DatabaseSeeder {
         
         if (pradeep != null) {
             createBlogPost(pradeep, "Best Practices for Fish Farming in Sri Lanka",
-                "<h2>Introduction to Modern Fish Farming</h2><p>Fish farming in Sri Lanka has evolved significantly over the past decade...</p>",
+                "<h2>Introduction to Modern Fish Farming</h2>" +
+                "<p>Fish farming in Sri Lanka has evolved significantly over the past decade, transforming from traditional methods to modern aquaculture practices. This comprehensive guide explores the best practices that have helped local fish farmers achieve sustainable success while maintaining environmental responsibility.</p>" +
+                "<h3>Understanding the Sri Lankan Aquaculture Landscape</h3>" +
+                "<p>Sri Lanka's tropical climate and abundant water resources create ideal conditions for fish farming. However, success requires more than just favorable conditions. Farmers must understand water quality management, disease prevention, and sustainable feeding practices to maximize their yields while protecting the environment.</p>" +
+                "<h3>Water Quality Management</h3>" +
+                "<p>Maintaining optimal water quality is the foundation of successful fish farming. Regular monitoring of pH levels (ideally 6.5-8.5), dissolved oxygen (minimum 5mg/L), and ammonia levels is essential. Install aeration systems in ponds to ensure adequate oxygen supply, especially during hot weather. Weekly water testing helps identify problems before they affect fish health.</p>" +
+                "<h3>Disease Prevention Strategies</h3>" +
+                "<p>Prevention is always better than cure in aquaculture. Implement biosecurity measures including quarantine periods for new stock, regular health inspections, and proper waste management. Avoid overstocking, which creates stress and increases disease susceptibility. When purchasing fingerlings, choose reputable hatcheries with certified disease-free stock.</p>" +
+                "<h3>Sustainable Feeding Practices</h3>" +
+                "<p>Feed represents 60-70% of operational costs in fish farming. Use high-quality commercial feeds appropriate for your fish species and growth stage. Feed 2-3 times daily, providing only what fish can consume in 15-20 minutes. Consider supplementing commercial feeds with locally available ingredients to reduce costs while maintaining nutrition.</p>" +
+                "<h3>Pond Management and Maintenance</h3>" +
+                "<p>Regular pond maintenance prevents many common problems. Remove excess algae and aquatic plants that compete for oxygen. Check and maintain pond embankments to prevent leaks. Clean filters and aerators weekly. Between harvests, dry ponds completely and apply lime to eliminate parasites and improve soil quality.</p>" +
+                "<h3>Record Keeping and Business Management</h3>" +
+                "<p>Successful farmers maintain detailed records of stocking dates, feeding schedules, water quality parameters, and harvest data. This information helps identify trends, optimize feeding strategies, and make informed business decisions. Track expenses and income carefully to understand profitability and identify areas for improvement.</p>" +
+                "<h3>Marketing and Value Addition</h3>" +
+                "<p>Don't just focus on production - develop strong marketing strategies. Build relationships with local markets, restaurants, and exporters. Consider value-added products like smoked or filleted fish to increase profit margins. Join farmer cooperatives to access better prices and shared resources.</p>" +
+                "<h3>Conclusion</h3>" +
+                "<p>Modern fish farming in Sri Lanka offers excellent opportunities for those willing to adopt scientific practices and maintain consistent management. By following these best practices, farmers can achieve sustainable production, ensure fish health, and build profitable businesses that contribute to food security and economic development.</p>",
                 LocalDateTime.now().minusDays(10), 245);
             
             createBlogPost(pradeep, "Export Quality Standards for Seafood",
-                "<h2>Understanding International Seafood Standards</h2><p>Exporting seafood requires strict adherence to international quality and safety standards...</p>",
+                "<h2>Understanding International Seafood Standards</h2>" +
+                "<p>Exporting seafood from Sri Lanka requires strict adherence to international quality and safety standards. This comprehensive guide covers everything you need to know about meeting export requirements and maintaining product quality throughout the supply chain.</p>" +
+                "<h3>Key International Certification Requirements</h3>" +
+                "<p>The primary certifications for seafood exports include HACCP (Hazard Analysis Critical Control Points), ISO 22000 for food safety management, and country-specific certifications like EU approval numbers or USDA compliance. These certifications demonstrate your commitment to food safety and open doors to premium international markets.</p>" +
+                "<h3>Temperature Control and Cold Chain Management</h3>" +
+                "<p>Maintaining the cold chain is critical for seafood quality. Fresh fish must be chilled to 0-4°C immediately after harvest. Frozen products require storage at -18°C or below. Use calibrated thermometers at every stage and maintain detailed temperature logs. Any break in the cold chain can compromise product safety and result in rejected shipments.</p>" +
+                "<h3>Hygiene and Sanitation Protocols</h3>" +
+                "<p>Processing facilities must meet stringent hygiene standards. Implement regular cleaning schedules using approved sanitizers. Workers must wear appropriate protective clothing, including hairnets, gloves, and clean uniforms. Establish handwashing protocols and restrict access to processing areas. Regular facility audits help identify and address hygiene issues before they affect exports.</p>" +
+                "<h3>Traceability Systems</h3>" +
+                "<p>Modern seafood exports require complete traceability from farm to consumer. Implement systems that track harvest dates, processing batches, storage conditions, and distribution channels. Use unique lot numbers and maintain comprehensive records. Traceability not only meets legal requirements but also protects your brand reputation and enables quick recall if needed.</p>" +
+                "<h3>Chemical and Microbiological Testing</h3>" +
+                "<p>Regular laboratory testing is non-negotiable for exports. Test for harmful bacteria like Salmonella, E. coli, and Vibrio species. Monitor antibiotic residues, heavy metals, and histamine levels. Partner with accredited laboratories and maintain testing schedules that meet or exceed importing country requirements.</p>" +
+                "<h3>Packaging and Labeling Requirements</h3>" +
+                "<p>Export packaging must protect product quality while meeting regulatory requirements. Use food-grade materials appropriate for your product. Labels must include species name (both common and scientific), net weight, production date, expiry date, storage instructions, and country of origin. Ensure labels are in the language required by the destination country.</p>" +
+                "<h3>Documentation and Compliance</h3>" +
+                "<p>Export documentation includes health certificates, catch certificates (for wild-caught seafood), commercial invoices, and bills of lading. Work with experienced freight forwarders who understand seafood logistics. Keep copies of all documentation for at least two years to facilitate audits and resolve any issues.</p>" +
+                "<h3>Staying Updated with Changing Regulations</h3>" +
+                "<p>International seafood regulations evolve constantly. Subscribe to updates from regulatory bodies like the FDA, EU Commission, and relevant industry associations. Attend export training programs and trade shows. Building relationships with importers helps you stay informed about market requirements and emerging trends.</p>",
                 LocalDateTime.now().minusDays(8), 189);
             
             createBlogPost(pradeep, "Sustainable Fishing Practices for the Future",
-                "<h2>The Importance of Sustainability</h2><p>As the global demand for seafood continues to rise, sustainable fishing practices have never been more important...</p>",
+                "<h2>The Importance of Sustainability in Modern Aquaculture</h2>" +
+                "<p>As the global demand for seafood continues to rise, sustainable fishing and farming practices have never been more important. This article explores how Sri Lankan aquaculture can balance production needs with environmental conservation to ensure long-term viability of the industry.</p>" +
+                "<h3>Understanding Environmental Impact</h3>" +
+                "<p>Traditional intensive fish farming can impact water quality, deplete wild fish stocks used for feed, and affect local ecosystems. However, sustainable practices can minimize these effects while maintaining profitability. Understanding your operation's environmental footprint is the first step toward implementing meaningful improvements.</p>" +
+                "<h3>Integrated Multi-Trophic Aquaculture (IMTA)</h3>" +
+                "<p>IMTA systems combine different species that complement each other ecologically. For example, fish waste provides nutrients for seaweed or vegetables grown in the same water system, which then filter the water for the fish. This creates a balanced ecosystem that reduces waste, improves water quality, and provides multiple income streams.</p>" +
+                "<h3>Sustainable Feed Alternatives</h3>" +
+                "<p>Traditional fish feeds rely heavily on wild-caught fish meal, creating sustainability concerns. Modern alternatives include plant-based proteins, insect meal, and algae-based feeds. Sri Lankan farmers can explore locally available ingredients like rice bran, coconut meal, and vegetable proteins to create sustainable, cost-effective feed formulations.</p>" +
+                "<h3>Water Conservation and Recycling</h3>" +
+                "<p>Recirculating Aquaculture Systems (RAS) can reduce water usage by up to 99% compared to traditional methods. While initial investment is higher, RAS allows greater production density and better disease control. Even simple improvements like pond water recycling for irrigation can significantly reduce freshwater consumption.</p>" +
+                "<h3>Energy Efficiency Measures</h3>" +
+                "<p>Aquaculture requires significant energy for aeration, pumping, and temperature control. Invest in energy-efficient equipment like solar-powered aerators and optimized pump systems. Consider renewable energy sources such as solar panels to reduce both operational costs and carbon footprint.</p>" +
+                "<h3>Biodiversity Conservation</h3>" +
+                "<p>Prevent farmed fish from escaping into natural water bodies where they could compete with or breed with wild populations. Use native or locally adapted species when possible. Maintain buffer zones around farms to protect natural habitats and water quality. Support conservation efforts for threatened wild fish populations.</p>" +
+                "<h3>Community Engagement and Fair Trade</h3>" +
+                "<p>Sustainable aquaculture extends beyond environmental concerns to include social responsibility. Provide fair wages and safe working conditions. Engage with local communities to address concerns and share benefits. Support local economies by sourcing materials and services locally when possible.</p>" +
+                "<h3>Certification and Market Access</h3>" +
+                "<p>Sustainable certifications like ASC (Aquaculture Stewardship Council) or BAP (Best Aquaculture Practices) open doors to premium markets and conscious consumers willing to pay higher prices for sustainably produced seafood. These certifications also provide frameworks for continuous improvement in environmental and social performance.</p>" +
+                "<h3>The Business Case for Sustainability</h3>" +
+                "<p>While some sustainable practices require upfront investment, they often reduce long-term costs through improved efficiency, better fish health, and access to premium markets. Sustainable operations are also more resilient to regulatory changes and market shifts toward environmentally conscious products.</p>" +
+                "<h3>Looking Forward</h3>" +
+                "<p>The future of aquaculture lies in balancing production with conservation. By adopting sustainable practices today, Sri Lankan fish farmers can ensure their operations remain viable for generations while contributing to global food security and environmental protection. Start small, measure progress, and continuously improve - every step toward sustainability counts.</p>",
                 LocalDateTime.now().minusDays(3), 156);
         }
         
         if (chandana != null) {
             createBlogPost(chandana, "Setting Up Your First Aquarium: A Beginner's Guide",
-                "<h2>Welcome to the World of Aquariums!</h2><p>Starting your first aquarium can be an exciting journey...</p>",
+                "<h2>Welcome to the World of Aquariums!</h2>" +
+                "<p>Starting your first aquarium can be an exciting journey into the fascinating world of aquatic life. This comprehensive beginner's guide will walk you through every step of setting up a successful aquarium, from choosing the right tank to maintaining a thriving aquatic ecosystem.</p>" +
+                "<h3>Choosing the Right Aquarium Size and Location</h3>" +
+                "<p>Contrary to popular belief, bigger is often easier for beginners. A 20-30 gallon tank provides more stability in water parameters than smaller tanks. Choose a location away from direct sunlight, which encourages algae growth, and away from heating vents or air conditioners. Ensure the stand can support the weight - a filled 20-gallon tank weighs about 200 pounds.</p>" +
+                "<h3>Essential Equipment for Your First Tank</h3>" +
+                "<p>You'll need a filter rated for your tank size (or slightly larger), a heater for tropical fish (preset to 76-78°F), a thermometer, LED lighting appropriate for your setup, and a water testing kit. Don't skimp on the filter - good filtration is crucial for fish health. Consider a sponge filter or hang-on-back filter for beginners.</p>" +
+                "<h3>Understanding the Nitrogen Cycle</h3>" +
+                "<p>Before adding fish, your tank must complete the nitrogen cycle. Fish waste produces ammonia, which beneficial bacteria convert to nitrite, then to less harmful nitrate. This process takes 4-6 weeks. You can speed it up by adding bacterial starter cultures or using established filter media from a healthy aquarium. Test water regularly and wait until ammonia and nitrite read zero before adding fish.</p>" +
+                "<h3>Substrate and Decorations</h3>" +
+                "<p>Choose substrate based on your planned fish and plants. Gravel is easy to maintain, while sand suits bottom-dwelling fish like corydoras. Rinse substrate thoroughly before adding to prevent cloudy water. Add decorations like rocks, driftwood, and plants to create hiding spots and reduce fish stress. Live plants help maintain water quality but require appropriate lighting.</p>" +
+                "<h3>Selecting Your First Fish</h3>" +
+                "<p>Start with hardy, peaceful species that tolerate beginner mistakes. Good choices include tetras, guppies, platies, or corydoras catfish. Research each species' adult size, temperament, and water requirements. Follow the rule of one inch of fish per gallon of water (excluding tail length). Add fish gradually - 2-3 fish per week - to avoid overwhelming your biological filter.</p>" +
+                "<h3>Water Parameters and Testing</h3>" +
+                "<p>Test your water weekly for ammonia, nitrite, nitrate, pH, and hardness. Most community fish thrive in pH 6.5-7.5 and moderate hardness. Keep ammonia and nitrite at zero, and nitrate below 20ppm. Use a dechlorinator when adding tap water, as chlorine kills beneficial bacteria and harms fish.</p>" +
+                "<h3>Feeding Your Fish Properly</h3>" +
+                "<p>Overfeeding is the most common beginner mistake. Feed only what your fish can consume in 2-3 minutes, once or twice daily. Use high-quality flakes or pellets as a staple, supplemented with frozen or live foods occasionally. One fasting day per week helps prevent digestive issues. Remove uneaten food promptly to prevent water quality problems.</p>" +
+                "<h3>Maintenance Schedule</h3>" +
+                "<p>Establish a regular maintenance routine: daily feeding and observation, weekly water testing and 20-30% water changes, monthly filter maintenance (rinse in tank water, never tap water), and periodic glass cleaning. Consistency prevents problems and keeps your fish healthy. Keep a maintenance log to track patterns and identify issues early.</p>" +
+                "<h3>Common Mistakes to Avoid</h3>" +
+                "<p>Don't rush the cycling process, avoid overcrowding, resist adding too many fish at once, and don't perform large water changes unless addressing an emergency. Never use soap or chemicals near your aquarium. Research fish compatibility before purchasing - not all species can live together peacefully.</p>" +
+                "<h3>Troubleshooting Common Issues</h3>" +
+                "<p>Cloudy water usually indicates bacterial bloom during cycling or overfeeding. Green water suggests excess light or nutrients - reduce lighting and feeding. Brown algae is common in new tanks and usually resolves naturally. If fish gasp at the surface, check oxygen levels and water parameters immediately.</p>" +
+                "<h3>Growing as an Aquarist</h3>" +
+                "<p>Join local aquarium clubs and online communities to learn from experienced hobbyists. Start a quarantine tank for new fish to prevent disease introduction. As you gain experience, you might explore planted tanks, breeding programs, or specialized setups for specific species. The aquarium hobby offers endless opportunities for learning and enjoyment.</p>",
                 LocalDateTime.now().minusDays(5), 312);
             
             createBlogPost(chandana, "Common Fish Diseases and How to Prevent Them",
-                "<h2>Fish Health Management</h2><p>Preventing fish diseases is far more effective than treating them...</p>",
+                "<h2>Fish Health Management: Prevention is Better Than Cure</h2>" +
+                "<p>Preventing fish diseases is far more effective than treating them. This comprehensive guide covers the most common fish diseases, their symptoms, causes, and most importantly, prevention strategies to keep your fish healthy and thriving.</p>" +
+                "<h3>Understanding Fish Immunity</h3>" +
+                "<p>Fish have immune systems, but they're heavily influenced by environmental conditions. Stress from poor water quality, overcrowding, or sudden parameter changes weakens immunity, making fish susceptible to opportunistic pathogens always present in aquariums. Maintaining optimal conditions is your first line of defense against disease.</p>" +
+                "<h3>Ich (White Spot Disease)</h3>" +
+                "<p>Ich appears as white spots resembling salt grains on fish bodies and fins. Fish may scratch against objects and show rapid breathing. Caused by the parasite Ichthyophthirius multifiliis, it thrives in stressed fish and temperature fluctuations. Prevention includes maintaining stable temperatures, quarantining new fish for 3-4 weeks, and avoiding sudden water changes. Treatment involves raising temperature to 86°F gradually and using ich medications according to package directions.</p>" +
+                "<h3>Fin Rot and Tail Rot</h3>" +
+                "<p>Bacterial infections cause fins to appear ragged, frayed, or discolored, often with white edges. Poor water quality is the primary cause. Prevention requires excellent filtration, regular water changes (20-30% weekly), and avoiding overcrowding. Maintain ammonia and nitrite at zero. Treatment involves improving water quality immediately and using antibacterial medications if necessary. Severe cases may require antibiotic treatment under veterinary guidance.</p>" +
+                "<h3>Fungal Infections</h3>" +
+                "<p>White, cotton-like growth on fish indicates fungal infection, usually secondary to injury or other disease. Fungi exploit weakened fish with damaged slime coats. Prevention includes avoiding sharp decorations, handling fish carefully, and maintaining water quality. Quarantine injured fish and treat with antifungal medications. Salt baths (1 tablespoon per gallon for 15 minutes) can help mild cases.</p>" +
+                "<h3>Dropsy</h3>" +
+                "<p>Characterized by swollen body and raised scales resembling a pinecone, dropsy indicates serious internal bacterial infection or organ failure. Often fatal, prevention is crucial. Maintain pristine water quality, avoid overfeeding, and provide a balanced diet. Quarantine affected fish immediately to prevent spread. Treatment success is low, but antibiotics and epsom salt baths may help if caught very early.</p>" +
+                "<h3>Velvet Disease</h3>" +
+                "<p>This parasitic infection causes a gold or rust-colored dust appearance on fish. Affected fish may scratch, clamp fins, and lose appetite. Caused by Oodinium parasites, it spreads quickly in stressed populations. Prevention includes quarantine procedures and stress reduction. Darken the tank (parasites need light) and treat with copper-based medications or malachite green following product instructions carefully.</p>" +
+                "<h3>Swim Bladder Disease</h3>" +
+                "<p>Fish swimming upside down, sideways, or struggling to maintain position indicates swim bladder issues. Causes include overfeeding, constipation, bacterial infection, or genetic factors. Prevention focuses on proper feeding - small meals twice daily, fasting one day weekly, and pre-soaking dried foods. For constipation, fast fish for 2-3 days then feed blanched peas. Bacterial cases may require antibiotics.</p>" +
+                "<h3>Establishing a Quarantine Protocol</h3>" +
+                "<p>A quarantine tank is essential disease prevention. Set up a bare-bottom 10-20 gallon tank with sponge filter and heater. Quarantine all new fish, plants, and decorations for 3-4 weeks before adding to main tank. This period allows observation for disease and time to treat if needed without risking your established fish.</p>" +
+                "<h3>Water Quality as Disease Prevention</h3>" +
+                "<p>The single most important disease prevention factor is water quality. Test weekly for ammonia, nitrite, and nitrate. Maintain 0 ammonia, 0 nitrite, and nitrate below 20ppm through regular water changes and appropriate filtration. Monitor pH stability and avoid drastic parameter swings. Clean substrate regularly to remove waste buildup.</p>" +
+                "<h3>Nutrition and Fish Health</h3>" +
+                "<p>A varied, quality diet strengthens fish immune systems. Use high-quality staple foods supplemented with frozen or live foods like brine shrimp, bloodworms, and vegetables for herbivores. Avoid overfeeding - it degrades water quality and causes digestive issues. Store food properly to maintain nutritional value and prevent contamination.</p>" +
+                "<h3>Stress Reduction Strategies</h3>" +
+                "<p>Chronic stress is a major disease contributor. Provide adequate hiding spots and appropriate tank mates. Avoid aggressive species with peaceful fish. Maintain consistent lighting schedule (8-10 hours daily). Minimize noise and vibration near the tank. Perform maintenance consistently and avoid sudden changes. Stressed fish show clamped fins, faded colors, and hiding behavior.</p>" +
+                "<h3>When to Seek Professional Help</h3>" +
+                "<p>Consult aquatic veterinarians or experienced aquarists for unusual symptoms, rapid fish deaths, or treatment-resistant diseases. Document symptoms with photos, water parameters, and timeline. Some diseases require prescription medications or laboratory diagnosis. Join aquarium forums or local clubs for advice, but verify information from multiple reliable sources before acting.</p>",
                 LocalDateTime.now().minusDays(2), 98);
         }
         
@@ -406,6 +537,10 @@ public class DatabaseSeeder {
         post.setCreatedAt(createdAt);
         post.setUpdatedAt(createdAt);
         post.setPublishedAt(createdAt);
+        
+        // Set featured image path - you can replace with actual renamed image
+        post.setFeaturedImagePath("/uploads/blog/" + title.toLowerCase().replace(" ", "_").substring(0, 30) + ".jpg");
+        
         blogPostRepository.save(post);
     }
 
@@ -461,8 +596,6 @@ public class DatabaseSeeder {
         createBanner("/banners/welcome-to-aqualink.jpg");
         createBanner("/banners/fresh-fish-delivery.jpg");
         createBanner("/banners/aquaculture-equipment.jpg");
-        createBanner("/banners/expert-consultation.jpg");
-        createBanner("/banners/sustainable-farming.jpg");
         
         log.info("✅ Created banners");
     }
