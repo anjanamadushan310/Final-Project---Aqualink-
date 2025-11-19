@@ -1,5 +1,8 @@
 # Image Paths Reference for Database Seeds
 
+
+$process = Get-NetTCPConnection -LocalPort 5173 -ErrorAction SilentlyContinue | Select-Object -ExpandProperty OwningProcess -First 1; if ($process) { Stop-Process -Id $process -Force }
+
 This document lists all the image paths set in the database seeder. Rename your actual images to match these paths.
 
 ## 📊 Quick Summary

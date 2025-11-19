@@ -14,11 +14,15 @@ const EnhancedDeliveryRequest = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { sellerId, businessName } = location.state || {};
-  const [sending, setSending] = useState(false);
-  const [error, setError] = useState(null);
-  const [availableTowns, setAvailableTowns] = useState([]);
-  const [addressLoaded, setAddressLoaded] = useState(false); // Track if address has been loaded from profile
-  const initialLoadRef = useRef(false); // Track if initial load has happened
+
+  // ===== Local State =====
+  const [sending, setSending] = useState(false);           
+  const [error, setError] = useState(null);                
+  const [availableTowns, setAvailableTowns] = useState([]); 
+  const [addressLoaded, setAddressLoaded] = useState(false); 
+
+  // Ref to prevent repeated initial load logic
+  const initialLoadRef = useRef(false);
   const [deliveryAddress, setDeliveryAddress] = useState({
     place: '',
     street: '',
@@ -27,7 +31,6 @@ const EnhancedDeliveryRequest = () => {
   });
 
   useEffect(() => {
-    // Prevent infinite loop - only run once on mount
     if (initialLoadRef.current) {
       console.log('Initial load already completed, skipping useEffect');
       return;
@@ -36,7 +39,7 @@ const EnhancedDeliveryRequest = () => {
     console.log('Running initial load useEffect');
     initialLoadRef.current = true;
 
-    // Debug cart data
+    // Debug logging for cart data on entry
     console.log('DeliveryQuoteRequest - Cart Data:', {
       cartItems,
       totalAmount,
@@ -44,27 +47,25 @@ const EnhancedDeliveryRequest = () => {
       firstItem: cartItems?.length > 0 ? cartItems[0] : null
     });
 
-    // Check if we have order data from Cart component via localStorage
+    // Check for order data stored in localStorage by Cart component
     const storedOrderData = localStorage.getItem('aqualink_order_data');
     if (storedOrderData) {
       try {
         const orderData = JSON.parse(storedOrderData);
         console.log('Found stored order data from Cart:', orderData);
         
-        // If cart context is empty but we have stored data, use the stored data
+        // If cart context is empty we still have fallback items from stored data
         if ((!cartItems || cartItems.length === 0) && orderData.items && orderData.items.length > 0) {
           console.log('Using stored order data as cart is empty');
-          // Note: We can't directly set cartItems here as it's from context
-          // The stored data will be used when submitting the quote request
+          
         }
       } catch (error) {
         console.error('Error parsing stored order data:', error);
       }
     }
 
-    // Load user's profile data (only once on page load)
+    // Load logged-in user's saved address from profile and pre-fill delivery form
     const loadUserProfile = async () => {
-      // Only load address if it hasn't been loaded yet
       if (addressLoaded) {
         console.log('Address already loaded, skipping profile load');
         return;
@@ -80,7 +81,7 @@ const EnhancedDeliveryRequest = () => {
         const profile = response.data;
         console.log('Full profile data:', JSON.stringify(profile, null, 2));
 
-        // Extract address fields exactly as they are in UserProfile entity
+        // Extract address fields (matching UserProfile entity fields)
         const district = profile.addressDistrict || '';
         const town = profile.addressTown || '';
 
@@ -91,7 +92,7 @@ const EnhancedDeliveryRequest = () => {
           availableTownsForDistrict: district ? districtToTowns[district] : []
         });
 
-        // Set the address state with the exact field names from UserProfile entity
+        // Prepare updated address from profile
         const updatedAddress = {
           place: profile.addressPlace || '',
           street: profile.addressStreet || '',
@@ -101,7 +102,7 @@ const EnhancedDeliveryRequest = () => {
 
         console.log('Setting delivery address state (first time only):', updatedAddress);
         
-        // First update available towns for the district
+        // Setup available towns for selected district
         if (district) {
           const towns = districtToTowns[district] || [];
           console.log('Setting available towns:', {
@@ -113,25 +114,23 @@ const EnhancedDeliveryRequest = () => {
           });
           setAvailableTowns(towns);
           
-          // If current town is not valid for this district, clear it
+          // Validate town against district's towns list
           if (town && !towns.includes(town)) {
             console.log('Town', town, 'is not valid for district', district, '- clearing town');
             updatedAddress.town = '';
           } else if (town) {
-            // Keep the valid town
             console.log('Keeping valid town:', town, 'for district:', district);
             updatedAddress.town = town;
           }
         } else {
-          // Clear towns if no district
           console.log('No district selected, clearing towns');
           setAvailableTowns([]);
           updatedAddress.town = '';
         }
 
-        // Now set the address with potentially cleared town
+        // Save final address state
         setDeliveryAddress(updatedAddress);
-        setAddressLoaded(true); // Mark address as loaded so it won't reload
+        setAddressLoaded(true);
 
       } catch (error) {
         console.error('Error loading profile:', error);
@@ -140,21 +139,21 @@ const EnhancedDeliveryRequest = () => {
           console.error('Response status:', error.response.status);
         }
         toast.error('Failed to load your address information. Please enter it manually.');
-        setAddressLoaded(true); // Mark as loaded even on error to prevent retries
+        setAddressLoaded(true); // Prevent repeated attempts on error
       }
     };
 
+    // Only load profile and refresh cart if we have a token
     if (token) {
-      // Refresh cart data first to ensure we have latest data
       refreshCart();
       loadUserProfile();
     } else {
       console.log('No token available, skipping profile load');
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [token]); // Only run on mount and when token changes - intentionally excluding other deps to prevent infinite loop
 
-  // Handle district/town state synchronization
+  }, [token]);
+
+  // Whenever district changes, update available towns list and validate selected town
   useEffect(() => {
     console.log('District changed. Current state:', {
       district: deliveryAddress.district,
@@ -167,7 +166,7 @@ const EnhancedDeliveryRequest = () => {
       
       setAvailableTowns(availableTownsForDistrict);
 
-      // Validate if current town is valid for the selected district
+      // Reset town if it doesn't belong to selected district
       if (deliveryAddress.town && !availableTownsForDistrict.includes(deliveryAddress.town)) {
         console.log('Current town is not valid for selected district, resetting town');
         setDeliveryAddress(prev => ({
@@ -191,24 +190,23 @@ const EnhancedDeliveryRequest = () => {
     const { name, value } = e.target;
     console.log('Address field change:', name, value);
     
-    // Use the exact field names from UserProfile entity
+ 
     const fieldName = name === 'district' ? 'district' : 
                      name === 'town' ? 'town' :
                      name === 'place' ? 'place' :
                      name === 'street' ? 'street' : name;
     
     if (name === 'district') {
-      // When district changes, update district and reset town
+      // When district changes, reset town and load its towns
       setDeliveryAddress(prev => {
         console.log('Updating district to:', value);
         return {
           ...prev,
           district: value,
-          town: '' // Reset town when district changes
+          town: '' 
         };
       });
       
-      // Load towns for selected district
       const townsForDistrict = districtToTowns[value] || [];
       console.log('Setting available towns for district:', value, townsForDistrict);
       setAvailableTowns(townsForDistrict);
@@ -220,21 +218,22 @@ const EnhancedDeliveryRequest = () => {
     }
   };
 
+
   const [preferences, setPreferences] = useState({
     quotesExpireAfter: 24,
     quotesExpireOn: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString()
   });
 
+  // ===== Submit Quote Request =====
   const handleSubmitQuoteRequest = async () => {
     setSending(true);
     setError(null);
 
     try {
-      // Use the same logic as display to get correct items and total
+   
       let itemsToUse = cartItems;
       let totalToUse = totalAmount;
 
-      // If cart context is empty, try to use stored order data
       if (!cartItems || cartItems.length === 0) {
         const storedOrderData = localStorage.getItem('aqualink_order_data');
         if (storedOrderData) {
@@ -248,7 +247,7 @@ const EnhancedDeliveryRequest = () => {
         }
       }
 
-      // Calculate actual total from items for accuracy
+      // Recalculate total based on items for accuracy
       const calculatedTotal = itemsToUse && itemsToUse.length > 0 
         ? itemsToUse.reduce((sum, item) => {
             const itemPrice = parseFloat(item.price) || 0;
@@ -257,9 +256,9 @@ const EnhancedDeliveryRequest = () => {
           }, 0)
         : 0;
 
-      // Use calculated total if it's greater than 0, otherwise use totalToUse
       const finalTotal = calculatedTotal > 0 ? calculatedTotal : (totalToUse || 0);
 
+      // Build request payload to backend
       const requestData = {
         sessionId: crypto.randomUUID(),
         sellerId: sellerId,
@@ -289,7 +288,7 @@ const EnhancedDeliveryRequest = () => {
       console.log('Submitting quote request with data:', requestData);
       console.log('Delivery address being sent:', requestData.deliveryAddress);
 
-      // Validate delivery address
+      // Basic client-side address validation before sending
       if (!deliveryAddress.place.trim()) {
         toast.error('Please enter the place/building name');
         return;
@@ -312,6 +311,7 @@ const EnhancedDeliveryRequest = () => {
         fullRequestData: requestData
       });
 
+      // Call delivery service to create the quote request
       const response = await deliveryService.createQuoteRequest(requestData);
       
       console.log('=== Backend Response Debug ===');
@@ -324,10 +324,11 @@ const EnhancedDeliveryRequest = () => {
       console.log('================================');
 
       if (response.success && response.data) {
+        // On success: inform user, clear cart, store order info, and navigate
         toast.success('Delivery quote request sent successfully! Delivery persons will be notified.');
-        clearCart(); // Clear the cart after successful request
-        
-        // Prepare order data for quote acceptance page
+        clearCart();
+
+        // Prepare order data for a later quote acceptance screen
         const orderData = {
           sessionId: response.data.sessionId || requestData.sessionId,
           orderId: response.data.orderId,
@@ -346,17 +347,16 @@ const EnhancedDeliveryRequest = () => {
         console.log('orderData.orderId:', orderData.orderId);
         console.log('===========================');
 
-        // Store order data in localStorage for QuoteAcceptance component
+        // Persist order data in localStorage for the QuoteAcceptance component
         localStorage.setItem('aqualink_order_data', JSON.stringify(orderData));
-        
-        // Verify storage
+   
         const stored = localStorage.getItem('aqualink_order_data');
         console.log('=== Verification of Storage ===');
         console.log('Stored in localStorage:', stored);
         console.log('Parsed back:', JSON.parse(stored));
         console.log('================================');
         
-        // Navigate to quote acceptance page within the dashboard
+        // Navigate to shop-owner dashboard with quote-acceptance active
         navigate('/dashboard/shop-owner', { state: { activeComponent: 'quote-acceptance' } });
       } else {
         throw new Error(response.message || 'Failed to submit quote request');
@@ -371,6 +371,7 @@ const EnhancedDeliveryRequest = () => {
     }
   };
 
+
   const handleQuoteExpiryChange = (hours) => {
     setPreferences({
       quotesExpireAfter: hours,
@@ -378,6 +379,7 @@ const EnhancedDeliveryRequest = () => {
     });
   };
 
+  
   if (error) {
     return (
       <div className="flex items-center justify-center h-64 bg-gray-50">
@@ -396,19 +398,19 @@ const EnhancedDeliveryRequest = () => {
     );
   }
 
+
   return (
     <div className="container mx-auto px-4 py-8">
       <h2 className="text-2xl font-semibold mb-6">Request Delivery Quotes</h2>
       
-      {/* Order Summary */}
+      {/* ===== Order Summary Card ===== */}
       <div className="bg-white rounded-lg shadow-md p-6 mb-6">
         <h3 className="text-xl font-semibold mb-4">Order Summary</h3>
         {(() => {
-          // Determine which items and total to display
+          // Decide which items and totals to show (cart vs stored data)
           let itemsToShow = cartItems;
           let totalToShow = totalAmount;
 
-          // If cart context is empty, try to use stored order data
           if (!cartItems || cartItems.length === 0) {
             const storedOrderData = localStorage.getItem('aqualink_order_data');
             if (storedOrderData) {
@@ -423,13 +425,17 @@ const EnhancedDeliveryRequest = () => {
             }
           }
 
+          // If we have items, render them with totals; otherwise, show a debug-like empty state
           return itemsToShow && itemsToShow.length > 0 ? (
             <div className="space-y-4">
               {itemsToShow.map((item, index) => {
-                console.log(`Item ${index}:`, item); // Debug each item
+                console.log(`Item ${index}:`, item);
                 const itemTotal = (item.price && item.quantity) ? (item.price * item.quantity) : 0;
                 return (
-                  <div key={item.cartItemId || index} className="flex justify-between items-center border-b pb-2">
+                  <div 
+                    key={item.cartItemId || index} 
+                    className="flex justify-between items-center border-b pb-2"
+                  >
                     <div>
                       <p className="font-medium">{item.productName || 'Unknown Product'}</p>
                       <p className="text-sm text-gray-600">
@@ -438,38 +444,46 @@ const EnhancedDeliveryRequest = () => {
                     </div>
                     <div className="text-right">
                       <p className="font-medium">Rs.{itemTotal.toFixed(2)}</p>
-                      <p className="text-sm text-gray-600">Rs.{item.price || 0} each</p>
+                      <p className="text-sm text-gray-600">
+                        Rs.{item.price || 0} each
+                      </p>
                     </div>
                   </div>
                 );
               })}
               <div className="flex justify-between items-center pt-2">
                 <p className="font-semibold">Total:</p>
-                <p className="font-semibold">Rs.{(() => {
-                  // Always calculate total from actual items to ensure accuracy
-                  const calculatedTotal = itemsToShow.reduce((sum, item) => {
-                    const itemPrice = parseFloat(item.price) || 0;
-                    const itemQuantity = parseInt(item.quantity) || 0;
-                    return sum + (itemPrice * itemQuantity);
-                  }, 0);
-                  
-                  // Use calculated total if it's greater than 0, otherwise use totalToShow
-                  return calculatedTotal > 0 ? calculatedTotal.toFixed(2) : (totalToShow ? totalToShow.toFixed(2) : '0.00');
-                })()}</p>
+                <p className="font-semibold">
+                  Rs.{(() => {
+                    // Always recompute total from visible items to avoid mismatches
+                    const calculatedTotal = itemsToShow.reduce((sum, item) => {
+                      const itemPrice = parseFloat(item.price) || 0;
+                      const itemQuantity = parseInt(item.quantity) || 0;
+                      return sum + (itemPrice * itemQuantity);
+                    }, 0);
+                    
+                    return calculatedTotal > 0
+                      ? calculatedTotal.toFixed(2)
+                      : (totalToShow ? totalToShow.toFixed(2) : '0.00');
+                  })()}
+                </p>
               </div>
             </div>
           ) : (
+            // No items found: show debug helpers for troubleshooting
             <div className="text-center py-8 text-gray-500">
               <p>No items found</p>
               <p className="text-sm">Cart Items: {JSON.stringify(cartItems)}</p>
               <p className="text-sm">Total Amount: {totalAmount}</p>
-              <p className="text-sm">Stored Data: {localStorage.getItem('aqualink_order_data') ? 'Found' : 'Not found'}</p>
+              <p className="text-sm">
+                Stored Data: {localStorage.getItem('aqualink_order_data') ? 'Found' : 'Not found'}
+              </p>
             </div>
           );
         })()}
       </div>
 
-      {/* Delivery Address */}
+      {/* ===== Delivery Address Card ===== */}
       <div className="bg-white rounded-lg shadow-md p-6 mb-6">
         <div className="flex justify-between items-center mb-4">
           <h3 className="text-xl font-semibold">Delivery Address</h3>
@@ -479,7 +493,10 @@ const EnhancedDeliveryRequest = () => {
             </div>
           )}
         </div>
+
+        {/* Address Form Fields */}
         <div className="grid grid-cols-1 gap-4">
+          {/* Place / Building */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Place/Building
@@ -493,6 +510,8 @@ const EnhancedDeliveryRequest = () => {
               placeholder="Enter building or place name"
             />
           </div>
+
+          {/* Street Address */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Street Address
@@ -506,6 +525,8 @@ const EnhancedDeliveryRequest = () => {
               placeholder="Enter street address"
             />
           </div>
+
+          {/* District Selector */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
               District
@@ -517,11 +538,17 @@ const EnhancedDeliveryRequest = () => {
               className="w-full border rounded-md py-2 px-3"
             >
               <option value="">Select District</option>
-              {Object.keys(districtToTowns).sort().map(district => (
-                <option key={district} value={district}>{district}</option>
-              ))}
+              {Object.keys(districtToTowns)
+                .sort()
+                .map(district => (
+                  <option key={district} value={district}>
+                    {district}
+                  </option>
+                ))}
             </select>
           </div>
+
+          {/* Town Selector (depends on district) */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Town
@@ -537,9 +564,13 @@ const EnhancedDeliveryRequest = () => {
                 <option value="">
                   {!deliveryAddress.district ? 'Select district first' : 'Select Town'}
                 </option>
-                {availableTowns.sort().map(town => (
-                  <option key={town} value={town}>{town}</option>
-                ))}
+                {availableTowns
+                  .sort()
+                  .map(town => (
+                    <option key={town} value={town}>
+                      {town}
+                    </option>
+                  ))}
               </select>
               {!deliveryAddress.district && (
                 <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
@@ -548,16 +579,19 @@ const EnhancedDeliveryRequest = () => {
               )}
             </div>
             {!deliveryAddress.district && (
-              <p className="mt-1 text-sm text-gray-500">Please select a district first</p>
+              <p className="mt-1 text-sm text-gray-500">
+                Please select a district first
+              </p>
             )}
           </div>
         </div>
       </div>
 
-      {/* Quote Preferences */}
+      {/* ===== Quote Preferences Card ===== */}
       <div className="bg-white rounded-lg shadow-md p-6 mb-6">
         <h3 className="text-xl font-semibold mb-4">Quote Preferences</h3>
         <div className="space-y-4">
+          {/* Expiry Time Selector */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Quotes should expire after:
@@ -575,14 +609,14 @@ const EnhancedDeliveryRequest = () => {
         </div>
       </div>
 
-      {/* Error Message */}
+      {/* ===== Inline Error Message (non-blocking) ===== */}
       {error && (
         <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded mb-6">
           {error}
         </div>
       )}
 
-      {/* Submit Button */}
+      {/* ===== Submit Button Row ===== */}
       <div className="flex justify-end">
         <button
           onClick={handleSubmitQuoteRequest}

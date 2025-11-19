@@ -31,6 +31,8 @@ import { CartProvider } from "./context/CartContext";
 import { useCart } from "./context/CartContext";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { ToastContainer } from "react-toastify";
+import Service from "./pages/Service";
+import Service1 from "./pages/Service1";
 
 // Main App Content Component (to use auth hooks inside provider)
 const AppContent = () => {
@@ -175,6 +177,10 @@ const AppRouter = ({ showLogin, setShowLogin, showProfileMenu, setShowProfileMen
           <Route path="/shop-owner/quote-acceptance" element={<QuoteAcceptance />} />
           <Route path="/order-confirmation/:orderId" element={<OrderConfirmation />} />
           <Route path="/orders" element={<OrdersManagement />} />
+
+          <Route path="/service" element={<Service />} />
+          <Route path="/service1" element={<Service1 />} />
+          
         </Routes>
       </main>
     </div>
