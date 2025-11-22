@@ -15,8 +15,7 @@ import java.util.HashMap;
 import java.util.stream.Collectors;
 
 @RestController
-@RequestMapping("/api/v1/fish")
-@CrossOrigin(origins = {"http://localhost:5173"})
+@RequestMapping("/api/admin/fish")
 public class FishAdsApproveController {
 
     @Autowired

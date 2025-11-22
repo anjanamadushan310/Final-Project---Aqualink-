@@ -10,6 +10,7 @@ import java.util.stream.Collectors;
 
 import javax.crypto.SecretKey;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import com.example.aqualink.entity.Role;
@@ -22,8 +23,11 @@ import jakarta.servlet.http.HttpServletRequest;
 
 @Component
 public class JwtUtil {
-    private String secret = "O6z6I2xL8UeQ9nV0xD5hRpO3rYgCmJv6YzNcT0qLgBw=";
-    private int jwtExpiration = 60*60*8*1000; // 8 hours for development
+    @Value("${jwt.secret:O6z6I2xL8UeQ9nV0xD5hRpO3rYgCmJv6YzNcT0qLgBw=}")
+    private String secret;
+    
+    @Value("${jwt.expiration:28800000}")
+    private int jwtExpiration; // Default 8 hours for development
 
     // Add the missing getSigningKey method
     private SecretKey getSigningKey() {

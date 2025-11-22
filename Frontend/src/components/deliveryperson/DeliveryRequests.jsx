@@ -144,7 +144,7 @@ const DeliveryRequests = () => {
             </div>
           ) : (
             filteredRequests.map(request => (
-              <div key={request.id} className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+              <div key={request.orderId || request.sessionId || request.id} className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
                 {/* Header */}
                 <div className="bg-gradient-to-r from-blue-50 to-indigo-50 p-6 border-b border-gray-200">
                   <div className="flex justify-between items-start">
@@ -337,9 +337,18 @@ const CreateQuoteModal = ({ isOpen, onClose, request }) => {
     setIsSubmitting(true);
 
     try {
+      console.log('=== CREATING DELIVERY QUOTE ===');
       console.log('Full request object:', request);
       console.log('request.id:', request.id);
       console.log('request.orderId:', request.orderId);
+      
+      // Debug authentication
+      const token = localStorage.getItem('token');
+      console.log('Auth Token exists:', !!token);
+      console.log('User from context:', user);
+      console.log('User roles:', user?.roles);
+      console.log('Required role: DELIVERY_PERSON');
+      console.log('==============================');
       
       const quoteData = {
         requestId: request.orderId || request.id, // Use orderId first, fallback to id
@@ -363,12 +372,14 @@ const CreateQuoteModal = ({ isOpen, onClose, request }) => {
         // Refresh the requests list
         window.location.reload();
       } else {
-        throw new Error(response.message || 'Failed to create quote');
+        // Show the detailed error message from the service
+        alert(response.message || 'Failed to create quote');
+        return;
       }
       
     } catch (error) {
       console.error('Error creating quote:', error);
-      alert('Failed to create quote. Please try again.');
+      alert(error.message || 'Failed to create quote. Please try again.');
     } finally {
       setIsSubmitting(false);
     }

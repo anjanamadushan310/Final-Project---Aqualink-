@@ -2,6 +2,7 @@ package com.example.aqualink.security.config;
 
 import com.example.aqualink.security.filter.JwtAuthFilter;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -20,6 +21,7 @@ import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 import java.util.Arrays;
+import java.util.List;
 
 @Configuration
 @EnableWebSecurity
@@ -28,6 +30,9 @@ public class SecurityConfig {
 
     @Autowired
     private JwtAuthFilter jwtAuthFilter;
+
+    @Value("${cors.allowed.origins:http://localhost:5173,http://localhost:3000}")
+    private String allowedOrigins;
 
     @Bean
     public PasswordEncoder passwordEncoder() {
@@ -59,14 +64,12 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/api/fish-ads").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/delivery-quotes/create-initial-order").permitAll() // Temporarily allow this endpoint for testing
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
-                        // Delivery and shop endpoints require authentication
+                        // Protected endpoints - require authentication
                         .requestMatchers("/api/delivery/**").authenticated()
-                        .requestMatchers("/api/delivery-quotes/**").permitAll() // Temporarily allow all delivery quotes endpoints for testing
+                        .requestMatchers("/api/delivery-quotes/**").authenticated()
                         .requestMatchers("/api/shop/**").authenticated()
-                        // Cart endpoints - temporarily allow for testing
-                        .requestMatchers("/api/cart/**").permitAll()
-                        // Orders endpoints - temporarily allow for testing
-                        .requestMatchers("/api/orders/**").permitAll()
+                        .requestMatchers("/api/cart/**").authenticated()
+                        .requestMatchers("/api/orders/**").authenticated()
 
                         .anyRequest().authenticated()
                 )
@@ -80,10 +83,15 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOriginPatterns(Arrays.asList("http://localhost:5173", "http://localhost:3000"));
+        
+        // Parse allowed origins from property (comma-separated)
+        List<String> origins = Arrays.asList(allowedOrigins.split(","));
+        configuration.setAllowedOrigins(origins);
+        
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
-        configuration.setAllowedHeaders(Arrays.asList("*"));
+        configuration.setAllowedHeaders(Arrays.asList("Authorization", "Content-Type", "Accept", "X-Requested-With"));
         configuration.setAllowCredentials(true);
+        configuration.setMaxAge(3600L);
         
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", configuration);

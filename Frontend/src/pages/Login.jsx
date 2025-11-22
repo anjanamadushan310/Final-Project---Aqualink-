@@ -1,5 +1,6 @@
 /*import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { API_URL } from "../config";
 
 function LoginForm({ onLogin, onClose }) {
   const [email, setEmail] = useState("");
@@ -14,7 +15,7 @@ function LoginForm({ onLogin, onClose }) {
     setLoading(true);
     
     try {
-      const res = await fetch("http://localhost:8080/api/auth/login", {
+      const res = await fetch(`${API_URL}/auth/login`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json"
@@ -149,6 +150,7 @@ export default LoginForm;
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+import { getDefaultDashboardRoute } from "../utils/roleUtils";
 
 function LoginForm({ onClose }) {
   const [email, setEmail] = useState("");
@@ -164,12 +166,14 @@ function LoginForm({ onClose }) {
     setLoading(true);
     
     try {
-      await login(email, password);
+      const response = await login(email, password);
       
-      // Close modal and redirect based on user role
+      // Close modal
       onClose();
-      // You can add role-based navigation here if needed
-      navigate('/');
+      
+      // Redirect to user's dashboard based on their roles
+      const dashboardRoute = getDefaultDashboardRoute(response.roles);
+      navigate(dashboardRoute);
       
     } catch (error) {
       console.error("Login error:", error);

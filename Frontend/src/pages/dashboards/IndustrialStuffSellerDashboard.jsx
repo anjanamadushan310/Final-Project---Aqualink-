@@ -1,31 +1,21 @@
 import React, { useState } from 'react';
+import { Routes, Route, Navigate } from 'react-router-dom';
 import Sidebar from '../../components/industrialstuffseller/Sidebar';
 import IndustrialStuffOrder from '../../components/industrialstuffseller/IndustrialStuffOrders';
 import IndustrialStuffFishStockManagement from '../../components/industrialstuffseller/IndustrialStuffStockManagement';
 import IndustrialStuffForm from '../../components/industrialstuffseller/IndustrialStuffForm';
 import DashboardFooter from '../../components/common/DashboardFooter';
+import RoleBasedRoute from '../../components/common/RoleBasedRoute';
+import { ROLES } from '../../utils/roleUtils';
 
 
 const IndustrialStuffSellerDashboard = () => {
-  const [activeComponent, setActiveComponent] = useState('dashboard');
   const [sidebarOpen, setSidebarOpen] = useState(false);
-
-  const renderComponent = () => {
-    switch (activeComponent) {
-      
-      case 'industrial-stuff-orders': return <IndustrialStuffOrder />;
-      case 'industrial-stuff-Stock-management': return <IndustrialStuffFishStockManagement />;
-      case 'industrial-stuff-form': return <IndustrialStuffForm />;
-      default: return <IndustrialStuffOrder/>;
-    }
-  };
 
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col">
       {/* Sidebar */}
       <Sidebar 
-        activeComponent={activeComponent}
-        setActiveComponent={setActiveComponent}
         sidebarOpen={sidebarOpen}
         setSidebarOpen={setSidebarOpen}
       />
@@ -33,7 +23,24 @@ const IndustrialStuffSellerDashboard = () => {
       {/* Main Content */}
       <div className="lg:ml-64 flex flex-col flex-1">
         <main className="p-4 lg:p-8 flex-1">
-          {renderComponent()}
+          <Routes>
+            <Route index element={<Navigate to="orders" replace />} />
+            <Route path="orders" element={
+              <RoleBasedRoute allowedRoles={[ROLES.INDUSTRIAL_STUFF_SELLER]}>
+                <IndustrialStuffOrder />
+              </RoleBasedRoute>
+            } />
+            <Route path="stock-management" element={
+              <RoleBasedRoute allowedRoles={[ROLES.INDUSTRIAL_STUFF_SELLER]}>
+                <IndustrialStuffFishStockManagement />
+              </RoleBasedRoute>
+            } />
+            <Route path="create-ads" element={
+              <RoleBasedRoute allowedRoles={[ROLES.INDUSTRIAL_STUFF_SELLER]}>
+                <IndustrialStuffForm />
+              </RoleBasedRoute>
+            } />
+          </Routes>
         </main>
         
         {/* Footer */}

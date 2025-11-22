@@ -19,16 +19,33 @@ export const AuthProvider = ({ children }) => {
 
   // Check if user is authenticated on app load
   useEffect(() => {
+    console.log('=== AUTH CONTEXT INITIALIZATION ===');
+    console.log('Token from localStorage:', token ? 'Present' : 'Missing');
+    
     if (token) {
-      // Try to get user info from token or make a request to verify
+      // Try to get user info from localStorage
       const userData = localStorage.getItem('user');
+      console.log('User data from localStorage:', userData);
+      
       if (userData) {
-        setUser(JSON.parse(userData));
+        try {
+          const parsedUser = JSON.parse(userData);
+          console.log('Parsed user:', parsedUser);
+          console.log('User roles:', parsedUser.roles);
+          setUser(parsedUser);
+        } catch (error) {
+          console.error('Error parsing user data:', error);
+          logout();
+        }
       }
       
       // Check if token is expired
       checkTokenExpiration();
+    } else {
+      console.log('No token found, user not authenticated');
     }
+    
+    console.log('=================================');
     setLoading(false);
     
     // Listen for token expiration events from API calls
@@ -71,32 +88,60 @@ export const AuthProvider = ({ children }) => {
         password
       });
 
-      const { token: authToken, roles, nicNumber, userId } = response;
+      console.log('=== LOGIN RESPONSE DEBUG ===');
+      console.log('Full response:', response);
+      console.log('Token:', response.token ? 'Present' : 'Missing');
+      console.log('Roles (raw):', response.roles);
+      console.log('===========================');
+
+      const { token: authToken, roles: rolesData, nicNumber, userId } = response;
       
+      // Extract role names from Role objects
+      // Backend returns: [{id: 1, name: "SHOP_OWNER"}, ...]
+      // We need: ["SHOP_OWNER", ...]
+      let roleNames = [];
+      if (rolesData && Array.isArray(rolesData)) {
+        roleNames = rolesData.map(role => role.name || role);
+      } else if (rolesData) {
+        // If it's a Set or object, convert to array of names
+        roleNames = Object.values(rolesData).map(role => 
+          typeof role === 'object' ? role.name : role
+        );
+      }
+
+      console.log('=== EXTRACTED ROLE NAMES ===');
+      console.log('Role names:', roleNames);
+      console.log('============================');
+      
+      const userData = {
+        email,
+        roles: roleNames,
+        nicNumber,
+        userId
+      };
+
       // Store in localStorage
       localStorage.setItem('token', authToken);
-      localStorage.setItem('user', JSON.stringify({
-        email,
-        roles,
-        nicNumber,
-        userId
-      }));
+      localStorage.setItem('user', JSON.stringify(userData));
 
       setToken(authToken);
-      setUser({
-        email,
-        roles,
-        nicNumber,
-        userId
-      });
+      setUser(userData);
 
-      return response;
+      console.log('=== USER DATA STORED ===');
+      console.log('Token stored:', !!localStorage.getItem('token'));
+      console.log('User stored:', localStorage.getItem('user'));
+      console.log('========================');
+
+      return { ...response, roles: roleNames };
     } catch (error) {
+      console.error('Login error:', error);
       throw error;
     }
   };
 
   const logout = () => {
+    console.log('=== LOGOUT INITIATED ===');
+    
     // Clear authentication data
     localStorage.removeItem('token');
     localStorage.removeItem('user');
@@ -117,8 +162,16 @@ export const AuthProvider = ({ children }) => {
     }
     keysToRemove.forEach(key => localStorage.removeItem(key));
     
+    console.log('Cleared localStorage items:', keysToRemove.length + 5);
+    
+    // Clear session storage for temporary data
+    sessionStorage.clear();
+    
     setToken(null);
     setUser(null);
+    
+    console.log('Auth state cleared');
+    console.log('========================');
     
     // Dispatch a custom event to trigger navigation to home page and cart clearing
     window.dispatchEvent(new CustomEvent('user-logout'));

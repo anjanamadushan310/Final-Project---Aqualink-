@@ -12,7 +12,6 @@ import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/industrial")
-@CrossOrigin(origins = "http://localhost:5173")
 @RequiredArgsConstructor
 public class IndustrialStuffViewController {
 

@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { Routes, Route, Navigate } from 'react-router-dom';
 import Sidebar from '../../components/deliveryperson/Sidebar';
 import DeliveryHistory from '../../components/deliveryperson/DeliveryHistory';
 import DeliveryRequests from '../../components/deliveryperson/DeliveryRequests';
@@ -7,31 +8,18 @@ import CoverageAreaManagement from '../../components/deliveryperson/CoverageArea
 import EarningsTracker from '../../components/deliveryperson/EarningsTracker';
 import CurrentDeliveries from '../../components/deliveryperson/CurrentDeliveries';
 import DashboardFooter from '../../components/common/DashboardFooter';
+import RoleBasedRoute from '../../components/common/RoleBasedRoute';
+import { ROLES } from '../../utils/roleUtils';
 
 
 
 const DeliveryPersonDashboard = () => {
-  const [activeComponent, setActiveComponent] = useState('dashboard');DeliveryHistory
   const [sidebarOpen, setSidebarOpen] = useState(false);
-
-  const renderComponent = () => {
-    switch (activeComponent) {
-      case 'delivery-requests': return <DeliveryRequests />;
-      case 'delivery-history': return <DeliveryHistory />;
-      case 'quote-management': return <QuoteManagement />;
-      case 'coverage-area-management': return <CoverageAreaManagement />;
-      case 'earnings-tracker': return <EarningsTracker />;
-      case 'current-deliveries': return <CurrentDeliveries />;
-      default: return <DeliveryRequests />;
-    }
-  };
 
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col">
       {/* Sidebar */}
       <Sidebar
-        activeComponent={activeComponent}
-        setActiveComponent={setActiveComponent}
         sidebarOpen={sidebarOpen}
         setSidebarOpen={setSidebarOpen}
       />
@@ -39,7 +27,39 @@ const DeliveryPersonDashboard = () => {
       {/* Main Content */}
       <div className="lg:ml-64 flex flex-col flex-1">
         <main className="p-4 lg:p-8 flex-1">
-          {renderComponent()}
+          <Routes>
+            <Route index element={<Navigate to="delivery-requests" replace />} />
+            <Route path="delivery-requests" element={
+              <RoleBasedRoute allowedRoles={[ROLES.DELIVERY_PERSON]}>
+                <DeliveryRequests />
+              </RoleBasedRoute>
+            } />
+            <Route path="delivery-history" element={
+              <RoleBasedRoute allowedRoles={[ROLES.DELIVERY_PERSON]}>
+                <DeliveryHistory />
+              </RoleBasedRoute>
+            } />
+            <Route path="quote-management" element={
+              <RoleBasedRoute allowedRoles={[ROLES.DELIVERY_PERSON]}>
+                <QuoteManagement />
+              </RoleBasedRoute>
+            } />
+            <Route path="coverage-area" element={
+              <RoleBasedRoute allowedRoles={[ROLES.DELIVERY_PERSON]}>
+                <CoverageAreaManagement />
+              </RoleBasedRoute>
+            } />
+            <Route path="earnings" element={
+              <RoleBasedRoute allowedRoles={[ROLES.DELIVERY_PERSON]}>
+                <EarningsTracker />
+              </RoleBasedRoute>
+            } />
+            <Route path="current-deliveries" element={
+              <RoleBasedRoute allowedRoles={[ROLES.DELIVERY_PERSON]}>
+                <CurrentDeliveries />
+              </RoleBasedRoute>
+            } />
+          </Routes>
         </main>
         
         {/* Footer */}

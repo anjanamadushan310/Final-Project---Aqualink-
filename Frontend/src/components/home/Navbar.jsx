@@ -4,6 +4,7 @@ import { Fish, User, Settings, LogOut, Briefcase, Home } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import ProfileMenu from './ProfileMenu';
+import { getDashboardPath } from '../../utils/roleUtils';
 
 function Navbar({
   dashboardName,
@@ -21,11 +22,9 @@ function Navbar({
 
   // Handle dashboard selection with navigation
   const handleDashboardSelect = (role) => {
-    // Convert role to URL-friendly format
-    const dashboardPath = role.toLowerCase().replace('_', '-').replace('_', '-');        //replace(/_/g, '-');
-    
-    // Navigate to the dashboard route
-    navigate(`/dashboard/${dashboardPath}`);
+    // All dashboards now use single /dashboard route
+    // The actual dashboard is determined by user's primary role
+    navigate(getDashboardPath());
     
     // Close the profile menu
     setShowProfileMenu(false);

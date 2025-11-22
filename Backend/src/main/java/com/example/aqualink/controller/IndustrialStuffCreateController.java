@@ -15,7 +15,6 @@ import jakarta.servlet.http.HttpServletRequest;
 
 @RestController
 @RequestMapping("/api/industrial-ads")
-@CrossOrigin(origins = "http://localhost:5173")
 public class IndustrialStuffCreateController {
 
     private final IndustrialStuffCreateService industrialService;

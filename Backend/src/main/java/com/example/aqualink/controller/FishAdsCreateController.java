@@ -21,7 +21,6 @@ import jakarta.servlet.http.HttpServletRequest;
 
 @RestController
 @RequestMapping("/api/fish-ads")
-@CrossOrigin(origins = "http://localhost:5173")
 public class FishAdsCreateController {
 
     private final FishAdsCreateService fishService;

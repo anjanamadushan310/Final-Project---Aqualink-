@@ -163,7 +163,7 @@ const BlogPostForm = ({ editMode = false }) => {
       }
       
       // Navigate back to blog management
-      navigate('/dashboard/Exporter/blog');
+      navigate('/dashboard/blog');
     } catch (err) {
       let errorMessage = 'Failed to save blog post. ';
       
@@ -418,7 +418,7 @@ const BlogPostForm = ({ editMode = false }) => {
         <div className="flex justify-end space-x-4">
           <button
             type="button"
-            onClick={() => navigate('/dashboard/Exporter/blog')}
+            onClick={() => navigate('/dashboard/blog')}
             className="px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-500"
             disabled={submitting}
           >

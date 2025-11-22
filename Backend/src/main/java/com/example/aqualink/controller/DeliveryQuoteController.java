@@ -26,7 +26,6 @@ import lombok.RequiredArgsConstructor;
 @RestController
 @RequestMapping("/api/delivery-quotes")
 @RequiredArgsConstructor
-@CrossOrigin(origins = {"http://localhost:5173", "http://localhost:3000"})
 public class DeliveryQuoteController {
 
     private final DeliveryQuoteService deliveryQuoteService;
@@ -35,8 +34,7 @@ public class DeliveryQuoteController {
      * Create delivery quote request and update order with address (called when submit button is clicked)
      */
     @PostMapping("/request")
-    // Temporarily removing authorization to test - TODO: Add back role restriction
-    // @PreAuthorize("hasRole('SHOP_OWNER') or hasRole('FARM_OWNER') or hasRole('INDUSTRIAL_STUFF_SELLER')")
+    @PreAuthorize("hasRole('SHOP_OWNER') or hasRole('FARM_OWNER') or hasRole('INDUSTRIAL_STUFF_SELLER')")
     public ResponseEntity<DeliveryQuoteRequestDTO> createQuoteRequest(
             @RequestBody DeliveryQuoteRequestWithOrderDTO requestDTO,
             Authentication authentication) {
@@ -65,8 +63,7 @@ public class DeliveryQuoteController {
      * Get available quote requests for delivery persons
      */
     @GetMapping("/available")
-    // Temporarily removing role restriction to debug 403 error
-    // @PreAuthorize("hasRole('DELIVERY_PERSON')")
+    @PreAuthorize("hasRole('DELIVERY_PERSON')")
     public ResponseEntity<List<DeliveryRequestForFrontendDTO>> getAvailableQuoteRequests(Authentication authentication) {
         String deliveryPersonEmail = authentication.getName();
         System.out.println("Fetching available requests for: " + deliveryPersonEmail);
@@ -85,8 +82,7 @@ public class DeliveryQuoteController {
      * Create a delivery quote (from delivery person)
      */
     @PostMapping("/create")
-    // Temporarily removing authorization to test
-    // @PreAuthorize("hasRole('DELIVERY_PERSON')")
+    @PreAuthorize("hasRole('DELIVERY_PERSON')")
     public ResponseEntity<DeliveryQuoteDTO> createQuote(
             @RequestBody CreateQuoteForFrontendDTO createDTO,
             Authentication authentication) {
@@ -99,8 +95,7 @@ public class DeliveryQuoteController {
      * Get quotes for a specific order (for customer)
      */
     @GetMapping("/order/{orderId}/quotes")
-    // Temporarily removing authorization to test
-    // @PreAuthorize("hasRole('SHOP_OWNER') or hasRole('FARM_OWNER') or hasRole('INDUSTRIAL_STUFF_SELLER')")
+    @PreAuthorize("hasRole('SHOP_OWNER') or hasRole('FARM_OWNER') or hasRole('INDUSTRIAL_STUFF_SELLER')")
     public ResponseEntity<List<DeliveryQuoteDTO>> getQuotesForOrder(
             @PathVariable Long orderId,
             Authentication authentication) {

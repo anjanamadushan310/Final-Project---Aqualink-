@@ -1,5 +1,5 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
+import { Link, NavLink } from 'react-router-dom';
 import { 
   HomeIcon, 
   UserPlusIcon, 
@@ -13,13 +13,11 @@ import {
   ClipboardDocumentListIcon
 } from '@heroicons/react/24/outline';
 
-const Sidebar = ({ activeComponent, setActiveComponent, sidebarOpen, setSidebarOpen }) => {
+const Sidebar = ({ sidebarOpen, setSidebarOpen }) => {
   const menuItems = [
-    { id: 'sales-orders', label: 'Sales Orders', icon: ShoppingBagIcon },
-    { id: 'fish-stock-management', label: 'Stock Management', icon: ClipboardDocumentListIcon },
-    { id: 'fish-ads-form', label: 'Create Ads', icon: PhotoIcon },
-    
-    
+    { id: 'sales-orders', label: 'Sales Orders', icon: ShoppingBagIcon, path: '/dashboard/sales-orders' },
+    { id: 'fish-stock-management', label: 'Stock Management', icon: ClipboardDocumentListIcon, path: '/dashboard/stock-management' },
+    { id: 'fish-ads-form', label: 'Create Ads', icon: PhotoIcon, path: '/dashboard/create-ads' },
   ];
 
   return (
@@ -58,21 +56,21 @@ const Sidebar = ({ activeComponent, setActiveComponent, sidebarOpen, setSidebarO
           {menuItems.map((item) => {
             const Icon = item.icon;
             return (
-              <button
+              <NavLink
                 key={item.id}
-                onClick={() => {
-                  setActiveComponent(item.id);
-                  setSidebarOpen(false);
-                }}
-                className={`w-full flex items-center space-x-3 px-3 py-3 mb-2 rounded-lg text-left transition-colors ${
-                  activeComponent === item.id
-                    ? 'bg-teal-600 text-white shadow-lg'
-                    : 'text-blue-100 hover:bg-teal-600 hover:text-white'
-                }`}
+                to={item.path}
+                onClick={() => setSidebarOpen(false)}
+                className={({ isActive }) =>
+                  `w-full flex items-center space-x-3 px-3 py-3 mb-2 rounded-lg transition-colors ${
+                    isActive
+                      ? 'bg-teal-600 text-white shadow-lg'
+                      : 'text-blue-100 hover:bg-teal-600 hover:text-white'
+                  }`
+                }
               >
                 <Icon className="w-5 h-5" />
                 <span className="font-medium">{item.label}</span>
-              </button>
+              </NavLink>
             );
           })}
         </nav>

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
+import { Link, NavLink } from 'react-router-dom';
 import { 
   HomeIcon, 
   UserPlusIcon, 
@@ -13,14 +13,14 @@ import {
   ClipboardDocumentListIcon
 } from '@heroicons/react/24/outline';
 
-const Sidebar = ({ activeComponent, setActiveComponent, sidebarOpen, setSidebarOpen }) => {
+const Sidebar = ({ sidebarOpen, setSidebarOpen }) => {
   const menuItems = [
-    { id: 'delivery-requests', label: 'Delivery Requests', icon: ClipboardDocumentListIcon },
-    { id: 'delivery-history', label: 'Delivery History', icon:  ShoppingBagIcon },
-    { id: 'quote-management', label: 'Quote Management', icon:StarIcon },
-    { id: 'coverage-area-management', label: 'Coverage Area Management', icon:StarIcon },
-    { id: 'earnings-tracker', label: 'Earnings Tracker', icon:StarIcon },
-    { id: 'current-deliveries', label: 'Current Deliveries', icon:StarIcon },
+    { id: 'delivery-requests', label: 'Delivery Requests', icon: ClipboardDocumentListIcon, path: '/dashboard/delivery-requests' },
+    { id: 'delivery-history', label: 'Delivery History', icon:  ShoppingBagIcon, path: '/dashboard/delivery-history' },
+    { id: 'quote-management', label: 'Quote Management', icon:StarIcon, path: '/dashboard/quote-management' },
+    { id: 'coverage-area-management', label: 'Coverage Area Management', icon:StarIcon, path: '/dashboard/coverage-area' },
+    { id: 'earnings-tracker', label: 'Earnings Tracker', icon:StarIcon, path: '/dashboard/earnings' },
+    { id: 'current-deliveries', label: 'Current Deliveries', icon:StarIcon, path: '/dashboard/current-deliveries' },
   ];
 
   return (
@@ -59,21 +59,21 @@ const Sidebar = ({ activeComponent, setActiveComponent, sidebarOpen, setSidebarO
           {menuItems.map((item) => {
             const Icon = item.icon;
             return (
-              <button
+              <NavLink
                 key={item.id}
-                onClick={() => {
-                  setActiveComponent(item.id);
-                  setSidebarOpen(false);
-                }}
-                className={`w-full flex items-center space-x-3 px-3 py-3 mb-2 rounded-lg text-left transition-colors ${
-                  activeComponent === item.id
-                    ? 'bg-teal-600 text-white shadow-lg'
-                    : 'text-blue-100 hover:bg-teal-600 hover:text-white'
-                }`}
+                to={item.path}
+                onClick={() => setSidebarOpen(false)}
+                className={({ isActive }) =>
+                  `w-full flex items-center space-x-3 px-3 py-3 mb-2 rounded-lg transition-colors ${
+                    isActive
+                      ? 'bg-teal-600 text-white shadow-lg'
+                      : 'text-blue-100 hover:bg-teal-600 hover:text-white'
+                  }`
+                }
               >
                 <Icon className="w-5 h-5" />
                 <span className="font-medium">{item.label}</span>
-              </button>
+              </NavLink>
             );
           })}
         </nav>
