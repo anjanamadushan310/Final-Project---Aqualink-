@@ -10,7 +10,6 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/banners")
-@CrossOrigin(origins = "http://localhost:5173")
 public class BannerController {
     @Autowired
     private BannerService bannerService;

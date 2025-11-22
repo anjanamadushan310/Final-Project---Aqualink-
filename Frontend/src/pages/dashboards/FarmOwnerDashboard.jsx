@@ -1,32 +1,22 @@
 import React, { useState } from 'react';
+import { Routes, Route, Navigate } from 'react-router-dom';
 import Sidebar from '../../components/farmowner/Sidebar';
 import FishStockManagement from '../../components/farmowner/FishStockManagement';
 import FishAdsForm from '../../components/farmowner/FishAdsForm';
 import SellerOrdersManagement from '../../components/farmowner/SellerOrdersManagement';
 import DashboardFooter from '../../components/common/DashboardFooter';
+import RoleBasedRoute from '../../components/common/RoleBasedRoute';
+import { ROLES } from '../../utils/roleUtils';
 
 
 
 const FarmOwnerDashboard= () => {
-  const [activeComponent, setActiveComponent] = useState('sales-orders');
   const [sidebarOpen, setSidebarOpen] = useState(false);
-
-  const renderComponent = () => {
-    switch (activeComponent) {
-      
-      case 'sales-orders': return <SellerOrdersManagement/>;
-      case 'fish-stock-management': return <FishStockManagement />;
-      case 'fish-ads-form': return <FishAdsForm />;
-      default: return <SellerOrdersManagement />;
-    }
-  };
 
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col">
       {/* Sidebar */}
       <Sidebar
-        activeComponent={activeComponent}
-        setActiveComponent={setActiveComponent}
         sidebarOpen={sidebarOpen}
         setSidebarOpen={setSidebarOpen}
       />
@@ -34,7 +24,24 @@ const FarmOwnerDashboard= () => {
       {/* Main Content */}
       <div className="lg:ml-64 flex flex-col flex-1">
         <main className="p-4 lg:p-8 flex-1">
-          {renderComponent()}
+          <Routes>
+            <Route index element={<Navigate to="sales-orders" replace />} />
+            <Route path="sales-orders" element={
+              <RoleBasedRoute allowedRoles={[ROLES.FARM_OWNER]}>
+                <SellerOrdersManagement />
+              </RoleBasedRoute>
+            } />
+            <Route path="stock-management" element={
+              <RoleBasedRoute allowedRoles={[ROLES.FARM_OWNER]}>
+                <FishStockManagement />
+              </RoleBasedRoute>
+            } />
+            <Route path="create-ads" element={
+              <RoleBasedRoute allowedRoles={[ROLES.FARM_OWNER]}>
+                <FishAdsForm />
+              </RoleBasedRoute>
+            } />
+          </Routes>
         </main>
         
         {/* Footer */}

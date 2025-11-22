@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import { API_URL } from '../config';
 import Footer from './home/Footer';
 
 const RegistrationForm = ({ setShowLogin }) => {
@@ -132,7 +133,7 @@ const RegistrationForm = ({ setShowLogin }) => {
   useEffect(() => {
   const fetchRoles = async () => {
     try {
-      const response = await axios.get('http://localhost:8080/api/users/roles');
+      const response = await axios.get(`${API_URL}/users/roles`);
       // Filter out any admin role by value; update as needed based on your actual admin value
       setAvailableRoles(
         response.data.filter(role => role.value !== 'ADMIN')
@@ -306,7 +307,7 @@ const RegistrationForm = ({ setShowLogin }) => {
 
     try {
       setOtpMessage('Sending OTP...');
-      const response = await axios.get(`http://localhost:8080/api/users/send-otp?email=${formData.email}`);
+      const response = await axios.get(`${API_URL}/users/send-otp?email=${formData.email}`);
       setOtpMessage(response.data.message);
       setOtpSent(true);
       setOtpVerified(false);
@@ -337,7 +338,7 @@ const RegistrationForm = ({ setShowLogin }) => {
     setOtpLoading(true);
 
     try {
-      const response = await axios.post('http://localhost:8080/api/users/verify-otp', null, {
+      const response = await axios.post(`${API_URL}/users/verify-otp`, null, {
         params: { email: formData.email, otp }
       });
       setOtpMessage(response.data.message);
@@ -454,7 +455,7 @@ const RegistrationForm = ({ setShowLogin }) => {
 
     try {
       const response = await axios.post(
-        'http://localhost:8080/api/users/register',
+        `${API_URL}/users/register`,
         formDataToSend,
         {
           headers: {

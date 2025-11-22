@@ -32,7 +32,6 @@ import lombok.RequiredArgsConstructor;
 @RestController
 @RequestMapping("/api/service-provider/services")
 @RequiredArgsConstructor
-@CrossOrigin(origins = {"http://localhost:5173", "http://localhost:3000"})
 @PreAuthorize("hasRole('SERVICE_PROVIDER')")
 public class ServiceProviderController {
 

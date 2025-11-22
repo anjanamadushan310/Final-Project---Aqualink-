@@ -1,5 +1,5 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
+import { Link, NavLink } from 'react-router-dom';
 import { 
   HomeIcon, 
   UserPlusIcon, 
@@ -12,17 +12,16 @@ import {
   XMarkIcon
 } from '@heroicons/react/24/outline';
 
-const Sidebar = ({ activeComponent, setActiveComponent, sidebarOpen, setSidebarOpen }) => {
+const Sidebar = ({ sidebarOpen, setSidebarOpen }) => {
   const menuItems = [
-    { id: 'user-verification', label: 'User Verification', icon: UserPlusIcon },
-    { id: 'product-management', label: 'Fish Ads Management', icon: CubeIcon },
-    { id: 'Stuff-management', label: 'Stuff Management', icon: CubeIcon },
-    { id: 'Service-management', label: 'Service Management', icon: CubeIcon },
-    { id: 'user-management', label: 'User Management', icon: UsersIcon },
-    { id: 'reviews', label: 'Reviews Management', icon: StarIcon },
-    { id: 'earnings', label: 'Earnings & Payments', icon: CurrencyDollarIcon },
-    { id: 'banners', label: 'Banner Management', icon: PhotoIcon },
-    
+    { id: 'user-verification', label: 'User Verification', icon: UserPlusIcon, path: '/dashboard/user-verification' },
+    { id: 'product-management', label: 'Fish Ads Management', icon: CubeIcon, path: '/dashboard/fish-ads' },
+    { id: 'Stuff-management', label: 'Stuff Management', icon: CubeIcon, path: '/dashboard/stuff-management' },
+    { id: 'Service-management', label: 'Service Management', icon: CubeIcon, path: '/dashboard/service-management' },
+    { id: 'user-management', label: 'User Management', icon: UsersIcon, path: '/dashboard/user-management' },
+    { id: 'reviews', label: 'Reviews Management', icon: StarIcon, path: '/dashboard/reviews' },
+    { id: 'earnings', label: 'Earnings & Payments', icon: CurrencyDollarIcon, path: '/dashboard/earnings' },
+    { id: 'banners', label: 'Banner Management', icon: PhotoIcon, path: '/dashboard/banners' },
   ];
 
   return (
@@ -61,21 +60,21 @@ const Sidebar = ({ activeComponent, setActiveComponent, sidebarOpen, setSidebarO
           {menuItems.map((item) => {
             const Icon = item.icon;
             return (
-              <button
+              <NavLink
                 key={item.id}
-                onClick={() => {
-                  setActiveComponent(item.id);
-                  setSidebarOpen(false);
-                }}
-                className={`w-full flex items-center space-x-3 px-3 py-3 mb-2 rounded-lg text-left transition-colors ${
-                  activeComponent === item.id
-                    ? 'bg-teal-600 text-white shadow-lg'
-                    : 'text-blue-100 hover:bg-teal-600 hover:text-white'
-                }`}
+                to={item.path}
+                onClick={() => setSidebarOpen(false)}
+                className={({ isActive }) =>
+                  `w-full flex items-center space-x-3 px-3 py-3 mb-2 rounded-lg transition-colors ${
+                    isActive
+                      ? 'bg-teal-600 text-white shadow-lg'
+                      : 'text-blue-100 hover:bg-teal-600 hover:text-white'
+                  }`
+                }
               >
                 <Icon className="w-5 h-5" />
                 <span className="font-medium">{item.label}</span>
-              </button>
+              </NavLink>
             );
           })}
         </nav>

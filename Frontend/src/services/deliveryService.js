@@ -83,10 +83,23 @@ class DeliveryService {
       };
     } catch (error) {
       console.error('Error in createQuote:', error);
+      
+      // Provide more specific error messages
+      let errorMessage = 'Failed to create quote';
+      if (error.message.includes('403')) {
+        errorMessage = 'Access denied. You need DELIVERY_PERSON role to create quotes. Please ensure you are logged in as a delivery person.';
+      } else if (error.message.includes('401')) {
+        errorMessage = 'Your session has expired. Please log in again.';
+      } else if (error.message.includes('400')) {
+        errorMessage = 'Invalid quote data. Please check all fields and try again.';
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+      
       return {
         success: false,
         data: null,
-        message: error.message || 'Failed to create quote'
+        message: errorMessage
       };
     }
   }
@@ -180,10 +193,23 @@ class DeliveryService {
       };
     } catch (error) {
       console.error('Error in getQuotesForOrder:', error);
+      
+      // Provide more specific error messages based on error type
+      let errorMessage = 'Failed to fetch quotes';
+      if (error.message.includes('403')) {
+        errorMessage = 'Access denied. You do not have permission to view quotes for this order. Please ensure you are logged in with the correct account (SHOP_OWNER, FARM_OWNER, or INDUSTRIAL_STUFF_SELLER role required).';
+      } else if (error.message.includes('401')) {
+        errorMessage = 'Your session has expired. Please log in again.';
+      } else if (error.message.includes('404')) {
+        errorMessage = 'Order not found or no quotes available yet.';
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+      
       return {
         success: false,
         data: [],
-        message: error.message || 'Failed to fetch quotes for order'
+        message: errorMessage
       };
     }
   }
@@ -199,10 +225,23 @@ class DeliveryService {
       };
     } catch (error) {
       console.error('Error in acceptQuote:', error);
+      
+      // Provide specific error messages
+      let errorMessage = 'Failed to accept quote';
+      if (error.message.includes('403')) {
+        errorMessage = 'Access denied. You need SHOP_OWNER, FARM_OWNER, or INDUSTRIAL_STUFF_SELLER role to accept quotes. Please ensure you are logged in with the correct customer account.';
+      } else if (error.message.includes('401')) {
+        errorMessage = 'Your session has expired. Please log in again.';
+      } else if (error.message.includes('404')) {
+        errorMessage = 'Quote not found or has been withdrawn.';
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+      
       return {
         success: false,
         data: null,
-        message: error.message || 'Failed to accept quote'
+        message: errorMessage
       };
     }
   }

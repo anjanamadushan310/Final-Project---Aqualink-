@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import { API_BASE_URL, API_URL } from '../config';
 import LoadingSpinner from '../components/user-profile/LoadingSpinner';
 import ErrorDisplay from '../components/user-profile/ErrorDisplay';
 import ProfileSection from '../components/user-profile/ProfileSection';
@@ -19,9 +20,6 @@ const UserProfile = () => {
     const [availableTowns, setAvailableTowns] = useState([]);
     const [loading, setLoading] = useState(false);
     const [successMessage, setSuccessMessage] = useState('');
-
-    // API base URL
-    const API_BASE_URL = 'http://localhost:8080';
 
     useEffect(() => {
         // Add a small delay to ensure token is available after login

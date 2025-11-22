@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { User, Briefcase, LogOut } from 'lucide-react';
+import { getRoleDisplayName } from '../../utils/roleUtils';
 
 // ProfileMenu rendered in a portal to avoid clipping by ancestor overflow
 export default function ProfileMenu({ open, anchorRef, user, onClose, onProfileClick, onDashboardSelect, onLogout }) {
@@ -95,7 +96,7 @@ export default function ProfileMenu({ open, anchorRef, user, onClose, onProfileC
                 </div>
                 <div>
                   <p className="text-sm font-medium">
-                    {role === 'SHOP_OWNER' ? 'Shop Owner' : role === 'FARM_OWNER' ? 'Farm Owner' : role === 'EXPORTER' ? 'Exporter' : role === 'SERVICE_PROVIDER' ? 'Service Provider' : role === 'INDUSTRIAL_STUFF_SELLER' ? 'Industrial Seller' : role === 'DELIVERY_PERSON' ? 'Delivery Person' : role === 'ADMIN' ? 'Administrator' : role}
+                    {getRoleDisplayName(role)}
                   </p>
                   <p className="text-xs text-gray-500">Access your dashboard</p>
                 </div>

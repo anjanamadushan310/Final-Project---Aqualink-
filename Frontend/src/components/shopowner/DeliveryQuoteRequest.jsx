@@ -357,7 +357,7 @@ const EnhancedDeliveryRequest = () => {
         console.log('================================');
         
         // Navigate to quote acceptance page within the dashboard
-        navigate('/dashboard/shop-owner', { state: { activeComponent: 'quote-acceptance' } });
+        navigate('/dashboard/quote-acceptance');
       } else {
         throw new Error(response.message || 'Failed to submit quote request');
       }

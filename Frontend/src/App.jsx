@@ -6,14 +6,9 @@ import LoginForm from "./pages/Login"
 import RegistrationForm from "./components/RegistrationForm";
 import HomePage from "./pages/HomePage";
 import OrderUI from "./pages/OrderUI";
-import AdminDashboard from "./pages/dashboards/AdminDashboard";
+import ProtectedRoute from "./components/common/ProtectedRoute";
+import DashboardRouter from "./components/common/DashboardRouter";
 import UserVerificationDashboard from "./components/admin/AdminDashboard";
-import ShopOwnerDashboard from "./pages/dashboards/ShopOwnerDashboard";
-import FarmOwnerDashboard from "./pages/dashboards/FarmOwnerDashboard";
-import ExporterDashboard from "./pages/dashboards/ExporterDashboard";
-import ServiceProviderDashboard from "./pages/dashboards/ServiceProviderDashboard";
-import IndustrialStuffSellerDashboard from "./pages/dashboards/IndustrialStuffSellerDashboard";
-import DeliveryPersonDashboard from "./pages/dashboards/DeliveryPersonDashboard";
 import ProductApprove from "./components/admin/ProductApprove";
 import FishAdsForm from "./components/farmowner/FishAdsForm";
 import UserProfile from "./pages/UserProfile";
@@ -71,29 +66,11 @@ const AppRouter = ({ showLogin, setShowLogin, showProfileMenu, setShowProfileMen
     clearCart = null;
   }
 
-  // Function to determine if current route is a dashboard and get dashboard name
+  // Function to determine if current route is a dashboard
   const getDashboardName = () => {
     const pathname = location.pathname;
-    if (pathname.startsWith('/dashboard/')) {
-      const dashboardType = pathname.replace('/dashboard/', '');
-      switch (dashboardType) {
-        case 'shop-owner':
-          return 'Shop Owner Dashboard';
-        case 'Farm-Owner':
-          return 'Farm Owner Dashboard';
-        case 'Exporter':
-          return 'Exporter Dashboard';
-        case 'Service-Provider':
-          return 'Service Provider Dashboard';
-        case 'Industrial-Stuff-Seller':
-          return 'Industrial Stuff Seller Dashboard';
-        case 'Delivery-Person':
-          return 'Delivery Person Dashboard';
-        case 'admin':
-          return 'Admin Dashboard';
-        default:
-          return 'Dashboard';
-      }
+    if (pathname.startsWith('/dashboard')) {
+      return 'Dashboard';
     }
     return null;
   };
@@ -150,17 +127,15 @@ const AppRouter = ({ showLogin, setShowLogin, showProfileMenu, setShowProfileMen
           <Route path="/blog" element={<BlogPage />} />
           <Route path="/blog/:postId" element={<BlogPostPage />} />
           
-          {/* Protected Dashboard Routes */}
-          <Route path="/dashboard/shop-owner" element={<ShopOwnerDashboard />}/>
-          <Route path="/dashboard/Farm-Owner" element={<FarmOwnerDashboard />}/>
-          <Route path="/dashboard/Exporter" element={<ExporterDashboard />}/>
-          <Route path="/dashboard/Exporter/blog" element={<ExporterDashboard />}/>
-          <Route path="/dashboard/Exporter/blog/create" element={<ExporterDashboard />}/>
-          <Route path="/dashboard/Exporter/blog/edit/:postId" element={<ExporterDashboard />}/>
-          <Route path="/dashboard/Service-Provider" element={<ServiceProviderDashboard />}/>
-          <Route path="/dashboard/Industrial-Stuff-Seller" element={<IndustrialStuffSellerDashboard/>}/>
-          <Route path="/dashboard/Delivery-Person" element={<DeliveryPersonDashboard />}/>
-          <Route path="/dashboard/admin" element={<AdminDashboard />} />
+          {/* Protected Dashboard Route - Single route for all roles */}
+          <Route 
+            path="/dashboard/*" 
+            element={
+              <ProtectedRoute>
+                <DashboardRouter />
+              </ProtectedRoute>
+            } 
+          />
           <Route path="/admin/verification" element={<UserVerificationDashboard />} />
 
           <Route path="/productaprove" element={<ProductApprove />} />

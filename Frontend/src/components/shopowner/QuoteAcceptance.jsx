@@ -186,6 +186,13 @@ const QuoteAcceptance = () => {
       console.log('Order ID type:', typeof savedOrder.orderId);
       console.log('Order data:', JSON.stringify(savedOrder, null, 2));
       console.log('API endpoint:', `/api/delivery-quotes/order/${savedOrder.orderId}/quotes`);
+      
+      // Debug authentication
+      const token = localStorage.getItem('token');
+      console.log('Auth Token:', token ? `${token.substring(0, 20)}...` : 'NO TOKEN FOUND');
+      console.log('User from context:', user);
+      console.log('User roles:', user?.roles);
+      console.log('Required roles: SHOP_OWNER, FARM_OWNER, or INDUSTRIAL_STUFF_SELLER');
       console.log('========================================');
 
       // Call backend to get quotes for this specific order
@@ -224,9 +231,25 @@ const QuoteAcceptance = () => {
         // Clear any previous errors on successful load
         setError(null);
       } else {
-        // No quotes available yet - this is normal if delivery persons haven't responded
-        console.log('No quotes available yet');
-        setQuotes([]);
+        // No quotes available yet OR error occurred
+        console.log('No quotes available or error occurred');
+        console.log('Response message:', response.message);
+        
+        // If there's an error message, display it
+        if (response.message && response.message.includes('Access denied')) {
+          setError({
+            type: 'AUTH_ERROR',
+            message: response.message
+          });
+        } else if (response.message && response.message.includes('session has expired')) {
+          setError({
+            type: 'SESSION_EXPIRED',
+            message: response.message
+          });
+        } else {
+          // No quotes available yet - this is normal if delivery persons haven't responded
+          setQuotes([]);
+        }
       }
 
       setLoading(false);
@@ -325,6 +348,19 @@ const QuoteAcceptance = () => {
     setError(null);
 
     try {
+      // Debug authentication
+      console.log('=== ACCEPTING QUOTE ===');
+      const token = localStorage.getItem('token');
+      console.log('Auth Token exists:', !!token);
+      if (token) {
+        const payload = JSON.parse(atob(token.split('.')[1]));
+        console.log('User email:', payload.sub || payload.email);
+        console.log('User roles:', payload.roles);
+        console.log('Required roles: SHOP_OWNER, FARM_OWNER, or INDUSTRIAL_STUFF_SELLER');
+      }
+      console.log('Quote ID:', selectedQuote);
+      console.log('======================');
+      
       // Accept the quote using the backend API
       const response = await deliveryService.acceptQuote(selectedQuote);
 
@@ -370,7 +406,14 @@ const QuoteAcceptance = () => {
         window.location.href = `/order-confirmation/${finalOrder.orderId}`;
 
       } else {
-        throw new Error(response.message || 'Failed to accept quote');
+        // Show detailed error message from the service
+        const errorMsg = response.message || 'Failed to accept quote';
+        console.error('Quote acceptance failed:', errorMsg);
+        setError({
+          type: 'ACCEPT_ERROR',
+          message: errorMsg
+        });
+        alert(errorMsg);
       }
 
     } catch (error) {
@@ -794,7 +837,14 @@ const QuoteAcceptance = () => {
 
               {error && (
                 <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-lg">
-                  <p className="text-red-600 text-sm">{error}</p>
+                  <p className="text-red-600 text-sm">
+                    {typeof error === 'object' ? error.message : error}
+                  </p>
+                  {typeof error === 'object' && error.type === 'AUTH_ERROR' && (
+                    <p className="text-xs text-red-500 mt-2">
+                      Debug info - Check browser console for authentication details
+                    </p>
+                  )}
                 </div>
               )}
 

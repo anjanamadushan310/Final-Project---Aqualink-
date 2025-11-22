@@ -28,11 +28,11 @@ const BlogManagement = () => {
   }, []);
 
   const handleCreatePost = () => {
-    navigate('/exporter/blog/create');
+    navigate('/dashboard/blog/create');
   };
 
   const handleEdit = (postId) => {
-    navigate(`/exporter/blog/edit/${postId}`);
+    navigate(`/dashboard/blog/edit/${postId}`);
   };
 
   const handleDelete = async (postId) => {

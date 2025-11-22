@@ -4,6 +4,8 @@ import DashboardFooter from '../../components/common/DashboardFooter';
 import { PencilSquareIcon, NewspaperIcon } from '@heroicons/react/24/outline';
 import BlogManagement from '../../components/blog/BlogManagement';
 import BlogPostForm from '../../components/blog/BlogPostForm';
+import RoleBasedRoute from '../../components/common/RoleBasedRoute';
+import { ROLES } from '../../utils/roleUtils';
 
 export default function ExporterDashboard() {
   const location = useLocation();
@@ -13,7 +15,7 @@ export default function ExporterDashboard() {
   // Set the active tab based on URL path when component mounts or URL changes
   useEffect(() => {
     const path = location.pathname;
-    if (path.includes('/dashboard/Exporter/blog')) {
+    if (path.includes('/dashboard/blog')) {
       setActiveTab('blog');
     } else {
       setActiveTab('overview');
@@ -22,17 +24,29 @@ export default function ExporterDashboard() {
 
   const renderMainContent = () => {
     // Check if we're on a specific blog route
-    if (location.pathname.includes('/dashboard/Exporter/blog/create')) {
-      return <BlogPostForm />;
+    if (location.pathname.includes('/dashboard/blog/create')) {
+      return (
+        <RoleBasedRoute allowedRoles={[ROLES.EXPORTER]}>
+          <BlogPostForm />
+        </RoleBasedRoute>
+      );
     }
     
-    if (location.pathname.match(/\/dashboard\/Exporter\/blog\/edit\/\d+/)) {
-      return <BlogPostForm editMode={true} />;
+    if (location.pathname.match(/\/dashboard\/blog\/edit\/\d+/)) {
+      return (
+        <RoleBasedRoute allowedRoles={[ROLES.EXPORTER]}>
+          <BlogPostForm editMode={true} />
+        </RoleBasedRoute>
+      );
     }
     
     // For the blog tab
     if (activeTab === 'blog') {
-      return <BlogManagement />;
+      return (
+        <RoleBasedRoute allowedRoles={[ROLES.EXPORTER]}>
+          <BlogManagement />
+        </RoleBasedRoute>
+      );
     }
     
     // Default dashboard overview
@@ -49,7 +63,7 @@ export default function ExporterDashboard() {
             </div>
             <p className="text-gray-600 mb-4">Share updates, news, and information about your products with your customers.</p>
             <Link 
-              to="/dashboard/Exporter/blog" 
+              to="/dashboard/blog" 
               className="text-blue-600 hover:text-blue-800 font-medium"
             >
               Manage Blog →
@@ -76,7 +90,7 @@ export default function ExporterDashboard() {
               }`}
               onClick={() => {
                 setActiveTab('overview');
-                navigate('/dashboard/Exporter');
+                navigate('/dashboard');
               }}
             >
               Overview
@@ -89,7 +103,7 @@ export default function ExporterDashboard() {
               }`}
               onClick={() => {
                 setActiveTab('blog');
-                navigate('/dashboard/Exporter/blog');
+                navigate('/dashboard/blog');
               }}
             >
               <div className="flex items-center">

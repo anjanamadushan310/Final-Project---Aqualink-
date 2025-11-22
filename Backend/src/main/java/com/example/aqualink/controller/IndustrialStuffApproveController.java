@@ -15,8 +15,7 @@ import java.util.HashMap;
 import java.util.stream.Collectors;
 
 @RestController
-@RequestMapping("/api/v1/industrial")
-@CrossOrigin(origins = {"http://localhost:3000", "http://localhost:5173"})
+@RequestMapping("/api/admin/industrial")
 public class IndustrialStuffApproveController {
 
     @Autowired
